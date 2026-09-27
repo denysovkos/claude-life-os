@@ -41,6 +41,11 @@ FOLDER_KEYS = {
     "housing", "insurance", "work", "legal", "health", "vehicle", "education",
 }
 
+# Must match recurring_payments_tax_relevance_check in 0001_tables.sql.
+TAX_RELEVANCE = {
+    "vorsorge_basisrente", "vorsorge_sonstige", "werbungskosten_candidate", "35a_candidate",
+}
+
 DEADLINE_TYPES = {
     "document_expiry", "payment_due", "legal_response", "notice_period", "appointment",
     "contract_milestone", "other",
@@ -105,8 +110,12 @@ def add_months(d, n):
     return dt.date(y, m, min(d.day, calendar.monthrange(y, m)[1]))
 
 
-def apply_rule(rule, start):
+def apply_rule(rule, start, actual_receipt=False):
+    """Same semantics as apply_term_rule() in migration 0007; tests/sql_rules_check.py
+    proves the two agree."""
     d = dt.date.fromisoformat(start)
+    if not actual_receipt:
+        d += dt.timedelta(days=rule.get("notification_offset_days", 0))
     for step in rule["steps"]:
         if "add_days" in step:
             d += dt.timedelta(days=step["add_days"])
@@ -226,9 +235,14 @@ class RegionPackTest(unittest.TestCase):
                         self.assertIn(t, known_types, f"{rule['key']}: unknown document type {t}")
                     if rule["hard"]:
                         self.assertTrue(rule.get("lead_days"), f"{rule['key']}: hard rule needs a ladder")
+                    self.assertIsInstance(rule.get("notification_offset_days", 0), int)
                     for step in rule["steps"]:
                         self.assertEqual(len(step), 1)
                         self.assertIn(next(iter(step)), {"add_days", "add_months", "term_months", "end_of_month"})
+                self.assertIsInstance(rules.get("purchase_rights_min_amount", 0), (int, float))
+                self.assertIsInstance(rules.get("purchase_rights_ignore", []), list)
+                labels = rules.get("tax_relevance_labels", {})
+                self.assertLessEqual(set(labels), TAX_RELEVANCE, "unknown tax_relevance value")
                 for a in rules.get("authorities", []):
                     self.assertIn(a["kind"], {"authority", "organization", "court"})
                     self.assertIn(a["category"], CATEGORIES)

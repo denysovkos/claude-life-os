@@ -16,5 +16,8 @@
   ],
   "annual_dates": [],
   "facts": [],
-  "authorities": []
+  "authorities": [],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
 }

@@ -38,11 +38,13 @@ jobs:
           set -e
           run() { psql -v ON_ERROR_STOP=1 -q -f "$1"; }
           for f in supabase/migrations/*.sql supabase/seed/*.sql packs/region/*/classification_rules.sql; do echo "== $f"; run "$f"; done
-          for f in supabase/migrations/0005_*.sql supabase/migrations/0006_*.sql supabase/seed/*.sql packs/region/*/classification_rules.sql; do echo "== again $f"; run "$f"; done
+          for f in supabase/migrations/0005_*.sql supabase/migrations/0006_*.sql supabase/migrations/0007_*.sql supabase/seed/*.sql packs/region/*/classification_rules.sql; do echo "== again $f"; run "$f"; done
       - name: Invariants and health views answer
         run: |
           psql -v ON_ERROR_STOP=1 -c "select * from v_system_invariants" -c "select * from v_system_health" \
                -c "select emergency_dossier()" -c "select briefing_text()"
+      - name: Region rules in SQL match the packs
+        run: python3 tests/sql_rules_check.py
       - name: Deny-all holds
         run: |
           test "$(psql -tAc "select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity")" = "0"

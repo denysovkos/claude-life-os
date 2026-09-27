@@ -6,12 +6,13 @@
       "applies_to": ["official_decision"],
       "deadline_type": "legal_response",
       "start": "issued_on",
-      "steps": [{"add_days": 4}, {"add_months": 1}],
+      "notification_offset_days": 4,
+      "steps": [{"add_months": 1}],
       "roll_to_business_day": true,
       "hard": true,
       "lead_days": [30, 14, 7, 3, 1],
       "basis": "§ 70 VwGO: one month from notification. § 41 Abs. 2 VwVfG: a letter sent by post counts as notified on the fourth day after posting (three days until 2024). § 193 BGB via § 57 VwGO, § 222 ZPO: an end on a weekend or public holiday moves to the next working day.",
-      "notes": "Without a Rechtsbehelfsbelehrung the period is one year (§ 58 Abs. 2 VwGO). Some Länder abolished the Widerspruch for certain matters; then the Bescheid itself says Klage within one month. derive_deadlines() in the database does not roll weekends forward, so it is at most two days early, never late. Public holidays are not in this rule: check the Land's calendar."
+      "notes": "Without a Rechtsbehelfsbelehrung the period is one year (§ 58 Abs. 2 VwGO). Some Länder abolished the Widerspruch for certain matters; then the Bescheid itself says Klage within one month. When the decision arrived by email, the real receipt date is used and the four-day fiction is skipped. Public holidays are not in this rule: check the Land's calendar."
     },
     {
       "key": "objection_tax",
@@ -19,7 +20,8 @@
       "applies_to": ["tax_assessment"],
       "deadline_type": "legal_response",
       "start": "issued_on",
-      "steps": [{"add_days": 4}, {"add_months": 1}],
+      "notification_offset_days": 4,
+      "steps": [{"add_months": 1}],
       "roll_to_business_day": true,
       "hard": true,
       "lead_days": [30, 14, 7, 3, 1],
@@ -130,16 +132,63 @@
     }
   ],
   "facts": [
-    {"key": "rundfunkbeitrag", "text": "The Rundfunkbeitrag cannot be cancelled while you are registered at a German address. It ends only with deregistration, moving in with someone who already pays, or an exemption."},
-    {"key": "kaution_buergschaft", "text": "A rent deposit guarantee (Mietkautionsbürgschaft) ends when the landlord releases it in writing, not when the tenancy ends. Keep paying until the release is in the index."},
-    {"key": "bekanntgabe_fiction", "text": "Since 1 January 2025 a letter from an authority counts as received on the fourth day after posting (previously the third). If it really arrived later, the authority has to prove the earlier date."}
+    {
+      "key": "rundfunkbeitrag",
+      "text": "The Rundfunkbeitrag cannot be cancelled while you are registered at a German address. It ends only with deregistration, moving in with someone who already pays, or an exemption."
+    },
+    {
+      "key": "kaution_buergschaft",
+      "text": "A rent deposit guarantee (Mietkautionsbürgschaft) ends when the landlord releases it in writing, not when the tenancy ends. Keep paying until the release is in the index."
+    },
+    {
+      "key": "bekanntgabe_fiction",
+      "text": "Since 1 January 2025 a letter from an authority counts as received on the fourth day after posting (previously the third). If it really arrived later, the authority has to prove the earlier date."
+    }
   ],
   "authorities": [
-    {"name": "Finanzamt (ELSTER)", "kind": "authority", "domains": ["elster.de"], "category": "government"},
-    {"name": "Bundeszentralamt für Steuern", "kind": "authority", "domains": ["bzst.de", "bzst.bund.de"], "category": "government"},
-    {"name": "Deutsche Rentenversicherung", "kind": "authority", "domains": ["drv-bund.de", "deutsche-rentenversicherung.de"], "category": "government"},
-    {"name": "Bundesagentur für Arbeit / Familienkasse", "kind": "authority", "domains": ["arbeitsagentur.de"], "category": "government"},
-    {"name": "Kraftfahrt-Bundesamt", "kind": "authority", "domains": ["kba.de"], "category": "government"},
-    {"name": "ARD ZDF Deutschlandradio Beitragsservice", "kind": "organization", "domains": ["rundfunkbeitrag.de", "beitragsservice.de"], "category": "bills_payments"}
-  ]
+    {
+      "name": "Finanzamt (ELSTER)",
+      "kind": "authority",
+      "domains": ["elster.de"],
+      "category": "government"
+    },
+    {
+      "name": "Bundeszentralamt für Steuern",
+      "kind": "authority",
+      "domains": ["bzst.de", "bzst.bund.de"],
+      "category": "government"
+    },
+    {
+      "name": "Deutsche Rentenversicherung",
+      "kind": "authority",
+      "domains": ["drv-bund.de", "deutsche-rentenversicherung.de"],
+      "category": "government"
+    },
+    {
+      "name": "Bundesagentur für Arbeit / Familienkasse",
+      "kind": "authority",
+      "domains": ["arbeitsagentur.de"],
+      "category": "government"
+    },
+    {
+      "name": "Kraftfahrt-Bundesamt",
+      "kind": "authority",
+      "domains": ["kba.de"],
+      "category": "government"
+    },
+    {
+      "name": "ARD ZDF Deutschlandradio Beitragsservice",
+      "kind": "organization",
+      "domains": ["rundfunkbeitrag.de", "beitragsservice.de"],
+      "category": "bills_payments"
+    }
+  ],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": ["wolt", "lieferando", "uber eats", "flink", "getir"],
+  "tax_relevance_labels": {
+    "vorsorge_basisrente": "Anlage Vorsorgeaufwand, Basisrente (Bescheinigung vom Anbieter)",
+    "vorsorge_sonstige": "Anlage Vorsorgeaufwand, sonstige Vorsorgeaufwendungen (Haftpflicht, Unfall)",
+    "werbungskosten_candidate": "Anlage N, Werbungskosten, nur der berufliche Anteil",
+    "35a_candidate": "Anlage Haushaltsnahe Aufwendungen (§ 35a EStG), aus der Hausgeld-Jahresabrechnung"
+  }
 }
