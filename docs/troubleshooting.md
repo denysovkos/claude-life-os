@@ -114,6 +114,25 @@ the extension in Supabase (Database → Extensions → pg_cron) and run
 A deadline that is real but not urgent can be silenced without closing it:
 `update deadlines set snoozed_until = '2026-11-01' where id = '…';`
 
+## No objection deadline for a letter from an authority
+
+**Symptom.** The brief says `nightly derivations failed`, or the doctor reports
+`region_rules_missing`, and a new official decision has no deadline.
+
+**Cause.** A region is set but its rules are not loaded. It is what an installation
+upgraded from schema 0.2.0 looks like until "life os doctor" syncs the region pack. The
+database refuses to count with no rules rather than count with the wrong law.
+
+**Fix.** Say "life os doctor" and accept the region pack update. The next night derives
+the missing deadlines. Documents without a date on them (`legal_decision_without_date`)
+still need the date set; the monthly review does that.
+
+## Deadlines look wrong after moving country or a pack update
+
+Open deadlines keep the date they were counted with until you recount them. Say "I moved
+to <country>" or "update the region pack" and the setup skill shows a dry run of what
+moves before changing anything. See [settings.md](settings.md).
+
 ## Two different contracts merged into one
 
 **Symptom.** Your phone contract shows the details of your internet contract with the
@@ -166,6 +185,7 @@ top of `Code.gs`. Sharing the script to get help meant sharing full database acc
 | `No item with the given ID could be found` | inbox folder deleted, or the script runs under another Google account | check the account; recreate the folder with setup |
 | `message_not_found` in `bridge_messages.skipped` | the mail was deleted before the bridge ran | nothing to copy; the email row stays |
 | `mime application/zip` in skipped | not an allowed file type | expected; open the mail yourself |
+| `You do not have permission to call …` or `Required permissions: …` | a permission box was left unticked when authorising | run `install` again, tick **Select all**, see [apps-script.md](apps-script.md) |
 | `Service invoked too many times` | Google's daily quota for Apps Script | transient; the next day catches up |
 
 ## A document is "untyped" or "missing expiry"

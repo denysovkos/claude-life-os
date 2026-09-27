@@ -16,7 +16,11 @@
  *   2. Project Settings (gear icon)  >  Script Properties  >  add two properties:
  *        SUPABASE_URL          https://<your-project>.supabase.co
  *        SUPABASE_SECRET_KEY   sb_secret_...   (Supabase > Project Settings > API Keys)
- *   3. Choose the function `install` in the toolbar and press Run. Approve the permissions.
+ *   3. Choose the function `install` in the toolbar and press Run. Google asks for
+ *      permission: Review permissions > your account > "Google hasn't verified this app"
+ *      > Advanced > Go to Life OS bridge (unsafe) > tick "Select all" if checkboxes are
+ *      shown > Allow. It is your own script in your own account; docs/apps-script.md
+ *      explains every permission.
  *   4. Done. `install` checks the connection, creates the 15-minute trigger and writes a
  *      first heartbeat, which is how the setup skill knows this part works.
  *

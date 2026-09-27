@@ -78,7 +78,7 @@ know about.
 
 ### Database (`supabase/migrations`)
 
-34 tables, 35 views, about 30 functions, row level security on every table with no
+35 tables, 35 views, about 35 functions, row level security on every table with no
 policies.
 
 The core objects:
@@ -105,7 +105,8 @@ The core objects:
 - `improvement_proposals`, `skill_revisions`: how the system changes itself, with a
   human deciding anything structural.
 - `run_locks`, `backup_snapshots`, `backups`: coordination and recovery.
-- `life_settings`: all configuration. Nothing personal is hard-coded anywhere else.
+- `life_settings` + `settings_history`: all configuration, and every change to it. Nothing
+  personal is hard-coded anywhere else. See [settings.md](settings.md).
 
 Two views answer "is it working" in one query: `v_system_invariants` (named conditions
 that must be zero) and `v_system_health` (the numbers).
@@ -145,17 +146,21 @@ start a deadline and how it is counted. The setup skill copies the chosen packs 
    legal folder. A trigger flips `emails.attachments_extracted` and
    `attachment_staging.claimed`.
 5. 01:15 UTC the next night, `pg_cron` runs `derive_deadlines()`: a hard `legal_response`
-   deadline one month after notification, ladder `{30,14,7,3,1}`.
+   deadline counted by the region pack's rule (in Germany: one month after the fourth day
+   after posting, moved off a weekend), ladder `{30,14,7,3,1}`, `rule_key =
+   objection_administrative`.
 6. On each rung, the daily brief names it. If Claude's scheduled task does not fire for
    36 hours, the bridge emails the person.
 
 ## Known gaps, stated rather than hidden
 
-- `derive_deadlines()` and `v_purchase_rights` currently implement German rules in SQL
-  (one month plus four days for objections, 14 days to return, two years of warranty).
-  Region packs describe these rules as data, and the skills use the pack, but the two
-  database functions do not read it yet. For other regions the derived deadlines are
-  conservative placeholders, never late for the German rules and unknown for others.
+- Legal rules are data. `derive_deadlines()`, `v_purchase_rights` and `v_tax_items` read
+  `life_settings.region_rules` (the region pack) through one interpreter,
+  `apply_term_rule()`, which CI checks against the same examples as the Python pack
+  tests. Every derived deadline records its `rule_key`, and `rederive_deadlines()`
+  recounts open ones when the rules change (see [settings.md](settings.md)). Without a
+  region pack, objection deadlines are an early 14-day placeholder and return windows are
+  `unknown`. Public holidays are not modelled; weekends are.
 - `briefing_text()` builds the brief in English. The skills deliver it unchanged.
 - The Drive inbox can be emptied by hand, which removes files before they are indexed.
   The bridge heals them from Gmail, but a file dropped into the inbox manually has no
