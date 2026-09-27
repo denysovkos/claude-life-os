@@ -18,23 +18,14 @@ je bij elke stap.
 Dit is voor de gewone Claude: claude.ai in de browser, of de Claude-app op computer of
 telefoon. Niet voor Claude Code.
 
-**1. Download de vijf skills** (zip-bestanden, niet uitpakken):
+**1. Download de skill: [life-os.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os.zip)** (niet uitpakken). Het is één skill met
+alles erin: installatie, mail, bestanden, de nachtelijke controle, de maandelijkse review
+en de antwoorden op je vragen. De link wijst altijd naar de nieuwste versie
+([alle releases](https://github.com/denysovkos/claude-life-os/releases)).
 
-| Skill | Wat hij doet | Download |
-|---|---|---|
-| life-os-setup | installeert en controleert alles, begin hier | [life-os-setup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os-setup.zip) |
-| email-intake | leest elke nacht je mail | [email-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/email-intake.zip) |
-| drive-file-intake | archiveert en indexeert elke nacht je documenten | [drive-file-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/drive-file-intake.zip) |
-| context-lookup | beantwoordt je vragen in elke chat | [context-lookup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/context-lookup.zip) |
-| life-review | de maandelijkse review | [life-review.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-review.zip) |
-
-De links wijzen altijd naar de nieuwste versie ([alle releases](https://github.com/denysovkos/claude-life-os/releases)).
-
-**2. Voeg ze toe aan Claude.** Open in Claude **Settings** → **Capabilities**:
-
-- zet **Code execution and file creation** aan (skills hebben dat nodig);
-- klik onder **Skills** op **Upload skill** en kies `life-os-setup.zip`;
-- herhaal dit voor de andere vier zip-bestanden.
+**2. Voeg hem toe aan Claude.** Open in Claude **Settings** → **Capabilities**, zet
+**Code execution and file creation** aan (skills hebben dat nodig) en klik dan onder
+**Skills** op **Upload skill** en kies `life-os.zip`.
 
 **3. Koppel je accounts.** **Settings** → **Connectors**: Google Drive, Gmail en Supabase;
 desgewenst ook Google Calendar, Todoist, Craft.
@@ -59,13 +50,20 @@ bestand dat elke 15 minuten in je Google-account draait, ook als Claude niet dra
 Stap voor stap, met uitleg van elke toestemming (in het Engels):
 [docs/apps-script.md](docs/apps-script.md).
 
-**6. Maak drie geplande taken** in Claude wanneer het erom vraagt: mail 's nachts, Drive
-daarna, de review eens per maand.
+**6. Laat het elke nacht draaien.** Claude start niet vanzelf, dus maak vier geplande
+runs aan, het liefst 's nachts en in deze volgorde: mail om **01:05**, bestanden om
+**02:05**, de nachtelijke controle met je dagelijkse samenvatting om **03:05** en de
+maandelijkse review op de 1e om **04:05**. Mail eerst, omdat de indeling ervan de brug
+vertelt welke bijlagen te kopiëren; de bestanden een uur later indexeren ze nog dezelfde
+nacht; de controle als laatste, zodat de ochtendsamenvatting alles bevat. Het makkelijkst
+gaat het met Claude Code-routines, die in de cloud draaien, ook als je computer uit
+staat: [docs/scheduling.md](docs/scheduling.md) (in het Engels) toont elke klik en de
+`/schedule`-commando's.
 
 Dat is alles, ongeveer 30 minuten. Later kun je altijd **`life os doctor`** schrijven: het
 controleert het hele systeem en zegt precies wat je moet oplossen.
 
-**Bijwerken:** download de nieuwe zip-bestanden en upload ze op dezelfde manier
+**Bijwerken:** download de nieuwe `life-os.zip` en upload hem op dezelfde manier
 (verwijder eerst de oude skill als Claude hem niet vervangt). Schrijf daarna
 `life os doctor`: het voert database-updates en nieuwe regels zelf door.
 
@@ -160,6 +158,7 @@ enige bron van waarheid; Todoist, Craft en de agenda spiegelen hem alleen.
 
 - [docs/architecture.md](docs/architecture.md): onderdelen, datamodel, de weg van een brief.
 - [docs/apps-script.md](docs/apps-script.md): de brug installeren.
+- [docs/scheduling.md](docs/scheduling.md): het nachtschema: routines, tijden, volgorde.
 - [docs/tasks.md](docs/tasks.md): wat er in de takenapp komt en hoe het wordt afgesloten.
 - [docs/settings.md](docs/settings.md): alle instellingen en wat er gebeurt als er een verandert.
 - [docs/security.md](docs/security.md): sleutels, rechten, wat de AI ziet, back-ups.

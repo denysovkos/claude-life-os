@@ -17,23 +17,14 @@
 Это для обычного Claude: claude.ai в браузере или приложение Claude на компьютере или
 телефоне. Не для Claude Code.
 
-**1. Скачайте пять скиллов** (zip-файлы, распаковывать не нужно):
+**1. Скачайте скилл: [life-os.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os.zip)** (распаковывать не нужно). Это один
+скилл, в котором есть всё: настройка, почта, файлы, ночная проверка, ежемесячный обзор и
+ответы на ваши вопросы. Ссылка всегда ведёт на самую новую версию
+([все релизы](https://github.com/denysovkos/claude-life-os/releases)).
 
-| Скилл | Что делает | Скачать |
-|---|---|---|
-| life-os-setup | устанавливает и проверяет всё, начните с него | [life-os-setup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os-setup.zip) |
-| email-intake | каждую ночь читает почту | [email-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/email-intake.zip) |
-| drive-file-intake | каждую ночь раскладывает и индексирует документы | [drive-file-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/drive-file-intake.zip) |
-| context-lookup | отвечает на ваши вопросы в любом чате | [context-lookup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/context-lookup.zip) |
-| life-review | ежемесячный обзор | [life-review.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-review.zip) |
-
-Ссылки всегда ведут на самую новую версию ([все релизы](https://github.com/denysovkos/claude-life-os/releases)).
-
-**2. Добавьте их в Claude.** В Claude откройте **Settings** → **Capabilities**:
-
-- включите **Code execution and file creation** (скиллам это нужно);
-- в разделе **Skills** нажмите **Upload skill** и выберите `life-os-setup.zip`;
-- повторите для остальных четырёх zip-файлов.
+**2. Добавьте его в Claude.** В Claude откройте **Settings** → **Capabilities**, включите
+**Code execution and file creation** (скиллам это нужно), затем в разделе **Skills**
+нажмите **Upload skill** и выберите `life-os.zip`.
 
 **3. Подключите аккаунты.** **Settings** → **Connectors**: Google Drive, Gmail и Supabase;
 по желанию ещё Google Calendar, Todoist, Craft.
@@ -59,14 +50,20 @@
 Пошагово, с объяснением каждого разрешения (по-английски):
 [docs/apps-script.md](docs/apps-script.md).
 
-**6. Создайте три запланированные задачи** в Claude, когда он попросит: почта ночью,
-Drive после неё, обзор раз в месяц.
+**6. Пусть работает каждую ночь.** Claude сам не запускается, поэтому создайте четыре
+запланированных запуска, лучше ночью и в таком порядке: почта в **01:05**, файлы в
+**02:05**, ночная проверка с ежедневной сводкой в **03:05** и ежемесячный обзор 1-го числа
+в **04:05**. Почта первой, потому что её сортировка подсказывает bridge, какие вложения
+копировать; файлы через час индексируют их в ту же ночь; проверка последней, чтобы
+утренняя сводка содержала всё. Проще всего через routines в Claude Code, которые работают
+в облаке даже при выключенном компьютере: в [docs/scheduling.md](docs/scheduling.md)
+(по-английски) есть каждый клик и команды `/schedule`.
 
 Это всё, около 30 минут. В любой момент потом напишите **`life os doctor`**: он проверит
 всю систему и скажет, что именно исправить.
 
-**Обновление:** скачайте новые zip-файлы и загрузите их в Claude так же (если Claude не
-заменяет скилл сам, сначала удалите старый). Затем напишите `life os doctor`: он сам
+**Обновление:** скачайте новый `life-os.zip` и загрузите его в Claude так же (если Claude
+не заменяет скилл сам, сначала удалите старый). Затем напишите `life os doctor`: он сам
 применит обновления базы и новые правила.
 
 ### Что нужно
@@ -159,6 +156,7 @@ Google переносит их напрямую из Gmail в Drive. Подро�
 
 - [docs/architecture.md](docs/architecture.md): компоненты, модель данных, путь одного письма.
 - [docs/apps-script.md](docs/apps-script.md): установка bridge.
+- [docs/scheduling.md](docs/scheduling.md): ночное расписание: routines, время, порядок.
 - [docs/tasks.md](docs/tasks.md): что попадает в таск-менеджер и как закрывается.
 - [docs/settings.md](docs/settings.md): все настройки и что происходит, когда они меняются.
 - [docs/security.md](docs/security.md): ключи, права, что видит ИИ, резервные копии.

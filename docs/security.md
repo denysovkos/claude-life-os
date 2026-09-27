@@ -28,7 +28,7 @@ Supabase's advisor reports `rls_enabled_no_policy` for every table. That is the 
 state, not a finding to fix: a policy would be the only way to open a table to the
 public API. Views are `security_invoker`, so they cannot become a side door past RLS
 either. CI checks on every push that no public table has RLS off and that `anon` and
-`authenticated` hold no grants; `life-os-setup` in doctor mode checks the same on the
+`authenticated` hold no grants; the setup workflow in doctor mode checks the same on the
 live project, plus that `anon` cannot execute any function.
 
 ## Secrets

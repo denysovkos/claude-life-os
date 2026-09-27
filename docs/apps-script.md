@@ -15,7 +15,7 @@ You do not edit the code. Everything it needs to know (which folder, which time 
 which kinds of mail) it reads from your database. The only two things you give it are
 the database address and its key.
 
-The `life-os-setup` skill walks you through this in chat and checks the result. This page
+The `life-os` skill ("set up life os") walks you through this in chat and checks the result. This page
 is the same procedure, for reference. It takes about five minutes.
 
 ## Before you start

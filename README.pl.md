@@ -17,23 +17,14 @@ prowadzi przez każdy krok.
 To jest dla zwykłego Claude: claude.ai w przeglądarce albo aplikacja Claude na komputer
 lub telefon. Nie dla Claude Code.
 
-**1. Pobierz pięć skilli** (pliki zip, nie rozpakowuj ich):
+**1. Pobierz skill: [life-os.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os.zip)** (nie rozpakowuj go). To jeden skill, który
+zawiera wszystko: konfigurację, pocztę, pliki, nocną kontrolę, miesięczny przegląd i
+odpowiedzi na Twoje pytania. Link zawsze prowadzi do najnowszej wersji
+([wszystkie wydania](https://github.com/denysovkos/claude-life-os/releases)).
 
-| Skill | Co robi | Pobierz |
-|---|---|---|
-| life-os-setup | instaluje i sprawdza wszystko, zacznij od niego | [life-os-setup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os-setup.zip) |
-| email-intake | co noc czyta pocztę | [email-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/email-intake.zip) |
-| drive-file-intake | co noc porządkuje i indeksuje dokumenty | [drive-file-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/drive-file-intake.zip) |
-| context-lookup | odpowiada na pytania w każdym czacie | [context-lookup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/context-lookup.zip) |
-| life-review | miesięczny przegląd | [life-review.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-review.zip) |
-
-Linki zawsze prowadzą do najnowszej wersji ([wszystkie wydania](https://github.com/denysovkos/claude-life-os/releases)).
-
-**2. Dodaj je do Claude.** W Claude otwórz **Settings** → **Capabilities**:
-
-- włącz **Code execution and file creation** (skille tego potrzebują);
-- w sekcji **Skills** kliknij **Upload skill** i wybierz `life-os-setup.zip`;
-- powtórz dla pozostałych czterech plików zip.
+**2. Dodaj go do Claude.** W Claude otwórz **Settings** → **Capabilities**, włącz
+**Code execution and file creation** (skille tego potrzebują), potem w sekcji **Skills**
+kliknij **Upload skill** i wybierz `life-os.zip`.
 
 **3. Połącz konta.** **Settings** → **Connectors**: Google Drive, Gmail i Supabase;
 opcjonalnie także Google Calendar, Todoist, Craft.
@@ -58,15 +49,21 @@ po angielsku; Google może je pokazać po polsku):
 Krok po kroku, z wyjaśnieniem każdego uprawnienia (po angielsku):
 [docs/apps-script.md](docs/apps-script.md).
 
-**6. Utwórz trzy zaplanowane zadania** w Claude, gdy poprosi: poczta w nocy, Dysk po
-niej, przegląd raz w miesiącu.
+**6. Niech działa co noc.** Claude sam się nie uruchamia, więc utwórz cztery zaplanowane
+uruchomienia, najlepiej w nocy i w tej kolejności: poczta o **01:05**, pliki o **02:05**,
+nocna kontrola z codziennym briefem o **03:05** i miesięczny przegląd 1. dnia miesiąca o
+**04:05**. Poczta najpierw, bo jej kategorie mówią mostowi, które załączniki skopiować;
+pliki godzinę później indeksują je tej samej nocy; kontrola na końcu, żeby poranny brief
+zawierał wszystko. Najprościej przez routines w Claude Code, które działają w chmurze
+nawet przy wyłączonym komputerze: [docs/scheduling.md](docs/scheduling.md) (po
+angielsku) opisuje każde kliknięcie i polecenia `/schedule`.
 
 To wszystko, około 30 minut. Później w dowolnej chwili napisz **`life os doctor`**:
 sprawdzi cały system i powie dokładnie, co naprawić.
 
-**Aktualizacja:** pobierz nowe pliki zip i wgraj je tak samo (jeśli Claude nie zastąpi
-skilla, najpierw usuń stary). Potem napisz `life os doctor`: sam wprowadzi aktualizacje
-bazy i nowe przepisy.
+**Aktualizacja:** pobierz nowy `life-os.zip` i wgraj go tak samo (jeśli Claude nie
+zastąpi skilla, najpierw usuń stary). Potem napisz `life os doctor`: sam wprowadzi
+aktualizacje bazy i nowe przepisy.
 
 ### Czego potrzebujesz
 
@@ -155,6 +152,7 @@ Craft i kalendarz tylko ją odzwierciedlają.
 
 - [docs/architecture.md](docs/architecture.md): komponenty, model danych, droga jednego listu.
 - [docs/apps-script.md](docs/apps-script.md): instalacja mostu.
+- [docs/scheduling.md](docs/scheduling.md): nocny harmonogram: routines, godziny, kolejność.
 - [docs/tasks.md](docs/tasks.md): co trafia do menedżera zadań i jak się zamyka.
 - [docs/settings.md](docs/settings.md): wszystkie ustawienia i co się dzieje, gdy się zmieniają.
 - [docs/security.md](docs/security.md): klucze, uprawnienia, co widzi AI, kopie zapasowe.

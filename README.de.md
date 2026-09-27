@@ -18,23 +18,14 @@ nötig: Claude führt durch jeden Schritt.
 Das ist für das normale Claude: claude.ai im Browser oder die Claude-App auf Computer
 oder Handy. Nicht für Claude Code.
 
-**1. Die fünf Skills herunterladen** (ZIP-Dateien, nicht entpacken):
+**1. Den Skill herunterladen: [life-os.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os.zip)** (nicht entpacken). Es ist ein
+Skill, der alles enthält: Einrichtung, Mail, Dateien, nächtliche Prüfung, Monatsrückblick
+und die Antworten auf Ihre Fragen. Der Link zeigt immer auf die neueste Version
+([alle Releases](https://github.com/denysovkos/claude-life-os/releases)).
 
-| Skill | Was er tut | Download |
-|---|---|---|
-| life-os-setup | installiert und prüft alles, hier anfangen | [life-os-setup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os-setup.zip) |
-| email-intake | liest jede Nacht Ihre Mails | [email-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/email-intake.zip) |
-| drive-file-intake | legt jede Nacht Ihre Dokumente ab und indexiert sie | [drive-file-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/drive-file-intake.zip) |
-| context-lookup | beantwortet Ihre Fragen in jedem Chat | [context-lookup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/context-lookup.zip) |
-| life-review | der Monatsrückblick | [life-review.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-review.zip) |
-
-Die Links zeigen immer auf die neueste Version ([alle Releases](https://github.com/denysovkos/claude-life-os/releases)).
-
-**2. In Claude hinzufügen.** In Claude **Settings** → **Capabilities** öffnen:
-
-- **Code execution and file creation** einschalten (Skills brauchen das);
-- unter **Skills** auf **Upload skill** klicken und `life-os-setup.zip` wählen;
-- für die anderen vier ZIP-Dateien wiederholen.
+**2. In Claude hinzufügen.** In Claude **Settings** → **Capabilities** öffnen,
+**Code execution and file creation** einschalten (Skills brauchen das), dann unter
+**Skills** auf **Upload skill** klicken und `life-os.zip` wählen.
 
 **3. Konten verbinden.** **Settings** → **Connectors**: Google Drive, Gmail und Supabase;
 nach Wunsch auch Google Calendar, Todoist, Craft.
@@ -60,15 +51,22 @@ Datei, die alle 15 Minuten in Ihrem Google-Konto läuft, auch wenn Claude nicht 
 Schritt für Schritt, mit Erklärung jeder Berechtigung (auf Englisch):
 [docs/apps-script.md](docs/apps-script.md).
 
-**6. Drei geplante Aufgaben** in Claude anlegen, wenn es darum bittet: Mail nachts, Drive
-danach, der Rückblick einmal im Monat.
+**6. Jede Nacht laufen lassen.** Claude startet nicht von selbst, also legen Sie vier
+geplante Läufe an, am besten nachts und in dieser Reihenfolge: Mail um **01:05**, Dateien
+um **02:05**, die nächtliche Prüfung mit Ihrem Tagesbriefing um **03:05** und der
+Monatsrückblick am 1. um **04:05**. Mail zuerst, weil ihre Einordnung der Bridge sagt,
+welche Anhänge sie kopieren soll; die Dateien eine Stunde später indexieren diese noch in
+derselben Nacht; die Prüfung zuletzt, damit das Morgenbriefing alles enthält. Am
+einfachsten mit Claude-Code-Routines, die in der Cloud laufen, auch wenn Ihr Computer aus
+ist: [docs/scheduling.md](docs/scheduling.md) (Englisch) zeigt jeden Klick und die
+`/schedule`-Befehle.
 
 Das ist alles, etwa 30 Minuten. Später jederzeit **`life os doctor`** schreiben: Es prüft
 das ganze System und sagt genau, was zu beheben ist.
 
-**Aktualisieren:** die neuen ZIP-Dateien herunterladen und genauso hochladen (falls Claude
-den Skill nicht ersetzt, den alten vorher entfernen). Dann `life os doctor` schreiben: Es
-spielt Datenbank-Updates und neue Regeln selbst ein.
+**Aktualisieren:** die neue `life-os.zip` herunterladen und genauso hochladen (falls
+Claude den Skill nicht ersetzt, den alten vorher entfernen). Dann `life os doctor`
+schreiben: Es spielt Datenbank-Updates und neue Regeln selbst ein.
 
 ### Was Sie brauchen
 
@@ -164,6 +162,7 @@ sie nur.
 
 - [docs/architecture.md](docs/architecture.md): Komponenten, Datenmodell, der Weg eines Briefs.
 - [docs/apps-script.md](docs/apps-script.md): die Bridge installieren.
+- [docs/scheduling.md](docs/scheduling.md): der nächtliche Zeitplan: Routines, Uhrzeiten, Reihenfolge.
 - [docs/tasks.md](docs/tasks.md): was in der Aufgaben-App landet und wie es sich schließt.
 - [docs/settings.md](docs/settings.md): alle Einstellungen und was passiert, wenn sich eine ändert.
 - [docs/security.md](docs/security.md): Schlüssel, Rechte, was die KI sieht, Backups.

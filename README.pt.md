@@ -18,23 +18,14 @@ programar: o Claude guia-te em cada passo.
 Isto é para o Claude normal: claude.ai no navegador, ou a app Claude no computador ou no
 telemóvel. Não para o Claude Code.
 
-**1. Descarrega as cinco skills** (ficheiros zip, não os descompactes):
+**1. Descarrega a skill: [life-os.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os.zip)** (não a descompactes). É uma única skill
+que contém tudo: instalação, correio, ficheiros, verificação noturna, revisão mensal e as
+respostas às tuas perguntas. A ligação aponta sempre para a versão mais recente
+([todas as versões](https://github.com/denysovkos/claude-life-os/releases)).
 
-| Skill | O que faz | Descarregar |
-|---|---|---|
-| life-os-setup | instala e verifica tudo, começa por esta | [life-os-setup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os-setup.zip) |
-| email-intake | lê o teu correio todas as noites | [email-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/email-intake.zip) |
-| drive-file-intake | arquiva e indexa os teus documentos todas as noites | [drive-file-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/drive-file-intake.zip) |
-| context-lookup | responde às tuas perguntas em qualquer conversa | [context-lookup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/context-lookup.zip) |
-| life-review | a revisão mensal | [life-review.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-review.zip) |
-
-As ligações apontam sempre para a versão mais recente ([todas as versões](https://github.com/denysovkos/claude-life-os/releases)).
-
-**2. Adiciona-as ao Claude.** No Claude abre **Settings** → **Capabilities**:
-
-- ativa **Code execution and file creation** (as skills precisam disso);
-- em **Skills** clica em **Upload skill** e escolhe `life-os-setup.zip`;
-- repete para os outros quatro ficheiros zip.
+**2. Adiciona-a ao Claude.** No Claude abre **Settings** → **Capabilities**, ativa
+**Code execution and file creation** (as skills precisam disso) e depois, em **Skills**,
+clica em **Upload skill** e escolhe `life-os.zip`.
 
 **3. Liga as tuas contas.** **Settings** → **Connectors**: Google Drive, Gmail e Supabase;
 se quiseres também Google Calendar, Todoist, Craft.
@@ -59,15 +50,22 @@ dos botões em inglês; o Google pode mostrá-los em português):
 Passo a passo, com a explicação de cada permissão (em inglês):
 [docs/apps-script.md](docs/apps-script.md).
 
-**6. Cria três tarefas agendadas** no Claude quando ele pedir: correio à noite, Drive a
-seguir, a revisão uma vez por mês.
+**6. Deixa-a correr todas as noites.** O Claude não arranca sozinho, por isso cria quatro
+execuções agendadas, de preferência à noite e por esta ordem: correio às **01:05**,
+ficheiros às **02:05**, a verificação noturna com o teu resumo diário às **03:05** e a
+revisão mensal no dia 1 às **04:05**. O correio primeiro, porque a sua classificação diz à
+ponte que anexos copiar; os ficheiros uma hora depois indexam-nos na mesma noite; a
+verificação no fim, para que o resumo da manhã inclua tudo. O mais simples são as routines
+do Claude Code, que correm na nuvem mesmo com o computador desligado:
+[docs/scheduling.md](docs/scheduling.md) (em inglês) explica cada clique e os comandos
+`/schedule`.
 
 É tudo, cerca de 30 minutos. Mais tarde, a qualquer momento, escreve
 **`life os doctor`**: verifica todo o sistema e diz-te exatamente o que corrigir.
 
-**Atualizar:** descarrega os novos ficheiros zip e carrega-os da mesma forma (se o Claude
-não substituir a skill, apaga primeiro a antiga). Depois escreve `life os doctor`: aplica
-ele próprio as atualizações da base de dados e as novas regras.
+**Atualizar:** descarrega o novo `life-os.zip` e carrega-o da mesma forma (se o Claude não
+substituir a skill, apaga primeiro a antiga). Depois escreve `life os doctor`: aplica ele
+próprio as atualizações da base de dados e as novas regras.
 
 ### O que precisas
 
@@ -156,6 +154,7 @@ dados é a única fonte de verdade; Todoist, Craft e o calendário apenas a espe
 
 - [docs/architecture.md](docs/architecture.md): componentes, modelo de dados, o percurso de uma carta.
 - [docs/apps-script.md](docs/apps-script.md): instalar a ponte.
+- [docs/scheduling.md](docs/scheduling.md): o horário noturno: routines, horas, ordem.
 - [docs/tasks.md](docs/tasks.md): o que chega ao gestor de tarefas e como se fecha.
 - [docs/settings.md](docs/settings.md): todas as definições e o que acontece quando uma muda.
 - [docs/security.md](docs/security.md): chaves, permissões, o que a IA vê, cópias de segurança.

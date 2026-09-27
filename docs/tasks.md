@@ -20,11 +20,11 @@ filter them.
 
 | Title | Created by | When | Due | Where |
 |---|---|---|---|---|
-| `📅 Daily brief 2026-10-03: Tax objection ends in 7 days` | email-intake | nightly, only if something matters today | today | system project |
+| `📅 Daily brief 2026-10-03: Tax objection ends in 7 days` | nightly-check | every night at the end of the night runs, only if something matters today | today | system project |
 | `💌 bills_payments Stadtwerke Beispiel: pay 61.20 by 15 Oct` | email-intake | a mail needs you to act | the due date in the mail, if any | default project (or a per-category one) |
 | `⚠️ Passport expires 2026-12-01: Anna_passport.pdf` | drive-file-intake | a document expires within 30 days and has no task | 7 days before expiry | default project (or per area) |
 | `🧾 Review 2026-09: cancel the old parking contract?` | life-review | monthly | in 3 days | system project |
-| `⚠️ email-intake failed 2026-10-03` | email-intake, drive-file-intake | a run had errors | today | system project |
+| `⚠️ email-intake failed 2026-10-03` | email-intake, drive-file-intake, nightly-check | a run had errors | today | system project |
 
 Hard deadlines (objection windows, residence permits, cancellation dates) also appear
 in the brief on every rung of their ladder, typically 90, 60, 30, 14, 7, 3 and 1 days
@@ -90,7 +90,7 @@ use it when present and fall back to `default_project`.
 
 ## Another task manager
 
-The skills talk to the task manager in five operations: create a task (title,
+The workflows talk to the task manager in five operations: create a task (title,
 description, due date, project, label), read whether a task is completed, update a due
 date, find an open task by title, and write the id back. Any task manager with a Claude
 connector that can do those five can be a provider: add its name as a `task_provider`

@@ -12,9 +12,9 @@ region pack.
 deadline, how that deadline is counted, when a contract can be cancelled, which
 authorities send mail and from where, when the tax return is due.
 
-Nothing in a pack runs by itself. The `life-os-setup` skill reads the packs you choose
+Nothing in a pack runs by itself. The setup workflow of the `life-os` skill reads the packs you choose
 and writes them into `life_settings` (`dossier_labels`, `lang_hints`, `region_rules`)
-and, for region packs, runs `classification_rules.sql`. The intake skills read those
+and, for region packs, runs `classification_rules.sql`. The intake workflows read those
 settings at the start of every run.
 
 ## Status

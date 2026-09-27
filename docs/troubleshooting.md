@@ -29,7 +29,8 @@ job's SLA (email 36h, Drive 30h, bridge 1h), and the Apps Script bridge, which r
 Google independently of Claude, emails you at most every 12 hours per job.
 
 **Fix.** Open Claude and say "run email-intake" (or the named job). Then check the
-scheduled task in Claude still exists and is enabled. A job that runs but less often than
+routine (claude.ai/code/routines) or scheduled task still exists and is enabled, see
+[scheduling.md](scheduling.md). A job that runs but less often than
 expected shows as `runs_7d` below `runs_7d_expected` in `v_intake_watchdog`.
 
 ## Two runs at once
@@ -180,8 +181,8 @@ top of `Code.gs`. Sharing the script to get help meant sharing full database acc
 | `Script Property SUPABASE_URL is missing` | property not set or misspelled | Apps Script → Project Settings → Script Properties |
 | `That is the publishable key` | `sb_publishable_…` pasted | use the `sb_secret_…` key |
 | `-> 401` | key revoked, or from another project | new secret key, update the property |
-| `-> 404 … /rest/v1/v_bridge_queue` | migrations not applied, or wrong project URL | run `life-os-setup` doctor |
-| `life_settings.drive_folders.inbox is empty` | setup did not finish the folders step | run `life-os-setup` again |
+| `-> 404 … /rest/v1/v_bridge_queue` | migrations not applied, or wrong project URL | say "life os doctor" |
+| `life_settings.drive_folders.inbox is empty` | setup did not finish the folders step | say "set up life os" again |
 | `No item with the given ID could be found` | inbox folder deleted, or the script runs under another Google account | check the account; recreate the folder with setup |
 | `message_not_found` in `bridge_messages.skipped` | the mail was deleted before the bridge ran | nothing to copy; the email row stays |
 | `mime application/zip` in skipped | not an allowed file type | expected; open the mail yourself |
@@ -208,7 +209,7 @@ one time-driven trigger for `run`). Running `install` again recreates it.
 
 ## Starting over
 
-Nothing is lost by re-running `life-os-setup`: every step checks what exists first. To
+Nothing is lost by running "set up life os" again: every step checks what exists first. To
 rebuild the index from scratch, keep Drive and Gmail (they are the originals), create a
 new Supabase project, run setup, and let the intakes run with a wide window. Documents
 and mail are re-indexed; your manual corrections, notes and matters are not, so export

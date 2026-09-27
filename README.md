@@ -17,23 +17,14 @@ you through every step.
 This is for the normal Claude app: claude.ai in the browser, or the Claude desktop or
 mobile app. Not Claude Code.
 
-**1. Download the five skills** (zip files, do not unpack them):
+**1. Download the skill: [life-os.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os.zip)** (do not unpack it). It is one skill that
+contains everything: setup, mail, files, the nightly check, the monthly review and the
+answers to your questions. The link always points to the newest version
+([all releases](https://github.com/denysovkos/claude-life-os/releases)).
 
-| Skill | What it does | Download |
-|---|---|---|
-| life-os-setup | installs and checks everything, start here | [life-os-setup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os-setup.zip) |
-| email-intake | reads your mail every night | [email-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/email-intake.zip) |
-| drive-file-intake | files and indexes your documents every night | [drive-file-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/drive-file-intake.zip) |
-| context-lookup | answers your questions in any chat | [context-lookup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/context-lookup.zip) |
-| life-review | the monthly review | [life-review.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-review.zip) |
-
-The links always point to the newest version ([all releases](https://github.com/denysovkos/claude-life-os/releases)).
-
-**2. Add them to Claude.** In Claude open **Settings** → **Capabilities**:
-
-- turn on **Code execution and file creation** (skills need it);
-- under **Skills** click **Upload skill** and choose `life-os-setup.zip`;
-- repeat for the other four zip files.
+**2. Add it to Claude.** In Claude open **Settings** → **Capabilities**, turn on
+**Code execution and file creation** (skills need it), then under **Skills** click
+**Upload skill** and choose `life-os.zip`.
 
 **3. Connect your accounts.** **Settings** → **Connectors**: Google Drive, Gmail and
 Supabase; if you like also Google Calendar, Todoist, Craft.
@@ -56,13 +47,19 @@ in your Google account every 15 minutes, even when Claude does not:
 
 Step by step with every permission explained: [docs/apps-script.md](docs/apps-script.md).
 
-**6. Create three scheduled tasks** in Claude when it asks: mail at night, Drive after
-it, the review once a month.
+**6. Let it run every night.** Claude does not start by itself, so create four scheduled
+runs, best at night and in this order: mail at **01:05**, files at **02:05**, the nightly
+check with your daily brief at **03:05**, and the monthly review on the 1st at **04:05**.
+Mail goes first because its sorting tells the bridge which attachments to copy; an hour
+later the file run indexes them the same night; the check comes last so the morning brief
+includes everything. The easiest way is Claude Code routines, which run in the cloud with
+your computer off: [docs/scheduling.md](docs/scheduling.md) has every click and the
+`/schedule` commands.
 
 That is all, about 30 minutes. Later, at any time, write **`life os doctor`**: it checks
 the whole system and tells you exactly what to fix.
 
-**Updating:** download the new zip files and upload them again the same way (remove the
+**Updating:** download the new `life-os.zip` and upload it again the same way (remove the
 old skill first if Claude does not replace it). Then write `life os doctor`; it applies
 database updates and new rules for you.
 
@@ -151,6 +148,7 @@ database is the single source of truth; Todoist, Craft and the calendar only mir
 - [docs/architecture.md](docs/architecture.md): components, data model, a letter's path
   through the system.
 - [docs/apps-script.md](docs/apps-script.md): installing the bridge.
+- [docs/scheduling.md](docs/scheduling.md): night schedule: routines, times, order.
 - [docs/tasks.md](docs/tasks.md): what lands in your task manager and how it closes.
 - [docs/settings.md](docs/settings.md): every setting, and what happens when one changes.
 - [docs/security.md](docs/security.md): keys, permissions, what the AI sees, backups.
@@ -160,7 +158,8 @@ database is the single source of truth; Todoist, Craft and the calendar only mir
 ## Repository
 
 ```
-skills/            the five Claude skills
+skills/life-os/    the Claude skill: SKILL.md and its six workflows
+.claude/skills/    link to it, so Claude Code and routines load it from a clone
 apps-script/       the Google Apps Script bridge (Code.gs)
 supabase/          database migrations and the document type registry
 packs/             language and region packs
@@ -170,7 +169,7 @@ scripts/           packaging and JSON formatting
 ```
 
 For contributors: `python3 -m unittest discover -s tests -v` runs the pack tests. Every
-push to `main` builds the skill zips and publishes them as release `v<VERSION>`
+push to `main` builds `life-os.zip` and publishes it as release `v<VERSION>`
 (`.github/workflows/release.yml`); bump `VERSION` for a new release. CI also
 applies every migration and pack to a fresh Postgres 16 twice, checks that the database
 counts deadlines exactly like the pack examples, and that it stays closed to the public

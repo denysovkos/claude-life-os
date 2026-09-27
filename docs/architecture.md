@@ -111,17 +111,25 @@ The core objects:
 Two views answer "is it working" in one query: `v_system_invariants` (named conditions
 that must be zero) and `v_system_health` (the numbers).
 
-### Skills (`skills/`)
+### The skill (`skills/life-os/`)
 
-| Skill | When | Writes |
+One skill, `life-os`, installed as one zip. Its `SKILL.md` routes each request to one of
+six workflows and holds the rules they share; each workflow is a file in `workflows/` that
+Claude reads only when it runs that workflow.
+
+| Workflow | When | Writes |
 |---|---|---|
-| `email-intake` | nightly | `emails`, `deadlines`, tasks, calendar events, the daily brief |
-| `drive-file-intake` | nightly, after email | `documents`, `document_texts`, `deadlines`, tasks, Drive filing |
+| `email-intake` | nightly 01:05 | `emails`, `deadlines`, tasks, calendar events |
+| `drive-file-intake` | nightly 02:05 | `documents`, `document_texts`, `deadlines`, tasks, Drive filing |
+| `nightly-check` | nightly 03:05 | derived deadlines, the one daily brief |
 | `life-review` | monthly | bank imports, contract fixes, one report, one decision task |
 | `context-lookup` | on demand, any chat | nothing |
-| `life-os-setup` | once, then as doctor | the installation itself |
+| `setup` | once, then as doctor | the installation itself |
 
-Every writing skill follows the same shape: load settings, `take_snapshot()`, take a row
+The same folder is linked at `.claude/skills/life-os`, so Claude Code and its cloud
+routines load it from a clone of the repository. See [scheduling.md](scheduling.md).
+
+Every writing workflow follows the same shape: load settings, `take_snapshot()`, take a row
 in `run_locks`, work from the last run's timestamp (never "yesterday"), apply
 `classification_rules` before judgement, log every skip and low-confidence decision,
 write a run row whose `errors` is empty only when nothing failed.
@@ -130,27 +138,28 @@ write a run row whose `errors` is empty only when nothing failed.
 
 Two independent axes. A language pack says how mail looks in a language and how the
 system talks back. A region pack says what the paperwork means legally: which letters
-start a deadline and how it is counted. The setup skill copies the chosen packs into
-`life_settings`, so the skills never need the repository at run time. See
+start a deadline and how it is counted. The setup workflow copies the chosen packs into
+`life_settings`, so the workflows never need the repository at run time. See
 `packs/README.md`.
 
 ## A letter's path through the system
 
 1. 14:02, an official decision arrives by email with a PDF.
-2. 02:00, `email-intake` classifies it `government`, extracts the sender and the
+2. 01:05, `email-intake` classifies it `government`, extracts the sender and the
    decision date if the mail states it, marks `action_needed`, creates a task.
-3. 02:15, the bridge sees the row in `v_bridge_queue` and copies the PDF into the Drive
+3. 01:15, the bridge sees the row in `v_bridge_queue` and copies the PDF into the Drive
    inbox, recording it in `attachment_staging`.
-4. 03:00, `drive-file-intake` finds the new file, reads its full text, classifies it
+4. 02:05, `drive-file-intake` finds the new file, reads its full text, classifies it
    `official_decision`, sets `issued_on`, links `source_email_id`, files it into the
    legal folder. A trigger flips `emails.attachments_extracted` and
    `attachment_staging.claimed`.
-5. 01:15 UTC the next night, `pg_cron` runs `derive_deadlines()`: a hard `legal_response`
-   deadline counted by the region pack's rule (in Germany: one month after the fourth day
+5. 03:05, `nightly-check` runs `derive_deadlines()` (the database's own `pg_cron` job runs
+   it again at 01:15 UTC as a safety net): a hard `legal_response` deadline counted by the region pack's rule (in Germany: one month after the fourth day
    after posting, moved off a weekend), ladder `{30,14,7,3,1}`, `rule_key =
    objection_administrative`.
-6. On each rung, the daily brief names it. If Claude's scheduled task does not fire for
-   36 hours, the bridge emails the person.
+6. The same run builds the daily brief, so the deadline is in it that morning and again
+   on each rung of its ladder. If a scheduled run does not fire for 36 hours, the bridge
+   emails the person.
 
 ## Known gaps, stated rather than hidden
 

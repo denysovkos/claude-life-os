@@ -12,7 +12,7 @@ value as JSON. Nothing personal is stored anywhere else:
 - not in this repository.
 
 Every change goes through a trigger into `settings_history`: the key, the old value,
-the new value, when, and who (`life-os-setup`, `skill`, or `human` for an edit made by
+the new value, when, and who (`setup`, `skill`, or `human` for an edit made by
 hand in the Supabase dashboard). Any setting can be read as of a date and put back.
 
 ```sql
@@ -22,12 +22,12 @@ select changed_at, key, actor, old_value, new_value from settings_history order 
 
 ## How they get there and how to change them
 
-First run: the `life-os-setup` skill asks a few questions, reads the packs you chose,
+First run: the setup workflow of the `life-os` skill asks a few questions, reads the packs you chose,
 and writes every setting in one statement.
 
 Later: say it in any chat, for example "change my language to German", "I moved to
 another country", "add my sister to the emergency binder", "switch tasks to Todoist".
-The same skill in reconfigure mode writes the change, shows you what changed from
+The setup workflow in reconfigure mode writes the change, shows you what changed from
 `settings_history`, and handles the side effects listed below. Editing a row by hand in
 the Supabase dashboard also works; the history then shows `human`.
 
@@ -35,7 +35,7 @@ the Supabase dashboard also works; the history then shows `human`.
 
 | Key | Example | Written by | Read by |
 |---|---|---|---|
-| `schema_version` | `"0.3.0"` | migrations | setup (doctor, upgrades) |
+| `schema_version` | `"0.4.0"` | migrations | setup (doctor, upgrades) |
 | `owner_name` | `"Anna Beispiel"` | setup | reports |
 | `owner_email` | `"anna@example.com"` | setup | brief and review by email |
 | `timezone` | `"Europe/Berlin"` | setup | every skill, the bridge, the binder date |
