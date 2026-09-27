@@ -114,9 +114,11 @@ use it instead of reasoning from scratch.
   `cancel_by` is the last day the cancellation must arrive, `earliest_exit` the first day
   it takes effect. `exit_known = false` means the index does not know: say so.
 - **Can I return it / warranty**: `select * from v_purchase_rights where vendor ilike '%X%' or item ilike '%X%';`
-  The return window is approximate, counted from the order mail rather than delivery, so
-  it errs early. The windows themselves come from the region; `region_rules.facts` and
-  `term_rules` (`consumer_withdrawal`, `statutory_warranty`) explain them if asked.
+  `return_until_approx` and `warranty_until` come from the region pack
+  (`consumer_withdrawal`, `statutory_warranty` in `region_rules`), counted from the order
+  mail rather than delivery, so they err early. `state = 'unknown'` means the region pack
+  has no such rule: say that the local rules decide and quote the shop's own terms if the
+  mail has them.
 - **Who still uses my old address**: `select * from v_address_audit;` Counterparty, date of
   the last mail that still carries a former address, link. Empty means nobody.
 - **Did a payment go through / what got more expensive**: `select * from v_payment_exceptions;`

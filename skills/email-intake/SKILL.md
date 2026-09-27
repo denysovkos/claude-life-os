@@ -143,7 +143,9 @@ Every `due_date` becomes a `deadlines` row, `source_kind = 'email'`, `source_id`
 email row. `payment_due` for bills, `legal_response` for lawyers, notaries and
 authorities. A response window from an authority is `hard = true` with lead ladder
 `{30,14,7,3,1}` (`region_rules.term_rules` says which letters carry such windows and how
-they are counted). Bills are soft,
+they are counted: count with `apply_term_rule(<rule>, <received date>, true)`, since an
+email's receipt date is real, and set `rule_key` and `rule_version` on the deadline).
+When the letter states its own deadline, the stated date wins and `rule_key` stays null. Bills are soft,
 `{7,1}`. A direct-debit bill gets the record but no task: nothing can be done about it,
 and the nightly job closes it three days after the due date.
 
@@ -154,8 +156,10 @@ For rows with `action_needed` and no `todoist_task_id`:
 - `task_provider = 'todoist'`: create one task. Title `💌 [category] [vendor]: [action_note]`,
   due = `due_date` if any, project from `task_targets` (`default_project`, or a
   category-specific project if the setting maps one), label `task_targets.label`,
-  description = `gmail_url` plus the Supabase row id. Write the id back in one
-  `execute_sql` that starts with `select set_config('app.actor','skill',true);`.
+  description = `gmail_url` plus the Supabase row id. Write the id back, to the email row
+  and to its deadline row if step 5 made one (`deadlines.todoist_task_id`, so completing
+  the task closes the deadline), in one `execute_sql` that starts with
+  `select set_config('app.actor','skill',true);`.
   Todoist's `deadlineDate` is premium-only: use `dueString` and put hard dates in the title.
 - `task_provider = 'none'`: create nothing. The row stays `action_needed` and the daily
   brief lists it.

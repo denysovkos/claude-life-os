@@ -218,8 +218,13 @@ coming up".
 - `hard = true` where missing the date is legally irreversible: residence titles,
   objection windows, cancellation dates of auto-renewing contracts. Ladder
   `{90,60,30,14,7,1}`. Soft dates `{30,7}`. When `region_rules.term_rules` has a rule
-  for the document type, use its `deadline_type`, `hard`, `lead_days` and counting, and
-  put its `basis` in `notes`.
+  for the document type, count the date with `apply_term_rule(<rule>, <start date>)` (the
+  database's own interpreter, so the skill and the nightly job never disagree), use the
+  rule's `deadline_type`, `hard` and `lead_days`, put its `basis` in `notes`, and set
+  `rule_key` and `rule_version` (`region_rules.version`). A deadline with a `rule_key` is
+  recounted automatically when the rules change; one without is left alone.
+  Objection deadlines for official decisions and tax assessments are not written here at
+  all: set `issued_on` and the nightly `derive_deadlines()` makes them.
 - For every document whose type has `notice_period_expected`, there must be a
   `notice_period` deadline with `hard = true`, dated at renewal minus the notice period.
   `select * from v_missing_notice_period;` at the end of every run.

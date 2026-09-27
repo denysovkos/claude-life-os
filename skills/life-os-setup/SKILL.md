@@ -13,9 +13,9 @@ description: >-
   another claude-life-os skill reports that the database was never set up.
 compatibility: Requires Supabase, Google Drive and Gmail connectors. Google Calendar recommended. Todoist and Craft optional.
 metadata:
-  version: v1.0
+  version: v1.1
   product: claude-life-os
-  schema_version: 0.2.0
+  schema_version: 0.3.0
 ---
 
 # Life OS setup
@@ -46,7 +46,7 @@ The person may never have used a database or a script editor. So:
 The database migrations, the packs and the Apps Script ship in this skill's own folder:
 
 ```
-assets/migrations/0001_tables.sql … 0006_pack_settings.sql
+assets/migrations/0001_tables.sql … 0007_region_rules_in_sql.sql
 assets/seed/document_types.sql
 assets/packs/lang/<locale>/{dossier,folders,keywords,formats}.json
 assets/packs/region/<code>/{rules.json,classification_rules.sql}
@@ -108,7 +108,7 @@ Check first: `list_projects`. If one is named `life-os` (or the person names one
 inside with `list_tables` (schema `public`):
 
 - has `life_settings` and `schema_version` is set: the database exists. Skip to step 5
-  (or run the upgrade in doctor mode if the version is older than `0.2.0`).
+  (or run the upgrade in doctor mode if the version is older than `0.3.0`).
 - has other tables: it is not ours. Do not install into it. Create a new project.
 - empty: use it.
 
@@ -128,7 +128,7 @@ Apply in this order with `apply_migration`, each named after its file without `.
 
 ```
 0001_tables, 0002_functions, 0003_views, 0004_triggers_and_security,
-0005_settings_and_localization, 0006_pack_settings
+0005_settings_and_localization, 0006_pack_settings, 0007_region_rules_in_sql
 ```
 
 Then run `assets/seed/document_types.sql` with `execute_sql` (or as migration
@@ -139,8 +139,8 @@ region pack was chosen. Stop at the first error, show it, and look for it in
 Verify:
 
 ```sql
-select value from life_settings where key = 'schema_version';            -- "0.2.0"
-select count(*) from pg_tables where schemaname = 'public';              -- 34
+select value from life_settings where key = 'schema_version';            -- "0.3.0"
+select count(*) from pg_tables where schemaname = 'public';              -- 35
 select count(*) from pg_views  where schemaname = 'public';              -- 35
 select count(*) from document_types;                                     -- 40
 select jobname, schedule, active from cron.job;                          -- nightly-derivations
@@ -152,10 +152,19 @@ in one line if the person sees it in the dashboard. Do not add policies.
 
 ## Step 5: settings
 
-Build the values from the answers and the packs, then write them in one `execute_sql`.
-Use dollar quoting for JSON, because translations contain apostrophes:
+Every setting lives in one place: the `life_settings` table of the person's own
+Supabase project, one row per key, the value as JSON. Nothing is stored in the skills,
+in Claude's memory or in the Apps Script (which only holds the database URL and key). A
+trigger copies every change into `settings_history` with who made it, so any setting can
+be read as of a date and put back. Tell the person this in one sentence.
+
+Build the values from the answers and the packs, then write them in one `execute_sql`
+that starts with `select set_config('app.actor','life-os-setup',true);` (so the history
+shows the setup made the change, not a human). Use dollar quoting for JSON, because
+translations contain apostrophes:
 
 ```sql
+select set_config('app.actor','life-os-setup',true);
 insert into life_settings (key, value) values
   ('owner_name',        to_jsonb(:name::text)),
   ('owner_email',       to_jsonb(:email::text)),
@@ -168,6 +177,7 @@ insert into life_settings (key, value) values
   ('dossier_labels',    $j${...}$j$::jsonb),
   ('lang_hints',        $j${...}$j$::jsonb),
   ('region_rules',      $j${...}$j$::jsonb),
+  ('installed_packs',   $j${"lang": {...}, "region": {...}}$j$::jsonb),
   ('current_address',   to_jsonb(:address::text)),        -- or 'null'::jsonb
   ('former_address_patterns', $j$[...]$j$::jsonb),
   ('emergency_contacts',      $j$[...]$j$::jsonb),
@@ -179,7 +189,13 @@ on conflict (key) do update set value = excluded.value, updated_at = now();
   built-in labels are English).
 - `lang_hints`: for each input locale, `{"<locale>": {"keywords": <keywords.json>,
   "formats": <formats.json or omitted>}}`.
-- `region_rules`: `packs/region/<region>/rules.json` as is, or `{}`.
+- `region_rules`: `packs/region/<region>/rules.json` with two keys added from that pack's
+  `pack.json`: `"region"` and `"version"`. No region: `{}`. The database reads its legal
+  rules from here: objection deadlines (`derive_deadlines()`), return and warranty windows
+  (`v_purchase_rights`), tax form labels (`v_tax_items`). With a region set but this empty,
+  nothing legal is derived and the invariant `region_rules_missing` fires, on purpose.
+- `installed_packs`: `{"lang": {"<locale>": "<version>", …}, "region": {"<code>": "<version>"}}`
+  for every pack written. Doctor compares it with the packs in `assets/` to offer updates.
 - `former_address_patterns`: short, distinctive fragments (a street name and house
   number), never a whole address, so they match however a sender formats it.
 
@@ -259,7 +275,11 @@ Get the project URL with `get_project_url`. Then walk them through it, one messa
    top and click **Run**. Google asks for permission: **Review permissions** → your
    account → if it says "Google hasn't verified this app", click **Advanced** → **Go to
    Life OS bridge (unsafe)**. It is your own script, running in your own account.
-   Click **Allow**.
+   If the next screen shows checkboxes, click **Select all** (an unticked box makes the
+   script fail later with a permission error), then **Allow**.
+   In Ukrainian or German Google shows the same buttons translated ("Додатково",
+   "Erweitert"); `assets/docs/apps-script.md` and `apps-script.uk.md` have the full
+   walkthrough and what each permission is for, if they ask.
 5. The log at the bottom says "Installed." Come back here and say "done".
 
 Timezone of the script itself does not matter; it reads `timezone` from the database.
@@ -328,7 +348,7 @@ then `drive-file-intake`. Then record the installed versions:
 
 ```sql
 insert into skill_revisions (skill_name, version, change_type, summary)
-values ('life-os-setup', 'v1.0', 'baseline', 'installed'),
+values ('life-os-setup', 'v1.1', 'baseline', 'installed'),
        ('email-intake', 'v3.0', 'baseline', 'installed by life-os-setup'),
        ('drive-file-intake', 'v3.0', 'baseline', 'installed by life-os-setup'),
        ('context-lookup', 'v2.0', 'baseline', 'installed by life-os-setup'),
@@ -351,11 +371,18 @@ apply a fix without the person saying yes.
 2. **Schema version**: `select value from life_settings where key = 'schema_version';`
    Older than this skill's `schema_version`: an upgrade is available. `list_migrations`
    shows what is applied; the fix is to apply the missing files from `assets/migrations`
-   in order (after a `take_snapshot('pre-upgrade')`).
-3. **Settings complete**: `owner_email`, `timezone`, `output_locale`, and all four
+   in order (after a `take_snapshot('pre-upgrade')`), then the pack check below, because
+   a migration can start reading a setting the old installation never wrote.
+3. **Packs current**: compare `installed_packs` with `version` in
+   `assets/packs/*/*/pack.json`. A newer region pack means the legal rules changed:
+   the fix is "update the region pack", done as in reconfigure → Country (rules, then the
+   recount of open deadlines). `select failing from v_system_invariants where invariant = 'region_rules_missing';`
+   above zero is a problem, not a warning: no objection deadline is being derived. It is
+   what an installation upgraded from 0.2.0 looks like until its pack is synced.
+4. **Settings complete**: `owner_email`, `timezone`, `output_locale`, and all four
    `drive_folders` set. Each folder id exists and is not trashed (`get_file_metadata`).
    `task_provider = 'todoist'` needs `task_targets.system_project` to exist in Todoist.
-4. **Security**:
+5. **Security**:
    ```sql
    select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity;     -- empty
@@ -365,7 +392,7 @@ apply a fix without the person saying yes.
    where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute');  -- empty
    ```
    Plus `get_advisors` (security), ignoring `rls_enabled_no_policy`.
-5. **Nightly database job**:
+6. **Nightly database job**:
    ```sql
    select jobname, schedule, active from cron.job;
    select status, start_time from cron.job_run_details
@@ -373,13 +400,13 @@ apply a fix without the person saying yes.
    order by start_time desc limit 3;
    select ran_at, error from derivation_runs order by ran_at desc limit 3;
    ```
-6. **Jobs running on time**: `select * from v_intake_watchdog;` Every `overdue` row is a
+7. **Jobs running on time**: `select * from v_intake_watchdog;` Every `overdue` row is a
    problem; `runs_7d` well below `runs_7d_expected` is a warning even if the last run is
    recent (a job that runs every other night looks fine on `last_run`).
-7. **Bridge**: `select started_at, errors, script_version from bridge_runs order by started_at desc limit 5;`
+8. **Bridge**: `select started_at, errors, script_version from bridge_runs order by started_at desc limit 5;`
    Errors in the last runs, or a `script_version` other than `bridge-3.0`.
-8. **Invariants**: `select invariant, severity, failing, meaning from v_system_invariants where failing > 0 order by severity;`
-9. **Health numbers**: `select * from v_system_health;` Flag
+9. **Invariants**: `select invariant, severity, failing, meaning from v_system_invariants where failing > 0 order by severity;`
+10. **Health numbers**: `select * from v_system_health;` Flag
    `hours_since_snapshot > 48`, `days_since_offsite_backup > 35`, `attachment_backlog > 0`,
    `text_coverage_pct < 80`, `recall_miss_pct_60d > 10`, `hard_deadlines_missed > 0`.
 
@@ -393,12 +420,30 @@ deadline slip comes first.
 
 Each change is a settings write plus its side effects:
 
+Every write in this mode starts with `select set_config('app.actor','life-os-setup',true);`
+and ends by showing the person what changed:
+`select key, old_value, new_value from settings_history where changed_at > now() - interval '5 minutes';`
+To undo a change, write the `old_value` back.
+
 - **Output language**: rewrite `output_locale` and `dossier_labels`. Folder names do not
   change (renaming Drive folders is harmless, but ask first).
 - **Input languages**: rewrite `input_locales` and `lang_hints`.
-- **Country**: rewrite `region` and `region_rules`, run the new pack's
-  `classification_rules.sql`. Old region rules stay (they are only rules); list them and
-  offer to deactivate (`active = false`), never delete.
+- **Country, or a newer version of the same region pack**: deadlines already in the
+  database were counted with the old rules, so this is a three-part change.
+  1. `select take_snapshot('before region change');` then write `region`, `region_rules`
+     (with `region` and `version` added) and `installed_packs`, and run the pack's
+     `classification_rules.sql`. Old email rules from the previous country stay (they
+     are only rules); list them and offer to deactivate (`active = false`), never delete.
+  2. `select * from rederive_deadlines(false);` is a dry run over every open deadline
+     that remembers the rule it was counted with (`deadlines.rule_key`). Show the person
+     the rows with `action = 'moved'` (old and new date) and `rule_gone` (the new
+     country has no such rule: the deadline stays as it is until they decide to keep or
+     cancel it). A date that moves earlier comes first in the list.
+  3. On yes: `select * from rederive_deadlines(true);` Moved deadlines get a note with
+     both dates. With a task provider, update the due date of each moved deadline's task
+     (`todoist_task_id`) the same way.
+  `derive_deadlines()` picks up documents that had no rule before on the next night.
+  Moving country does not change `timezone`, `output_locale` or folders; ask about each.
 - **Task app**: switching to Todoist runs install step 9. Switching to none: set
   `task_provider = 'none'`; existing tasks stay in Todoist.
 - **Addresses and emergency contacts**: update the setting, then
