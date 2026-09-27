@@ -1,8 +1,7 @@
 -- Tables, constraints, indexes and comments.
--- Generated from the reference deployment. Do not edit by hand; add a new migration instead.
+-- Exported from the reference deployment. Do not edit by hand; add a new migration instead.
 
 create extension if not exists pg_trgm with schema public;
-create extension if not exists pg_cron;
 
 create table if not exists public.attachment_staging (
   id uuid default gen_random_uuid() not null,
@@ -120,7 +119,7 @@ create table if not exists public.briefings (
   constraint briefings_channel_check CHECK ((channel = ANY (ARRAY['email'::text, 'todoist'::text, 'none'::text]))),
   constraint briefings_pkey PRIMARY KEY (id)
 );
-comment on table public.briefings is 'One row per day. Channel is todoist: the brief is a single task in Система with the body in the description, due today. Email delivery was retired on 2026-08-31 at the person''s request, and briefings_date_uidx keeps it at one brief per day.';
+comment on table public.briefings is 'One row per day. Channel is todoist: the brief is a single task in the system project with the body in the description, due today. briefings_date_uidx keeps it at one brief per day.';
 comment on column public.briefings.should_send is 'Set from brief_item_count() > 0. Kept separate from sent so a delivery failure is distinguishable from a deliberate suppression.';
 comment on column public.briefings.gmail_message_id is 'Legacy. Email delivery is retired; kept only so the one message that was sent stays traceable.';
 
@@ -154,7 +153,7 @@ create table if not exists public.bundles (
   constraint bundles_status_check CHECK ((status = ANY (ARRAY['open'::text, 'submitted'::text, 'done'::text, 'cancelled'::text]))),
   constraint bundles_pkey PRIMARY KEY (id)
 );
-comment on table public.bundles is 'A named set of documents required for one event: LEA submission, tax filing, bank application. Requirements point at the type registry rather than at files, so a bundle survives a document being renewed.';
+comment on table public.bundles is 'A named set of documents required for one event: residence permit submission, tax filing, bank application. Requirements point at the type registry rather than at files, so a bundle survives a document being renewed.';
 
 create table if not exists public.classification_rules (
   id uuid default gen_random_uuid() not null,
@@ -319,7 +318,7 @@ create table if not exists public.documents (
   constraint documents_drive_file_id_key UNIQUE (drive_file_id)
 );
 comment on column public.documents.todoist_task_id is 'Todoist task id created for this document''s expiry alert, if any. Prevents duplicate task creation without relying on text search.';
-comment on column public.documents.subject_person is 'Who the document pertains to (e.g. Natalia, Kostiantyn, Kateryna, or multiple names for joint documents). Null if not determinable from content — never guessed.';
+comment on column public.documents.subject_person is 'Who the document pertains to (e.g. Anna, Max, Sophie, or multiple names for joint documents). Null if not determinable from content — never guessed.';
 comment on column public.documents.needs_review is 'True when extraction is uncertain and a human should confirm (e.g. expiry_date null on a document type that usually has one).';
 comment on column public.documents.area_name is 'Specific Craft area or project name this document belongs to, for real filtering. para_category stays as the coarse PARA bucket.';
 comment on column public.documents.kind is 'document = formal doc with legal/expiry significance. reference_file = working file (template, comparison sheet) the person returns to — replaces the separate Craft "File Index" collection so there is one index, not two.';
@@ -328,7 +327,7 @@ comment on column public.documents.content_fingerprint is 'md5 of the normalised
 comment on column public.documents.duplicate_of is 'Points at the canonical row when this record is a duplicate copy. Never delete duplicates, link them, so the Drive file id stays resolvable.';
 comment on column public.documents.source_email_id is 'Set when the document arrived as an email attachment rather than being uploaded to Drive directly. Links the paper back to the letter that transmitted it.';
 comment on column public.documents.document_type_key is 'Controlled type from the document_types registry. The free-text document_type column is kept as the raw observed label, but every filter and metric reads this key.';
-comment on column public.documents.physical_location is 'Where the paper original actually is. LEA and notaries want originals, and the index knowing only about the scan is a real gap on the day it is asked for.';
+comment on column public.documents.physical_location is 'Where the paper original actually is. Authorities and notaries want originals, and the index knowing only about the scan is a real gap on the day it is asked for.';
 
 create table if not exists public.drive_folder_areas (
   drive_folder_id text not null,
@@ -342,7 +341,7 @@ create table if not exists public.drive_folder_areas (
   constraint drive_folder_areas_para_category_check CHECK ((para_category = ANY (ARRAY['area'::text, 'project'::text, 'resource'::text, 'archive'::text]))),
   constraint drive_folder_areas_pkey PRIMARY KEY (drive_folder_id)
 );
-comment on table public.drive_folder_areas is 'Canonical folder-to-area map, both directions: read by drive_file_id to classify an existing file''s location, and by area_name (is_filing_default=true) to decide where a newly classified document should be moved to. The Drive "Inbox" folder (1CRdp10JM5qy5FezTMHk4-ZKUBVwqRo6E) is intentionally absent: it is where new files land before classification, never a destination.';
+comment on table public.drive_folder_areas is 'Canonical folder-to-area map, both directions: read by drive_file_id to classify an existing file''s location, and by area_name (is_filing_default=true) to decide where a newly classified document should be moved to. The Drive "Inbox" folder is intentionally absent: it is where new files land before classification, never a destination.';
 
 create table if not exists public.email_processing_runs (
   id uuid default gen_random_uuid() not null,
@@ -422,7 +421,7 @@ create table if not exists public.entities (
   constraint entities_kind_check CHECK ((kind = ANY (ARRAY['person'::text, 'organization'::text, 'authority'::text, 'property'::text, 'court'::text]))),
   constraint entities_pkey PRIMARY KEY (id)
 );
-comment on table public.entities is 'People, organisations, authorities and properties. Everything that used to be a repeated string now points here, so "show me everything Generali" becomes one join instead of three text searches.';
+comment on table public.entities is 'People, organisations, authorities and properties. Everything that used to be a repeated string now points here, so "show me everything from my insurer" becomes one join instead of three text searches.';
 
 create table if not exists public.entity_aliases (
   alias text not null,
@@ -500,7 +499,7 @@ create table if not exists public.matters (
   constraint matters_status_check CHECK ((status = ANY (ARRAY['active'::text, 'waiting'::text, 'closed'::text, 'abandoned'::text]))),
   constraint matters_pkey PRIMARY KEY (id)
 );
-comment on table public.matters is 'A thread of real life: the LEA extension, the Friedenstrasse purchase, case 1700/26. Documents, emails, deadlines, costs and bundles attach to it, so state is readable in one query instead of reassembled from memory.';
+comment on table public.matters is 'A thread of real life: a residence permit extension, a flat purchase, a court case. Documents, emails, deadlines, costs and bundles attach to it, so state is readable in one query instead of reassembled from memory.';
 
 create table if not exists public.notes (
   id uuid default gen_random_uuid() not null,
