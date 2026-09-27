@@ -1,0 +1,22 @@
+{
+  "title": "Notfallordner",
+  "generated": "erstellt",
+  "intro": "Automatisch aus dem Dokumentenindex erstellt. Wenn etwas nicht stimmt, gilt der Stand in Supabase und Google Drive.",
+  "matters": "Offene Angelegenheiten und was zu tun ist",
+  "hard_deadlines": "Fristen, die nicht versäumt werden dürfen",
+  "loans": "Kredite und Leasing",
+  "insurance": "Versicherungen",
+  "subscriptions": "Wohnen, Telekommunikation, Abos (was pausiert oder gekündigt werden kann)",
+  "notice": "Kündigungsfrist",
+  "months": "Mon.",
+  "notice_unknown": "Kündigungsfrist unbekannt",
+  "until": "bis",
+  "total": "Laufende Verpflichtungen gesamt",
+  "per_month": "pro Monat",
+  "identity": "Ausweisdokumente und wo die Originale liegen",
+  "valid_until": "gültig bis",
+  "original": "Original",
+  "property": "Immobilie",
+  "contacts": "Kontakte",
+  "none": "- keine"
+}

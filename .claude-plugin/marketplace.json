@@ -1,0 +1,12 @@
+{
+  "name": "claude-life-os",
+  "description": "Life OS: your paperwork, handled. One skill with six workflows for Gmail, Google Drive and Supabase.",
+  "owner": { "name": "Kostiantyn Denysov", "url": "https://github.com/denysovkos" },
+  "plugins": [
+    {
+      "name": "life-os",
+      "source": "./",
+      "description": "Indexes documents and mail, tracks deadlines, contracts and payments, sends a daily brief."
+    }
+  ]
+}

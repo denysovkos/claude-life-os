@@ -1,0 +1,9 @@
+{
+  "name": "life-os",
+  "displayName": "Life OS",
+  "description": "A personal paperwork system on Gmail, Google Drive and Supabase: indexes documents and mail, tracks deadlines, contracts and payments, sends a daily brief. Deterministic work runs in Google Apps Script and Postgres; Claude only does the judgement.",
+  "author": { "name": "Kostiantyn Denysov", "url": "https://github.com/denysovkos" },
+  "homepage": "https://github.com/denysovkos/claude-life-os",
+  "repository": "https://github.com/denysovkos/claude-life-os",
+  "keywords": ["paperwork", "documents", "deadlines", "gmail", "google-drive", "supabase", "personal-finance", "life-admin"]
+}
