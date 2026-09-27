@@ -1,0 +1,22 @@
+{
+  "categories": {
+    "bills_payments": [
+      "factura",
+      "importe a pagar",
+      "domiciliación",
+      "vencimiento"
+    ],
+    "government": [
+      "agencia tributaria",
+      "resolución",
+      "ayuntamiento",
+      "notificación"
+    ],
+    "orders_delivery": [
+      "paquete",
+      "entregado",
+      "número de seguimiento",
+      "enviado"
+    ]
+  }
+}

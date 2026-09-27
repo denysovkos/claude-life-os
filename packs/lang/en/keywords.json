@@ -1,0 +1,17 @@
+{
+  "categories": {
+    "purchases": ["receipt", "your purchase", "thank you for your order", "order total", "paid with", "purchase confirmation"],
+    "orders_delivery": ["has been delivered", "out for delivery", "shipped", "tracking number", "parcel", "delivery confirmation"],
+    "government": ["tax office", "city council", "immigration", "residence permit", "authority", "official notice", "council tax", "hmrc", "irs"],
+    "bank_finance": ["account statement", "bank statement", "balance", "investment", "portfolio", "savings", "interest rate", "credit card statement"],
+    "bills_payments": ["invoice", "bill", "amount due", "payment due", "direct debit", "premium", "utility", "subscription renewal"],
+    "legal_notary": ["notary", "lawyer", "attorney", "solicitor", "contract", "deed", "power of attorney", "court"],
+    "work": ["payslip", "salary", "employer", "hr department", "onboarding", "performance review", "employment"],
+    "health": ["appointment", "doctor", "clinic", "prescription", "health insurance", "dentist", "lab results"],
+    "travel": ["flight", "boarding pass", "booking confirmation", "hotel", "check-in", "itinerary", "reservation"],
+    "personal_social": ["birthday", "dinner", "see you", "family", "wedding", "party", "catch up"]
+  },
+  "action_phrases": ["please pay", "action required", "respond by", "reply by", "sign and return", "please confirm", "deadline"],
+  "deadline_phrases": ["due date", "due by", "payable by", "no later than", "within 14 days", "within one month"],
+  "amount_labels": ["total", "amount due", "balance due", "grand total"]
+}

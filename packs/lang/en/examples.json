@@ -1,0 +1,25 @@
+{
+  "dates": [
+    {"text": "Payment due by 2026-03-05.", "expect": "2026-03-05"},
+    {"text": "Your appointment is on March 5, 2026 at 10:30.", "expect": "2026-03-05"},
+    {"text": "Valid until 14 Sept 2027", "expect": "2027-09-14"},
+    {"text": "Statement date: 31/01/2026", "expect": "2026-01-31"}
+  ],
+  "amounts": [
+    {"text": "Amount due: £1,234.56", "expect": "1234.56"},
+    {"text": "Total $89.00 charged to your card", "expect": "89.00"},
+    {"text": "Premium EUR 42.10 per month", "expect": "42.10"}
+  ],
+  "emails": [
+    {"subject": "Your receipt from Northwind Books", "body": "Thank you for your order. Order total £24.99, paid with Visa.", "expect_category": "purchases"},
+    {"subject": "Your parcel has been delivered", "body": "Tracking number 1Z999. Your parcel has been delivered to your front door.", "expect_category": "orders_delivery"},
+    {"subject": "Official notice from the tax office", "body": "The tax office has reviewed your return. This official notice explains the result.", "expect_category": "government"},
+    {"subject": "Your account statement is ready", "body": "Your January bank statement is available. Closing balance 3,210.00.", "expect_category": "bank_finance"},
+    {"subject": "Invoice 2026-0113", "body": "Your invoice is attached. Amount due £61.20 by direct debit on 15 February.", "expect_category": "bills_payments"},
+    {"subject": "Draft deed from the notary", "body": "Please find the draft deed. The notary asks you to review the contract before signing.", "expect_category": "legal_notary"},
+    {"subject": "Your January payslip", "body": "Your payslip is available in the portal. Contact the HR department with questions about your salary.", "expect_category": "work"},
+    {"subject": "Appointment reminder", "body": "Reminder of your appointment with Dr. Hale at the clinic on Tuesday.", "expect_category": "health"},
+    {"subject": "Booking confirmation: flight to Lisbon", "body": "Your flight is confirmed. Online check-in opens 24 hours before departure. Boarding pass follows.", "expect_category": "travel"},
+    {"subject": "Birthday dinner on Saturday", "body": "We are doing a birthday dinner for Mia. See you there, the whole family is coming.", "expect_category": "personal_social"}
+  ]
+}

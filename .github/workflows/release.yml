@@ -1,0 +1,36 @@
+name: release
+
+# Every push to main publishes life-os.zip as the GitHub release v<VERSION>.
+# README links to releases/latest/download/life-os.zip, so it always points here.
+# Bump VERSION to publish a new release; pushing again with the same VERSION
+# replaces the zips of that release.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pack tests must pass before anything is published
+        run: python3 -m unittest discover -s tests
+      - name: Build the skill zip
+        run: scripts/package_skills.sh
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          tag="v$(tr -d '[:space:]' < VERSION)"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" dist/life-os.zip --clobber
+          else
+            gh release create "$tag" dist/life-os.zip --title "claude-life-os $tag" --target "$GITHUB_SHA" \
+              --notes "Download life-os.zip and upload it in Claude: Settings → Capabilities → Skills → Upload skill. Then write \"set up life os\" in a new chat. Full steps: README."
+          fi

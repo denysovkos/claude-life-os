@@ -1,24 +1,9 @@
----
-name: email-intake
-description: >-
-  Daily Gmail intake for claude-life-os. Scans new mail since the last run, sorts each
-  message into one of 10 fixed categories, extracts what/where/when/how much and any
-  deadline, stores it in the Supabase "emails" table, creates tasks for anything that
-  needs action, creates calendar events for travel and appointments, and delivers the
-  daily brief. Use when the scheduled task fires, or when the person says "check my
-  mail", "process my email", "run email intake", "what came in", "перевір пошту",
-  "Post checken", or asks about something that arrived by email (a bill, a letter from
-  an authority, a delivery). For questions about mail that already came in, query the
-  emails table first and use live Gmail only if it is not there yet.
-compatibility: Requires Gmail and Supabase connectors. Google Calendar recommended. A task provider (Todoist) is optional.
-metadata:
-  version: v3.0
-  product: claude-life-os
----
-
 # Email intake
 
-Write `v3.0` into `email_processing_runs.skill_version` on every run.
+Workflow `email-intake` v3.1 of the `life-os` skill: nightly mail intake. The shared rules in
+`../SKILL.md` apply; this file adds what is specific to this workflow.
+
+Write `v3.1` into `email_processing_runs.skill_version` on every run.
 
 This job usually runs unattended, at night, with nobody reading the chat. Three rules
 follow from that and are not optional.
@@ -34,7 +19,8 @@ follow from that and are not optional.
 ```sql
 select key, value from life_settings
 where key in ('timezone','output_locale','input_locales','region','owner_name',
-              'task_provider','task_targets','bridge_categories');
+              'owner_email','task_provider','task_targets','bridge_categories',
+              'lang_hints','region_rules');
 select * from take_snapshot('email-intake pre-run');
 
 insert into run_locks (skill_name, expires_at, holder)
@@ -47,11 +33,11 @@ returning skill_name;
 
 Zero rows from the lock means another run holds it. Stop. Delete the lock row at the end.
 If `schema_version` is missing, the database was never set up: say so and point to the
-`life-os-setup` skill.
+setup workflow (`workflows/setup.md`).
 
-Write the brief, tasks and notes in `output_locale`. Read mail in any language; the
-language packs for `input_locales` (keywords, date and amount formats) are hints, not
-filters.
+Write the brief, tasks and notes in `output_locale`. Read mail in any language;
+`lang_hints` (the language packs for `input_locales`: keywords, date and amount formats)
+are hints, not filters.
 
 ## Step 1: open the run
 
@@ -141,7 +127,10 @@ Then:
 Every `due_date` becomes a `deadlines` row, `source_kind = 'email'`, `source_id` = the
 email row. `payment_due` for bills, `legal_response` for lawyers, notaries and
 authorities. A response window from an authority is `hard = true` with lead ladder
-`{30,14,7,3,1}` (the region pack says which letters carry such windows). Bills are soft,
+`{30,14,7,3,1}` (`region_rules.term_rules` says which letters carry such windows and how
+they are counted: count with `apply_term_rule(<rule>, <received date>, true)`, since an
+email's receipt date is real, and set `rule_key` and `rule_version` on the deadline).
+When the letter states its own deadline, the stated date wins and `rule_key` stays null. Bills are soft,
 `{7,1}`. A direct-debit bill gets the record but no task: nothing can be done about it,
 and the nightly job closes it three days after the due date.
 
@@ -152,8 +141,10 @@ For rows with `action_needed` and no `todoist_task_id`:
 - `task_provider = 'todoist'`: create one task. Title `💌 [category] [vendor]: [action_note]`,
   due = `due_date` if any, project from `task_targets` (`default_project`, or a
   category-specific project if the setting maps one), label `task_targets.label`,
-  description = `gmail_url` plus the Supabase row id. Write the id back in one
-  `execute_sql` that starts with `select set_config('app.actor','skill',true);`.
+  description = `gmail_url` plus the Supabase row id. Write the id back, to the email row
+  and to its deadline row if step 5 made one (`deadlines.todoist_task_id`, so completing
+  the task closes the deadline), in one `execute_sql` that starts with
+  `select set_config('app.actor','skill',true);`.
   Todoist's `deadlineDate` is premium-only: use `dueString` and put hard dates in the title.
 - `task_provider = 'none'`: create nothing. The row stays `action_needed` and the daily
   brief lists it.
@@ -184,23 +175,12 @@ counts, `category_counts`, and the `errors` / `skipped` / `decisions` arrays. `e
 Write the report into `notes`: scanned, logged per category, actions flagged, errors, any
 run gap. If a human started this run, also answer in chat, short.
 
-## Step 9: the daily brief
+## Step 9: the daily brief is not delivered here
 
-```sql
-select (build_briefing()->>'item_count')::int as item_count, briefing_text() as text;
-```
-
-Zero items: write a `briefings` row with `suppressed = true` and deliver nothing. No
-"all clear" messages. A brief that talks every day stops being read, and then it is
-ignored on the one day it matters.
-
-Above zero: with Todoist, one task in `task_targets.system_project`, due today, titled
-`📅 Brief <date>: <the single most important fact>`, `text` as the description, unchanged.
-Without a task provider, send it as an email to `owner_email` through Gmail with the same
-subject. Log the `briefings` row. One per day.
-
-Deadlines speak only when today hits a rung of their own `lead_days` ladder, and
-`deadlines.snoozed_until` silences one without closing it.
+The brief goes out once a night from the `nightly-check` workflow, which runs after
+both intakes, so it includes tonight's mail and tonight's documents. If the person ran
+this workflow by hand and asks "what's new", answer from this run's notes; if they ask
+for the brief itself, run step 3 of `workflows/nightly-check.md`.
 
 ## Step 10: failure task
 
@@ -239,6 +219,6 @@ on conflict (gmail_message_id) do update set
 
 insert into email_processing_runs (skill_version, started_at, emails_scanned, emails_added,
   emails_updated, actions_flagged, category_counts, errors, skipped, decisions, notes)
-values ('v3.0', :started_at, ..., :category_counts::jsonb, :errors::jsonb,
+values ('v3.1', :started_at, ..., :category_counts::jsonb, :errors::jsonb,
         :skipped::jsonb, :decisions::jsonb, :notes);
 ```
