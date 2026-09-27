@@ -1,0 +1,176 @@
+# claude-life-os
+
+[English](README.md) · [Українська](README.uk.md) · **Deutsch** · [Polski](README.pl.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Русский](README.ru.md) · [Português](README.pt.md)
+
+Ein persönliches System für Papierkram. Es liest Gmail und Google Drive, führt einen
+Index aller formellen Dokumente, Briefe, Verträge und Rechnungen in einer Datenbank, die
+Ihnen gehört, und sorgt dafür, dass keine Frist, keine automatische Verlängerung und
+kein Ablaufdatum untergeht. Fragen stellen Sie in normaler Sprache, in jedem
+Claude-Chat: „Wann läuft mein Pass ab?“, „Kann ich das Fitnessstudio noch kündigen?“,
+„Was steht im Mietvertrag über Haustiere?“
+
+Gebaut hat es eine Person für ihr eigenes Leben, einen Monat lang im täglichen Einsatz.
+Jetzt wird daraus etwas, das jede und jeder installieren kann. Programmieren ist nicht
+nötig: Claude führt durch jeden Schritt.
+
+## Installation
+
+Das ist für das normale Claude: claude.ai im Browser oder die Claude-App auf Computer
+oder Handy. Nicht für Claude Code.
+
+**1. Die fünf Skills herunterladen** (ZIP-Dateien, nicht entpacken):
+
+| Skill | Was er tut | Download |
+|---|---|---|
+| life-os-setup | installiert und prüft alles, hier anfangen | [life-os-setup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os-setup.zip) |
+| email-intake | liest jede Nacht Ihre Mails | [email-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/email-intake.zip) |
+| drive-file-intake | legt jede Nacht Ihre Dokumente ab und indexiert sie | [drive-file-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/drive-file-intake.zip) |
+| context-lookup | beantwortet Ihre Fragen in jedem Chat | [context-lookup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/context-lookup.zip) |
+| life-review | der Monatsrückblick | [life-review.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-review.zip) |
+
+Die Links zeigen immer auf die neueste Version ([alle Releases](https://github.com/denysovkos/claude-life-os/releases)).
+
+**2. In Claude hinzufügen.** In Claude **Settings** → **Capabilities** öffnen:
+
+- **Code execution and file creation** einschalten (Skills brauchen das);
+- unter **Skills** auf **Upload skill** klicken und `life-os-setup.zip` wählen;
+- für die anderen vier ZIP-Dateien wiederholen.
+
+**3. Konten verbinden.** **Settings** → **Connectors**: Google Drive, Gmail und Supabase;
+nach Wunsch auch Google Calendar, Todoist, Craft.
+
+**4. Neuen Chat öffnen und schreiben: `richte Life OS ein`.** Ab hier führt Claude. Es
+stellt ein paar Fragen (Sprache, Land, welche Apps Sie nutzen), legt die Datenbank und
+die Drive-Ordner an und prüft jeden Schritt vor dem nächsten.
+
+**5. Die Google-Apps-Script-Bridge installieren**, wenn Claude darum bittet. Das ist eine
+Datei, die alle 15 Minuten in Ihrem Google-Konto läuft, auch wenn Claude nicht läuft:
+
+- script.google.com → **Neues Projekt** (New project) → den Code einfügen, den Claude
+  zeigt → speichern;
+- **Projekteinstellungen** (Project Settings) → **Skripteigenschaften** (Script
+  Properties) → `SUPABASE_URL` und `SUPABASE_SECRET_KEY` hinzufügen (Claude sagt, wo es
+  sie gibt; der Schlüssel gehört nur dorthin, nie in einen Chat);
+- Funktion `install` wählen → **Ausführen** (Run) → **Berechtigungen überprüfen**
+  (Review permissions) → Ihr Konto → „Google hat diese App nicht überprüft“ →
+  **Erweitert** (Advanced) → **Weiter zu Life OS bridge (unsicher)** → **Alle auswählen**
+  (Select all) → **Zulassen** (Allow). Die Warnung ist normal: Es ist Ihr eigenes Skript
+  und läuft nur in Ihrem Konto.
+
+Schritt für Schritt, mit Erklärung jeder Berechtigung (auf Englisch):
+[docs/apps-script.md](docs/apps-script.md).
+
+**6. Drei geplante Aufgaben** in Claude anlegen, wenn es darum bittet: Mail nachts, Drive
+danach, der Rückblick einmal im Monat.
+
+Das ist alles, etwa 30 Minuten. Später jederzeit **`life os doctor`** schreiben: Es prüft
+das ganze System und sagt genau, was zu beheben ist.
+
+**Aktualisieren:** die neuen ZIP-Dateien herunterladen und genauso hochladen (falls Claude
+den Skill nicht ersetzt, den alten vorher entfernen). Dann `life os doctor` schreiben: Es
+spielt Datenbank-Updates und neue Regeln selbst ein.
+
+### Was Sie brauchen
+
+- Ein Google-Konto (Gmail und Google Drive).
+- Einen Claude-Tarif mit Skills und Konnektoren.
+- Ein kostenloses [Supabase](https://supabase.com)-Konto. Supabase ist die Datenbank, in
+  der der Index liegt; der kostenlose Tarif reicht. Das Projekt legt Claude selbst an.
+- Optional: Todoist für Aufgaben, Craft für den Monatsbericht. Ohne sie kommen Aufgaben
+  und Berichte per E-Mail und als Google Docs.
+
+## Was es für Sie tut
+
+- **Jede Nacht** liest es neue Mails, ordnet sie in 10 Kategorien ein (Rechnungen,
+  Behörden, Bank, Verträge, Reisen usw.), zieht Beträge und Fälligkeiten heraus und legt
+  eine Aufgabe an, wenn Sie etwas tun müssen. Reisen und Termine werden zu
+  Kalendereinträgen.
+- **Wichtige Anhänge** (Rechnungen, Verträge, Behördenpost) werden automatisch in Google
+  Drive kopiert, in den richtigen Ordner abgelegt und mit vollem Text indexiert.
+- **Es verfolgt Fristen, nicht nur Daten.** Ein Aufenthaltstitel, der abläuft; ein
+  Bescheid, gegen den man einen Monat lang Widerspruch einlegen kann; eine Versicherung,
+  die sich verlängert, wenn man nicht drei Monate vorher kündigt: Aus jedem wird eine
+  Frist mit Erinnerungen, die häufiger werden, je näher sie rückt. Wie eine Frist
+  berechnet wird, hängt von Ihrem Land ab.
+- **Ein kurzes tägliches Briefing**, nur an Tagen, an denen etwas zählt. Keine
+  „Alles in Ordnung“-Nachrichten.
+- **Ein Monatsrückblick**: was Sie monatlich zahlen, was sich geändert hat, was Sie bis
+  wann kündigen können, was in die Steuererklärung gehört und was auffällig ist.
+- **Ein Notfallordner**: ein Google Doc, täglich neu geschrieben, mit offenen
+  Angelegenheiten, Fristen, Verträgen, Versicherungen, dem Ort der Originale und
+  Kontakten.
+
+## Aufgaben in Ihrer Aufgaben-App
+
+Die Datenbank führt die Liste, die Aufgaben-App spiegelt sie nur. Wechseln Sie die App
+oder nutzen keine, geht nichts verloren. Mit Todoist erhalten Sie:
+
+| Aufgabe | Wann |
+|---|---|
+| `📅 Daily brief <Datum>: <das Wichtigste>` | nur an Tagen, an denen etwas zählt; das Briefing steht in der Beschreibung |
+| `💌 <Kategorie> <Absender>: <was zu tun ist>` | ein Brief verlangt eine Handlung |
+| `⚠️ <Dokument> expires <Datum>: <Datei>` | ein Dokument läuft in 30 Tagen ab |
+| `🧾 Review <Monat>: <wichtigste Entscheidung>` | einmal im Monat, die Entscheidungen, die nur Sie treffen können |
+| `⚠️ <Job> failed <Datum>` | ein nächtlicher Lauf hatte Fehler |
+
+Die Titel erscheinen in Ihrer gewählten Sprache; die Wörter `Daily brief` bleiben
+Englisch, weil das System daran sein eigenes Briefing erkennt. Wer eine Aufgabe
+abhakt, schließt auch die Frist dahinter. Mehr in [docs/tasks.md](docs/tasks.md)
+(Englisch).
+
+## Einstellungen
+
+Alle Einstellungen liegen in einer Tabelle Ihrer eigenen Datenbank, `life_settings`, und
+jede Änderung wird in `settings_history` festgehalten, sichtbar und rückgängig zu
+machen. Um etwas zu ändern, sagen Sie es einfach: „Stell die Sprache auf Englisch“, „Ich
+bin nach Spanien gezogen“, „Nimm meine Schwester in den Notfallordner auf“. Ändern sich
+Ihr Land oder dessen Regeln, werden bereits berechnete Fristen neu berechnet, nachdem
+Claude Ihnen gezeigt hat, was sich verschiebt. Details in
+[docs/settings.md](docs/settings.md) (Englisch).
+
+## Sprachen und Länder
+
+Mails liest das System in jeder Sprache. Die eigenen Ausgaben (Briefings, Aufgaben,
+Berichte, Notfallordner, Ordnernamen) gibt es in diesen Sprachen:
+
+| Sprache | Stand |
+|---|---|
+| English, Deutsch, Українська | vollständig und getestet |
+| Polski, Français, Español, Italiano, Nederlands, Русский, Português | erste Übersetzung, sonst Englisch |
+
+Rechtliche Regeln (wie eine Widerspruchsfrist berechnet wird, wann ein Handyvertrag
+kündbar ist, bis wann man einen Kauf widerrufen kann, wann die Steuererklärung fällig
+ist) kommen in einem **Regionalpaket**. **Deutschland** ist vollständig. Überall sonst
+verfolgt das System weiterhin jedes gelesene Datum, verwendet aber vorsichtige
+Platzhalter und fragt nach den lokalen Regeln. Wie man eine Sprache oder ein Land
+hinzufügt: [packs/README.md](packs/README.md).
+
+## Datenschutz und Sicherheit
+
+Ihre Daten bleiben in Ihren eigenen Konten: Ihr Gmail, Ihr Drive, Ihr Supabase-Projekt.
+Dazwischen gibt es keinen Server, niemand sonst hat Zugriff. Die Datenbank ist so
+gesperrt, dass ihre öffentliche Schnittstelle gar nichts liefert; lesen können sie nur
+Claude (über Ihren eigenen Konnektor) und Ihr eigenes Apps Script. Dateien laufen nie
+durch die KI: Google verschiebt sie direkt von Gmail nach Drive. Details in
+[docs/security.md](docs/security.md) (Englisch).
+
+## Wie es funktioniert
+
+Alles, was pünktlich passieren muss, erledigen Dinge, die nicht vergessen: Google Apps
+Script alle 15 Minuten und geplante Jobs in der Datenbank jede Nacht. Claude macht nur,
+was Urteilsvermögen braucht: einen Brief lesen und verstehen, was er bedeutet. Die
+Datenbank ist die einzige Quelle der Wahrheit; Todoist, Craft und der Kalender spiegeln
+sie nur.
+
+- [docs/architecture.md](docs/architecture.md): Komponenten, Datenmodell, der Weg eines Briefs.
+- [docs/apps-script.md](docs/apps-script.md): die Bridge installieren.
+- [docs/tasks.md](docs/tasks.md): was in der Aufgaben-App landet und wie es sich schließt.
+- [docs/settings.md](docs/settings.md): alle Einstellungen und was passiert, wenn sich eine ändert.
+- [docs/security.md](docs/security.md): Schlüssel, Rechte, was die KI sieht, Backups.
+- [docs/troubleshooting.md](docs/troubleshooting.md): jeder Fehler des Originals und was ihn behebt.
+
+## Stand
+
+Früh. Datenbank, Bridge und E-Mail-Intake liefen einen Monat täglich in der privaten
+Originalversion und wurden dann verallgemeinert. Der Einrichtungs-Skill und die Pakete
+sind neu. Mit Ecken und Kanten ist zu rechnen, bitte melden.

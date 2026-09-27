@@ -1,6 +1,6 @@
 # claude-life-os
 
-[Українською](README.uk.md)
+**English** · [Українська](README.uk.md) · [Deutsch](README.de.md) · [Polski](README.pl.md) · [Français](README.fr.md) · [Español](README.es.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Русский](README.ru.md) · [Português](README.pt.md)
 
 A personal system for paperwork. It reads your Gmail and Google Drive, keeps an index of
 every formal document, letter, contract and bill in a database you own, and makes sure
@@ -12,68 +12,126 @@ It was built by one person for their own life over a month of daily use, and is 
 being turned into something anyone can install. No programming needed: Claude walks
 you through every step.
 
+## Install
+
+This is for the normal Claude app: claude.ai in the browser, or the Claude desktop or
+mobile app. Not Claude Code.
+
+**1. Download the five skills** (zip files, do not unpack them):
+
+| Skill | What it does | Download |
+|---|---|---|
+| life-os-setup | installs and checks everything, start here | [life-os-setup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-os-setup.zip) |
+| email-intake | reads your mail every night | [email-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/email-intake.zip) |
+| drive-file-intake | files and indexes your documents every night | [drive-file-intake.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/drive-file-intake.zip) |
+| context-lookup | answers your questions in any chat | [context-lookup.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/context-lookup.zip) |
+| life-review | the monthly review | [life-review.zip](https://github.com/denysovkos/claude-life-os/releases/latest/download/life-review.zip) |
+
+The links always point to the newest version ([all releases](https://github.com/denysovkos/claude-life-os/releases)).
+
+**2. Add them to Claude.** In Claude open **Settings** → **Capabilities**:
+
+- turn on **Code execution and file creation** (skills need it);
+- under **Skills** click **Upload skill** and choose `life-os-setup.zip`;
+- repeat for the other four zip files.
+
+**3. Connect your accounts.** **Settings** → **Connectors**: Google Drive, Gmail and
+Supabase; if you like also Google Calendar, Todoist, Craft.
+
+**4. Open a new chat and write: `set up life os`.** From here Claude leads. It asks a few
+questions (your language, your country, which apps you use), creates the database and
+the Drive folders, and checks every step before the next one.
+
+**5. Install the Google Apps Script bridge** when Claude asks. It is one file that runs
+in your Google account every 15 minutes, even when Claude does not:
+
+- script.google.com → **New project** → paste the code Claude shows you → save;
+- **Project Settings** → **Script Properties** → add `SUPABASE_URL` and
+  `SUPABASE_SECRET_KEY` (Claude says where to find them; the key goes only there, never
+  into a chat);
+- choose the function `install` → **Run** → **Review permissions** → your account →
+  "Google hasn't verified this app" → **Advanced** → **Go to Life OS bridge (unsafe)** →
+  **Select all** → **Allow**. The warning is normal: it is your own script, running only
+  in your account.
+
+Step by step with every permission explained: [docs/apps-script.md](docs/apps-script.md).
+
+**6. Create three scheduled tasks** in Claude when it asks: mail at night, Drive after
+it, the review once a month.
+
+That is all, about 30 minutes. Later, at any time, write **`life os doctor`**: it checks
+the whole system and tells you exactly what to fix.
+
+**Updating:** download the new zip files and upload them again the same way (remove the
+old skill first if Claude does not replace it). Then write `life os doctor`; it applies
+database updates and new rules for you.
+
+### What you need
+
+- A Google account (Gmail and Google Drive).
+- A Claude plan that includes skills and connectors.
+- A free [Supabase](https://supabase.com) account. Supabase is the database that stores
+  the index; the free plan is enough. Claude creates the project for you.
+- Optional: Todoist for tasks, Craft for the monthly report. Without them, tasks and
+  reports arrive by email and as Google Docs.
+
 ## What it does for you
 
-- **Every night**, it reads new mail, sorts it into 10 categories (bills, authorities,
-  bank, contracts, travel, …), pulls out amounts and due dates, and creates a task when
-  you need to act. Travel and appointments become calendar events.
+- **Every night** it reads new mail, sorts it into 10 categories (bills, authorities,
+  bank, contracts, travel and so on), pulls out amounts and due dates, and creates a task
+  when you need to act. Travel and appointments become calendar events.
 - **Important attachments** (bills, contracts, letters from authorities) are copied into
   Google Drive automatically, filed into the right folder, and indexed with their full
   text.
-- **Deadlines are tracked, not just dates.** A residence permit that expires, a letter
-  you can object to within a month, an insurance that renews itself unless cancelled
-  three months before: each becomes a deadline with reminders that grow more frequent
-  as it gets closer.
-- **A short daily brief**, only on days something matters. No "all clear" messages.
+- **It tracks deadlines, not just dates.** A residence permit that expires, a letter you
+  can object to within a month, an insurance that renews itself unless cancelled three
+  months before: each becomes a deadline with reminders that come more often as it gets
+  closer. How a deadline is counted depends on your country.
+- **A short daily brief**, only on days when something matters. No "all clear" messages.
 - **A monthly review**: what you pay every month, what changed, what you can cancel and
   by when, what goes into your tax return, and anything that looks wrong.
 - **An emergency binder**: a Google Doc, rewritten daily, with your open matters,
   deadlines, contracts, insurance, where your original documents are, and who to call.
 
-## What you need
+## Tasks in your task manager
 
-- A Google account (Gmail and Google Drive).
-- A Claude plan with connectors (Supabase, Google Drive, Gmail; Google Calendar
-  recommended).
-- A free [Supabase](https://supabase.com) account. Supabase is the database that stores
-  the index. The free plan is enough.
-- Optional: Todoist for tasks, Craft for the monthly report. Without them, tasks and
-  reports arrive by email and as Google Docs.
+The database keeps the list; the task manager only mirrors it, so nothing is lost if you
+switch apps or use none. With Todoist you get:
 
-About 30 minutes for the setup.
+| Task | When |
+|---|---|
+| `📅 Daily brief <date>: <most important thing>` | only on days something matters; the brief is in the description |
+| `💌 <category> <sender>: <what to do>` | a letter needs you to act |
+| `⚠️ <document> expires <date>: <file>` | a document expires within 30 days |
+| `🧾 Review <month>: <main decision>` | once a month, the decisions only you can make |
+| `⚠️ <job> failed <date>` | a nightly job had errors |
 
-## Install
+Completing a task closes the deadline behind it. More in [docs/tasks.md](docs/tasks.md).
 
-1. **Get the skills.** Download the latest release, or build it yourself with
-   `scripts/package_skills.sh`. You get five zip files:
-   `life-os-setup.zip`, `email-intake.zip`, `drive-file-intake.zip`,
-   `context-lookup.zip`, `life-review.zip`.
-2. **Add them to Claude.** In Claude: Settings → Capabilities → Skills → Upload skill,
-   once per zip.
-3. **Connect your accounts.** Settings → Connectors: Supabase, Google Drive, Gmail, and
-   if you like Google Calendar, Todoist, Craft.
-4. **Start a new chat and say "set up life os".** Claude asks a few questions (your
-   language, your country, which apps you use), creates the database, the Drive
-   folders, and gives you one piece of code to paste into Google Apps Script with
-   click-by-click instructions. It checks each step before moving on.
-5. **Create three scheduled tasks** in Claude when it asks you to: email at night, Drive
-   after it, the review once a month.
+## Settings
 
-Later, at any time: say **"life os doctor"** and it checks the whole system and tells
-you exactly what to fix.
+All settings are stored in one table of your own database, `life_settings`, and every
+change is recorded in `settings_history`, so it can be seen and undone. To change
+something, just say it: "change my language to German", "I moved to Spain", "add my
+sister to the emergency binder". When your country or its rules change, deadlines that
+were already counted are recounted, after Claude shows you what moves. Details in
+[docs/settings.md](docs/settings.md).
 
 ## Languages and countries
 
 The system reads mail in any language. Its own output (briefs, tasks, reports, the
-emergency binder, folder names) is fully translated in **English, German and
-Ukrainian**. Polish, French, Spanish, Italian, Dutch, Russian and Portuguese have a
-starter translation and fall back to English where it is incomplete.
+emergency binder, folder names) comes in these languages:
+
+| Language | Status |
+|---|---|
+| English, Deutsch, Українська | complete and tested |
+| Polski, Français, Español, Italiano, Nederlands, Русский, Português | starter translation, English where incomplete |
 
 Legal rules (how an objection deadline is counted, when a phone contract can be
-cancelled, when the tax return is due) come in a **region pack**. **Germany** is
-complete. Everywhere else the system still tracks every date it reads, but asks you
-about local rules instead of knowing them. See [packs/README.md](packs/README.md) to
-add a language or a country.
+cancelled, when to return a purchase, when the tax return is due) come in a **region
+pack**. **Germany** is complete. Everywhere else the system still tracks every date it
+reads, but uses cautious placeholders and asks you about local rules. See
+[packs/README.md](packs/README.md) to add a language or a country.
 
 ## Privacy and security
 
@@ -86,13 +144,15 @@ directly from Gmail to Drive. Details in [docs/security.md](docs/security.md).
 ## How it works
 
 Everything that has to happen on time is done by things that do not forget: Google
-Apps Script every 15 minutes, and scheduled jobs inside the database every night.
-Claude does only what needs judgement: reading a letter and understanding what it
-means. The database is the single source of truth; Todoist, Craft and the calendar only
-mirror it.
+Apps Script every 15 minutes and scheduled jobs inside the database every night. Claude
+does only what needs judgement: reading a letter and understanding what it means. The
+database is the single source of truth; Todoist, Craft and the calendar only mirror it.
 
 - [docs/architecture.md](docs/architecture.md): components, data model, a letter's path
-  through the system, known gaps.
+  through the system.
+- [docs/apps-script.md](docs/apps-script.md): installing the bridge.
+- [docs/tasks.md](docs/tasks.md): what lands in your task manager and how it closes.
+- [docs/settings.md](docs/settings.md): every setting, and what happens when one changes.
 - [docs/security.md](docs/security.md): keys, permissions, what the AI sees, backups.
 - [docs/troubleshooting.md](docs/troubleshooting.md): every failure the original ran
   into, and what fixes it.
@@ -104,17 +164,20 @@ skills/            the five Claude skills
 apps-script/       the Google Apps Script bridge (Code.gs)
 supabase/          database migrations and the document type registry
 packs/             language and region packs
-docs/              architecture, security, troubleshooting
-tests/             contract tests for the packs
-scripts/           packaging
+docs/              documentation
+tests/             pack contract tests and the SQL rule check
+scripts/           packaging and JSON formatting
 ```
 
-For contributors: `python3 -m unittest discover -s tests -v` runs the pack contract
-tests. CI also applies every migration and pack to a fresh Postgres 16 twice and checks
-that the database stays closed to the public API.
+For contributors: `python3 -m unittest discover -s tests -v` runs the pack tests. Every
+push to `main` builds the skill zips and publishes them as release `v<VERSION>`
+(`.github/workflows/release.yml`); bump `VERSION` for a new release. CI also
+applies every migration and pack to a fresh Postgres 16 twice, checks that the database
+counts deadlines exactly like the pack examples, and that it stays closed to the public
+API.
 
 ## Status
 
-Early. The database, the bridge and the email intake have run daily for a month in the
+Early. The database, the bridge and the email intake ran daily for a month in the
 original private version and were then generalised. The setup skill and the packs are
 new. Expect rough edges and please report them.
