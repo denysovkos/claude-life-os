@@ -1,24 +1,7 @@
----
-name: life-os-setup
-description: >-
-  Installs, checks and reconfigures claude-life-os, the personal system that files
-  documents from Gmail and Google Drive into a Supabase database and tracks deadlines,
-  contracts and payments. Walks a non-technical person through every step in plain
-  language: connectors, the Supabase project and its database, the Drive folders, the
-  Google Apps Script bridge, optional Todoist and Craft, and the scheduled tasks. The
-  same skill in doctor mode re-checks the whole system and says exactly what to fix.
-  Use when the person says "set up life os", "install claude-life-os", "налаштуй life
-  os", "richte Life OS ein", "life os doctor", "check my life os", "is everything
-  working", "перевір систему", "change my language / country / task app", or when
-  another claude-life-os skill reports that the database was never set up.
-compatibility: Requires Supabase, Google Drive and Gmail connectors. Google Calendar recommended. Todoist and Craft optional.
-metadata:
-  version: v1.1
-  product: claude-life-os
-  schema_version: 0.3.0
----
-
 # Life OS setup
+
+Workflow `setup` v1.2 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
+`../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Three modes. Pick from what the person said; if unclear, ask.
 
@@ -43,10 +26,13 @@ The person may never have used a database or a script editor. So:
 
 ## Where the files are
 
-The database migrations, the packs and the Apps Script ship in this skill's own folder:
+The database migrations, the packs and the Apps Script ship in the skill's own folder
+(`assets/`, next to `SKILL.md`). When the skill runs from a clone of the repository (Claude
+Code, routines), `assets/` does not exist and the same files are at the repository root:
+`supabase/migrations`, `supabase/seed`, `packs`, `apps-script`, `docs`.
 
 ```
-assets/migrations/0001_tables.sql … 0007_region_rules_in_sql.sql
+assets/migrations/0001_tables.sql … 0008_nightly_check_watchdog.sql
 assets/seed/document_types.sql
 assets/packs/lang/<locale>/{dossier,folders,keywords,formats}.json
 assets/packs/region/<code>/{rules.json,classification_rules.sql}
@@ -54,7 +40,7 @@ assets/apps-script/Code.gs
 assets/docs/troubleshooting.md
 ```
 
-Find the folder with `find / -type d -path '*life-os-setup/assets' 2>/dev/null | head -1`.
+Find the folder with `find / -type d -path '*life-os/assets' 2>/dev/null | head -1`.
 If there is none (the skill was installed without assets), ask the person to download
 the repository as a ZIP (on GitHub: the green "Code" button, then "Download ZIP") and
 drop it into this chat. Unzip it in the sandbox and use `supabase/`, `packs/`,
@@ -108,7 +94,7 @@ Check first: `list_projects`. If one is named `life-os` (or the person names one
 inside with `list_tables` (schema `public`):
 
 - has `life_settings` and `schema_version` is set: the database exists. Skip to step 5
-  (or run the upgrade in doctor mode if the version is older than `0.3.0`).
+  (or run the upgrade in doctor mode if the version is older than `0.4.0`).
 - has other tables: it is not ours. Do not install into it. Create a new project.
 - empty: use it.
 
@@ -128,7 +114,8 @@ Apply in this order with `apply_migration`, each named after its file without `.
 
 ```
 0001_tables, 0002_functions, 0003_views, 0004_triggers_and_security,
-0005_settings_and_localization, 0006_pack_settings, 0007_region_rules_in_sql
+0005_settings_and_localization, 0006_pack_settings, 0007_region_rules_in_sql,
+0008_nightly_check_watchdog
 ```
 
 Then run `assets/seed/document_types.sql` with `execute_sql` (or as migration
@@ -139,7 +126,7 @@ region pack was chosen. Stop at the first error, show it, and look for it in
 Verify:
 
 ```sql
-select value from life_settings where key = 'schema_version';            -- "0.3.0"
+select value from life_settings where key = 'schema_version';            -- "0.4.0"
 select count(*) from pg_tables where schemaname = 'public';              -- 35
 select count(*) from pg_views  where schemaname = 'public';              -- 35
 select count(*) from document_types;                                     -- 40
@@ -159,12 +146,12 @@ trigger copies every change into `settings_history` with who made it, so any set
 be read as of a date and put back. Tell the person this in one sentence.
 
 Build the values from the answers and the packs, then write them in one `execute_sql`
-that starts with `select set_config('app.actor','life-os-setup',true);` (so the history
+that starts with `select set_config('app.actor','setup',true);` (so the history
 shows the setup made the change, not a human). Use dollar quoting for JSON, because
 translations contain apostrophes:
 
 ```sql
-select set_config('app.actor','life-os-setup',true);
+select set_config('app.actor','setup',true);
 insert into life_settings (key, value) values
   ('owner_name',        to_jsonb(:name::text)),
   ('owner_email',       to_jsonb(:email::text)),
@@ -322,42 +309,62 @@ where key = 'task_targets';
 Craft: find or create a folder `Life OS reports` and write its id into
 `notes_targets.reports_folder`.
 
-## Step 10: scheduled tasks
+## Step 10: the night schedule
 
-The Claude side does not start by itself. Ask the person to create three scheduled tasks
-in Claude (Claude app → Scheduled tasks → New), with these exact prompts:
+The Claude side does not start by itself. It needs four scheduled runs, at night, in
+this order, each with a few minutes past the hour (runs exactly on the hour can start
+late):
 
-| When (their time zone) | Prompt |
-|---|---|
-| every day 02:00 | `Run email-intake.` |
-| every day 03:00 | `Run drive-file-intake.` |
-| monthly, first Sunday 10:00 | `Run life-review.` |
+| When (their time zone) | Prompt | Why this slot |
+|---|---|---|
+| every day 01:05 | `Run the life-os email-intake workflow.` | first: its categories tell the bridge which attachments to copy, which the bridge does within 15 minutes |
+| every day 02:05 | `Run the life-os drive-file-intake workflow.` | an hour later, so tonight's attachments are already in the Drive inbox |
+| every day 03:05 | `Run the life-os nightly-check workflow.` | last: derivations, health check, and the one daily brief, built from everything above |
+| 1st of every month, 04:05 | `Run the life-os life-review workflow.` | the review reads a finished month and a fresh index |
 
-Email before Drive on purpose: the bridge needs the email intake's categories to know
-which attachments to copy, and it has an hour to do so before the Drive intake runs.
+Night, because nobody is working with the mail or the Drive then, the runs do not
+compete with the person's own Claude use, and the brief is ready in the morning.
 
-Say honestly: scheduled tasks sometimes skip a night. That is why the database keeps a
+Where to create them depends on what the person uses. Explain the choice in two
+sentences and walk them through one:
+
+- **Claude Code routines (recommended).** They run in Anthropic's cloud, so the laptop
+  can be off. A routine clones a GitHub repository and loads the skills committed in it,
+  so the person needs a copy of the claude-life-os repository on their GitHub (a fork, or
+  "Use this template"; it holds no personal data). At claude.ai/code/routines → **New
+  routine**: name, the prompt from the table, the repository, the **Default**
+  environment, trigger **Schedule** → daily (monthly: pick a preset, then
+  `/schedule update` in the Claude Code CLI to set `5 4 1 * *`), connectors: keep Gmail,
+  Google Drive, Supabase, Google Calendar and, if used, Todoist and Craft, remove the
+  rest. Four routines. From the CLI, `/schedule` creates the same thing conversationally.
+  Full walkthrough: `docs/scheduling.md`.
+- **Claude desktop app, scheduled tasks.** Same prompts, but they run on the person's
+  computer, so it must be on and awake at night.
+
+Say honestly: a scheduled run can still be skipped. That is why the database keeps a
 watchdog and the bridge emails them when a job has not run within its window (36 hours
-for email, 30 for Drive). A missed night is caught up by the next run, because each run
+for each nightly job). A missed night is caught up by the next run, because each run
 starts where the last one stopped.
 
 ## Step 11: first run and baseline
 
-Offer to run `email-intake` now (it covers the last two days on an empty system) and
-then `drive-file-intake`. Then record the installed versions:
+Offer to run the email intake now (it covers the last two days on an empty system),
+then the Drive intake, then the nightly check (which sends the first brief). Then record
+the installed versions:
 
 ```sql
 insert into skill_revisions (skill_name, version, change_type, summary)
-values ('life-os-setup', 'v1.1', 'baseline', 'installed'),
-       ('email-intake', 'v3.0', 'baseline', 'installed by life-os-setup'),
-       ('drive-file-intake', 'v3.0', 'baseline', 'installed by life-os-setup'),
-       ('context-lookup', 'v2.0', 'baseline', 'installed by life-os-setup'),
-       ('life-review', 'v2.0', 'baseline', 'installed by life-os-setup');
+values ('life-os', 'v4.0', 'baseline', 'installed'),
+       ('setup', 'v1.2', 'baseline', 'installed with life-os v4.0'),
+       ('email-intake', 'v3.1', 'baseline', 'installed with life-os v4.0'),
+       ('drive-file-intake', 'v3.1', 'baseline', 'installed with life-os v4.0'),
+       ('nightly-check', 'v1.0', 'baseline', 'installed with life-os v4.0'),
+       ('context-lookup', 'v2.1', 'baseline', 'installed with life-os v4.0'),
+       ('life-review', 'v2.1', 'baseline', 'installed with life-os v4.0');
 ```
 
 Finish with doctor mode, then a three-line summary: what runs when, where the emergency
-binder is, and "ask me anything about your documents in any chat" (that is
-`context-lookup`).
+binder is, and "ask me anything about your documents in any chat".
 
 ---
 
@@ -369,7 +376,7 @@ apply a fix without the person saying yes.
 
 1. **Connectors**: the calls from install step 1.
 2. **Schema version**: `select value from life_settings where key = 'schema_version';`
-   Older than this skill's `schema_version`: an upgrade is available. `list_migrations`
+   Older than `schema_version` in `../SKILL.md`: an upgrade is available. `list_migrations`
    shows what is applied; the fix is to apply the missing files from `assets/migrations`
    in order (after a `take_snapshot('pre-upgrade')`), then the pack check below, because
    a migration can start reading a setting the old installation never wrote.
@@ -403,10 +410,12 @@ apply a fix without the person saying yes.
 7. **Jobs running on time**: `select * from v_intake_watchdog;` Every `overdue` row is a
    problem; `runs_7d` well below `runs_7d_expected` is a warning even if the last run is
    recent (a job that runs every other night looks fine on `last_run`).
-8. **Bridge**: `select started_at, errors, script_version from bridge_runs order by started_at desc limit 5;`
+8. **Night schedule**: `select * from v_intake_watchdog;` has a row per nightly job,
+   `nightly-check` included; a job with `runs_7d = 0` was never scheduled.
+9. **Bridge**: `select started_at, errors, script_version from bridge_runs order by started_at desc limit 5;`
    Errors in the last runs, or a `script_version` other than `bridge-3.0`.
-9. **Invariants**: `select invariant, severity, failing, meaning from v_system_invariants where failing > 0 order by severity;`
-10. **Health numbers**: `select * from v_system_health;` Flag
+10. **Invariants**: `select invariant, severity, failing, meaning from v_system_invariants where failing > 0 order by severity;`
+11. **Health numbers**: `select * from v_system_health;` Flag
    `hours_since_snapshot > 48`, `days_since_offsite_backup > 35`, `attachment_backlog > 0`,
    `text_coverage_pct < 80`, `recall_miss_pct_60d > 10`, `hard_deadlines_missed > 0`.
 
@@ -420,7 +429,7 @@ deadline slip comes first.
 
 Each change is a settings write plus its side effects:
 
-Every write in this mode starts with `select set_config('app.actor','life-os-setup',true);`
+Every write in this mode starts with `select set_config('app.actor','setup',true);`
 and ends by showing the person what changed:
 `select key, old_value, new_value from settings_history where changed_at > now() - interval '5 minutes';`
 To undo a change, write the `old_value` back.

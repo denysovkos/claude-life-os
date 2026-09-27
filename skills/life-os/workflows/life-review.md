@@ -1,25 +1,9 @@
----
-name: life-review
-description: >-
-  Monthly (and on-demand) review of the whole claude-life-os system: import bank
-  statements into bank_transactions, reconcile contracts against bank debits and
-  invoices, fill unknown notice periods from indexed contracts, audit addresses after a
-  move, track the tax year, check backups, review system quality, and deliver one report
-  plus one task with the decisions that need a human. Use when the person says "monthly
-  review", "how are my finances", "what can I cancel", "reconcile the bank", "import this
-  statement", "tax year", "emergency binder", "місячний огляд", "що можна скасувати",
-  "звір банк", "Kontoauszug importieren", "Steuer", or when the monthly scheduled task
-  fires (first Sunday of the month). Not for the nightly intake (drive-file-intake,
-  email-intake) and not for single lookups (context-lookup).
-compatibility: Requires Supabase and Google Drive connectors. A task provider (Todoist) and a notes provider (Craft) are optional.
-metadata:
-  version: v2.0
-  product: claude-life-os
----
-
 # Life review
 
-Write `v2.0` into `life_review_runs.skill_version`.
+Workflow `life-review` v2.1 of the `life-os` skill: the monthly review. The shared rules in
+`../SKILL.md` apply; this file adds what is specific to this workflow.
+
+Write `v2.1` into `life_review_runs.skill_version`.
 
 ## How the work is split, and why this skill exists
 
@@ -66,7 +50,7 @@ pack, say that a local rule applies and ask.
    `bank_statement` documents with no `bank_statement_imports` row. For each, oldest
    first, at most three per run:
    - Read the text (`document_texts.body`, else Drive `read_file_content`, else the OCR
-     fallback described in `drive-file-intake`). Identify the account (IBAN or account
+     fallback described in `workflows/drive-file-intake.md`). Identify the account (IBAN or account
      number) and the period.
    - **Already covered?** If `bank_transactions` already has rows for that account
      spanning the whole period (for example from a CSV import done earlier), record an
@@ -178,7 +162,7 @@ pack, say that a local rule applies and ask.
 - "Emergency binder": `select emergency_dossier();` shows the current text. The Google
   Doc in the emergency folder is rewritten daily by the bridge. To add people to it,
   update `life_settings.emergency_contacts` (a list of `{name, role, contact}`).
-- Content questions ("what does the contract say about X") belong to `context-lookup`;
+- Content questions ("what does the contract say about X") belong to the `context-lookup` workflow;
   use `ask_documents` from here only inside a review.
 
 On-demand modes that write still take the snapshot and the lock.

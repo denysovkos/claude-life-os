@@ -1,25 +1,7 @@
----
-name: context-lookup
-description: >-
-  Read-only lookup in the claude-life-os Supabase index of documents, emails, contracts,
-  payments, deadlines and bank transactions. Use for any question about the person's own
-  paperwork, money or obligations, in any chat, before searching Drive or Gmail by hand:
-  a certificate, a clause, a bill, an expiry, when a contract can be cancelled, whether
-  something can still be returned, what goes into the tax return, which documents a
-  bundle still lacks, who still writes to the old address, what a contract says, whether
-  a payment went through, the emergency binder, or whether the system is healthy.
-  Examples: "when does my insurance end", "can I still return the headphones", "what
-  does the lease say about pets", "коли можу розірвати", "що можна скасувати", "чи можу
-  повернути", "wann kann ich kündigen", "was steht im Mietvertrag". Never writes.
-  Monthly reviews and imports belong to life-review, nightly sync to drive-file-intake
-  and email-intake.
-compatibility: Requires the Supabase connector (read-only use). Google Drive and Gmail are optional, only to open a source link when asked.
-metadata:
-  version: v2.0
-  product: claude-life-os
----
-
 # Context lookup (read-only, scope first)
+
+Workflow `context-lookup` v2.1 of the `life-os` skill: read-only answers in any chat. The shared rules in
+`../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Other chats regularly need one fact out of the person's documents or mail (is the
 registration certificate still valid, what is the notice period on the gym contract,
@@ -37,7 +19,7 @@ where key in ('output_locale','timezone','region','schema_version');
 
 Answer in the language the person asked in. `output_locale` is only the fallback. If
 `schema_version` is missing, the system was never installed: say so and point to the
-`life-os-setup` skill.
+setup workflow (`workflows/setup.md`).
 
 ## Scope before query
 
@@ -45,7 +27,7 @@ Classify every question into exactly one scope (rarely two) before touching the
 database. Never run an unscoped `select *` and filter afterwards, and never report beyond
 the resolved scope even when a join returns more. A finance question gets finance rows.
 
-The scope vocabulary is read from the controlled vocabularies the intake skills
+The scope vocabulary is read from the controlled vocabularies the intake workflows
 maintain, so this skill cannot drift from them:
 
 ```sql
@@ -134,7 +116,7 @@ use it instead of reasoning from scratch.
 
 - Insert, update or delete any row in any table.
 - Create a task or calendar event, even for a deadline found along the way. Say "this
-  one has no task yet" and leave it to the person or the intake skills.
+  one has no task yet" and leave it to the person or the intake workflows.
 - Fetch file content or upload anything speculatively. Hand over `drive_url` / `gmail_url`.
 - Widen the scope "just in case".
 

@@ -1,23 +1,9 @@
----
-name: drive-file-intake
-description: >-
-  Nightly Google Drive intake for claude-life-os. Syncs new and moved Drive files into the
-  Supabase "documents" index: recognises the document type from a closed registry, reads
-  expiry, issue and notice dates, stores the full text, deduplicates on the full text,
-  files documents out of the Drive inbox into their folder, writes deadlines, and creates
-  tasks for anything about to expire. Use when the scheduled task fires, or when the
-  person says "process my files", "sync Drive", "check expiring documents", "run the file
-  intake", "обробити файли", "Dokumente einlesen", or attaches a document in chat to be
-  filed. For questions about documents already indexed, use context-lookup instead.
-compatibility: Requires Google Drive and Supabase connectors. A task provider (Todoist) is optional.
-metadata:
-  version: v3.0
-  product: claude-life-os
----
-
 # Drive file intake
 
-Write `v3.0` into `processing_runs.skill_version` on every run, so the monthly review can
+Workflow `drive-file-intake` v3.1 of the `life-os` skill: nightly document intake. The shared rules in
+`../SKILL.md` apply; this file adds what is specific to this workflow.
+
+Write `v3.1` into `processing_runs.skill_version` on every run, so the monthly review can
 attribute a change in a metric to a revision.
 
 This job usually runs unattended at night. The same three rules as `email-intake` apply:
@@ -61,7 +47,7 @@ returning skill_name;
 
 Zero rows from the lock: another run holds it, stop and say so. Delete the lock row at
 the end. `pg_advisory_lock` does not work here: every MCP call is its own session.
-If `schema_version` is missing, the database was never set up: point to `life-os-setup`.
+If `schema_version` is missing, the database was never set up: point to the setup workflow.
 
 `drive_folders` gives `inbox` (where the bridge and manual drops land), `catch_all`
 (where a document goes when its area has no folder), `backups` and `emergency`. The
@@ -382,6 +368,6 @@ select * from v_missing_notice_period;
 insert into processing_runs (skill_version, started_at, files_scanned, files_added,
   files_updated, expiring_flagged, text_queue_depth, capabilities, errors, skipped,
   decisions, notes)
-values ('v3.0', :started_at, ..., :capabilities::jsonb, :errors::jsonb, :skipped::jsonb,
+values ('v3.1', :started_at, ..., :capabilities::jsonb, :errors::jsonb, :skipped::jsonb,
         :decisions::jsonb, :notes);
 ```

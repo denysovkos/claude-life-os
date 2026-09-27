@@ -1,31 +1,27 @@
 #!/usr/bin/env bash
-# Builds one upload-ready zip per skill into dist/.
+# Builds dist/life-os.zip: the one skill a person uploads to Claude.
 #
-# claude.ai takes a skill as a zip whose top folder contains SKILL.md. life-os-setup also
-# needs the database migrations, the packs and the Apps Script, so they are copied into
-# its assets/ folder here. That way the setup skill never depends on the person
-# downloading the repository or on the repository being public.
+# claude.ai takes a skill as a zip whose top folder contains SKILL.md. The setup workflow
+# also needs the database migrations, the packs, the Apps Script and the docs, so they are
+# copied into life-os/assets/ here. The person never needs the repository itself.
+#
+# Claude Code (and its cloud routines) load the same skill from the repository through the
+# symlink .claude/skills/life-os -> skills/life-os; there the files are at the repo root.
 #
 # Usage: scripts/package_skills.sh     (needs zip)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 rm -rf dist && mkdir -p dist/stage
-for dir in skills/*/; do
-  name=$(basename "$dir")
-  cp -R "$dir" "dist/stage/$name"
-done
+cp -R skills/life-os dist/stage/life-os
 
-assets=dist/stage/life-os-setup/assets
-mkdir -p "$assets"
+assets=dist/stage/life-os/assets
+mkdir -p "$assets/apps-script"
 cp -R supabase/migrations supabase/seed "$assets/"
 cp -R packs "$assets/packs"
 cp -R docs "$assets/docs"
-mkdir -p "$assets/apps-script" && cp apps-script/Code.gs apps-script/appsscript.json "$assets/apps-script/"
+cp apps-script/Code.gs apps-script/appsscript.json "$assets/apps-script/"
 
-for dir in dist/stage/*/; do
-  name=$(basename "$dir")
-  (cd dist/stage && zip -qr "../$name.zip" "$name")
-  echo "dist/$name.zip"
-done
+(cd dist/stage && zip -qr ../life-os.zip life-os)
 rm -rf dist/stage
+echo dist/life-os.zip
