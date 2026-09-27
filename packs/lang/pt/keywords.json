@@ -1,0 +1,22 @@
+{
+  "categories": {
+    "bills_payments": [
+      "fatura",
+      "valor a pagar",
+      "débito direto",
+      "vencimento"
+    ],
+    "government": [
+      "autoridade tributária",
+      "finanças",
+      "notificação",
+      "câmara municipal"
+    ],
+    "orders_delivery": [
+      "encomenda",
+      "entregue",
+      "número de rastreio",
+      "enviado"
+    ]
+  }
+}

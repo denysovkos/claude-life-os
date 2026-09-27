@@ -1,0 +1,8 @@
+{
+  "locale": "ru",
+  "name": "Русский",
+  "status": "skeleton",
+  "version": "0.1.0",
+  "maintainers": [],
+  "todo": "Missing dossier and folder labels fall back to English. To promote to stable: complete dossier.json, folders.json, keywords.json (all 10 categories), add formats.json and examples.json, and pass tests/test_packs.py."
+}

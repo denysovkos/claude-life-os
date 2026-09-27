@@ -1,0 +1,22 @@
+{
+  "categories": {
+    "bills_payments": [
+      "fattura",
+      "importo da pagare",
+      "addebito diretto",
+      "scadenza"
+    ],
+    "government": [
+      "agenzia delle entrate",
+      "comune",
+      "avviso",
+      "prefettura"
+    ],
+    "orders_delivery": [
+      "pacco",
+      "consegnato",
+      "numero di tracciamento",
+      "spedito"
+    ]
+  }
+}

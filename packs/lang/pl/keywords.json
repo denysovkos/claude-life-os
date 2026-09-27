@@ -1,0 +1,22 @@
+{
+  "categories": {
+    "bills_payments": [
+      "faktura",
+      "do zapłaty",
+      "polecenie zapłaty",
+      "termin płatności"
+    ],
+    "government": [
+      "urząd skarbowy",
+      "decyzja",
+      "urząd",
+      "sygnatura"
+    ],
+    "orders_delivery": [
+      "przesyłka",
+      "doręczono",
+      "numer przesyłki",
+      "kurier"
+    ]
+  }
+}

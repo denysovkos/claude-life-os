@@ -1,0 +1,20 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_administrative",
+      "label": "Deadline to object to an official decision",
+      "applies_to": ["official_decision"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_months": 1}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [30, 14, 7, 3, 1],
+      "basis": "Name the statute and state the rule in one sentence.",
+      "notes": "Exceptions a person should know about."
+    }
+  ],
+  "annual_dates": [],
+  "facts": [],
+  "authorities": []
+}

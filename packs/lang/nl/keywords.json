@@ -1,0 +1,22 @@
+{
+  "categories": {
+    "bills_payments": [
+      "factuur",
+      "te betalen",
+      "automatische incasso",
+      "vervaldatum"
+    ],
+    "government": [
+      "belastingdienst",
+      "gemeente",
+      "beschikking",
+      "ind"
+    ],
+    "orders_delivery": [
+      "pakket",
+      "bezorgd",
+      "track en trace",
+      "verzonden"
+    ]
+  }
+}

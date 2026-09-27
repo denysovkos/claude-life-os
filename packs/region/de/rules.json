@@ -1,0 +1,145 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_administrative",
+      "label": "Widerspruchsfrist",
+      "applies_to": ["official_decision"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 4}, {"add_months": 1}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [30, 14, 7, 3, 1],
+      "basis": "§ 70 VwGO: one month from notification. § 41 Abs. 2 VwVfG: a letter sent by post counts as notified on the fourth day after posting (three days until 2024). § 193 BGB via § 57 VwGO, § 222 ZPO: an end on a weekend or public holiday moves to the next working day.",
+      "notes": "Without a Rechtsbehelfsbelehrung the period is one year (§ 58 Abs. 2 VwGO). Some Länder abolished the Widerspruch for certain matters; then the Bescheid itself says Klage within one month. derive_deadlines() in the database does not roll weekends forward, so it is at most two days early, never late. Public holidays are not in this rule: check the Land's calendar."
+    },
+    {
+      "key": "objection_tax",
+      "label": "Einspruchsfrist",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 4}, {"add_months": 1}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [30, 14, 7, 3, 1],
+      "basis": "§ 355 Abs. 1 AO: one month from notification. § 122 Abs. 2 AO: fourth day after posting, also for ELSTER retrieval (§ 122a AO). § 108 Abs. 3 AO: weekend or holiday end moves to the next working day.",
+      "notes": "Same one-year fallback without a Rechtsbehelfsbelehrung (§ 356 Abs. 2 AO)."
+    },
+    {
+      "key": "telecom_min_term_end",
+      "label": "Mindestvertragslaufzeit endet",
+      "applies_to": ["telecom_contract"],
+      "deadline_type": "contract_milestone",
+      "start": "contract_start",
+      "steps": [{"term_months": 24}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [60, 30],
+      "basis": "§ 56 Abs. 1 TKG: initial term at most 24 months, counted from the day service starts (Schaltung), so it ends the day before the same calendar day 24 months later, or on the last day of the month when that day does not exist (§ 188 Abs. 2 and 3 BGB).",
+      "notes": "Use the term the contract states if it is shorter (12 months, or monthly). The start is activation, not the order date."
+    },
+    {
+      "key": "telecom_cancel_by",
+      "label": "Kündigen bis (Ende der Mindestlaufzeit)",
+      "applies_to": ["telecom_contract"],
+      "deadline_type": "notice_period",
+      "start": "contract_start",
+      "steps": [{"term_months": 24}, {"add_months": -1}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [30, 7],
+      "basis": "§ 56 Abs. 3 TKG: after the initial term the contract continues indefinitely and can be cancelled at any time with one month's notice.",
+      "notes": "Soft on purpose: missing it costs at most one extra month, not another year. recurring_payments gets contract_end = null and notice_period_months = 1 after the initial term."
+    },
+    {
+      "key": "insurance_cancel_by",
+      "label": "Kündigen bis (Versicherung)",
+      "applies_to": ["insurance_policy"],
+      "deadline_type": "notice_period",
+      "start": "contract_end",
+      "steps": [{"add_months": -3}],
+      "roll_to_business_day": false,
+      "hard": true,
+      "lead_days": [60, 30, 14, 7],
+      "basis": "§ 11 Abs. 1 and 3 VVG: tacit renewal by at most one year at a time, notice period between one and three months. Three months is the statutory maximum and therefore the safe default when the policy text is not indexed yet.",
+      "notes": "Read the policy and store its real notice_period_months. Contracts running longer than three years can be cancelled at the end of the third year (§ 11 Abs. 4 VVG). A premium increase gives a special right to cancel within one month of the notice (§ 40 VVG): that is its own legal_response deadline."
+    },
+    {
+      "key": "rent_tenant_exit",
+      "label": "Mietende bei Kündigung durch Mieter",
+      "applies_to": ["rental_contract"],
+      "deadline_type": "notice_period",
+      "start": "event_date",
+      "steps": [{"add_months": 2}, {"end_of_month": true}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [14, 7],
+      "basis": "§ 573c Abs. 1 BGB: notice received by the landlord by the third working day of a month ends the tenancy at the end of the month after next.",
+      "notes": "Only valid if receipt is within the first three working days; otherwise add a month. A fixed-term contract or a Kündigungsverzicht overrides this; read the contract. event_date is the day the landlord receives the notice."
+    },
+    {
+      "key": "consumer_withdrawal",
+      "label": "Widerrufsfrist",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": true,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "§ 355 Abs. 2, § 356 Abs. 2 BGB: 14 days from receipt of the goods for distance contracts. § 193 BGB for weekend ends.",
+      "notes": "v_purchase_rights approximates this from the order mail date, which is earlier than delivery, so it errs on the safe side. Without proper Widerrufsbelehrung the period extends up to 12 months and 14 days."
+    },
+    {
+      "key": "statutory_warranty",
+      "label": "Gewährleistung endet",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_months": 24}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [30],
+      "basis": "§ 438 Abs. 1 Nr. 3 BGB: two years from delivery for consumer goods. § 477 BGB: within the first year a defect is presumed to have existed at delivery.",
+      "notes": "A manufacturer guarantee (Garantie) is voluntary and separate; its terms live in the guarantee document."
+    },
+    {
+      "key": "residence_permit_apply_by",
+      "label": "Verlängerung beantragen bis",
+      "applies_to": ["residence_permit_temporary", "fiktionsbescheinigung"],
+      "deadline_type": "document_expiry",
+      "start": "expiry_date",
+      "steps": [{"add_days": 0}],
+      "roll_to_business_day": false,
+      "hard": true,
+      "lead_days": [90, 60, 30, 14, 7, 1],
+      "basis": "§ 81 Abs. 4 AufenthG: an extension applied for before the current title expires keeps it valid until the authority decides (Fiktionswirkung). An application after expiry does not.",
+      "notes": "The last valid day is still in time, but appointment backlogs make 8 to 12 weeks the practical lead. Most authorities accept an online application that triggers the Fiktionswirkung without an appointment."
+    }
+  ],
+  "annual_dates": [
+    {
+      "key": "tax_return_due",
+      "label": "Steuererklärung abgeben",
+      "month_day": "07-31",
+      "year_offset_from_tax_year": 1,
+      "hard": true,
+      "basis": "§ 149 Abs. 2 AO: 31 July of the following year for people obliged to file, without a tax adviser. With an adviser the deadline is later (§ 149 Abs. 3 AO).",
+      "notes": "Voluntary filers (Antragsveranlagung) have four years instead (§ 169 Abs. 2 AO). The tax_relevance values in recurring_payments and v_tax_items map onto German forms (Anlage Vorsorgeaufwand, Anlage N, § 35a EStG)."
+    }
+  ],
+  "facts": [
+    {"key": "rundfunkbeitrag", "text": "The Rundfunkbeitrag cannot be cancelled while you are registered at a German address. It ends only with deregistration, moving in with someone who already pays, or an exemption."},
+    {"key": "kaution_buergschaft", "text": "A rent deposit guarantee (Mietkautionsbürgschaft) ends when the landlord releases it in writing, not when the tenancy ends. Keep paying until the release is in the index."},
+    {"key": "bekanntgabe_fiction", "text": "Since 1 January 2025 a letter from an authority counts as received on the fourth day after posting (previously the third). If it really arrived later, the authority has to prove the earlier date."}
+  ],
+  "authorities": [
+    {"name": "Finanzamt (ELSTER)", "kind": "authority", "domains": ["elster.de"], "category": "government"},
+    {"name": "Bundeszentralamt für Steuern", "kind": "authority", "domains": ["bzst.de", "bzst.bund.de"], "category": "government"},
+    {"name": "Deutsche Rentenversicherung", "kind": "authority", "domains": ["drv-bund.de", "deutsche-rentenversicherung.de"], "category": "government"},
+    {"name": "Bundesagentur für Arbeit / Familienkasse", "kind": "authority", "domains": ["arbeitsagentur.de"], "category": "government"},
+    {"name": "Kraftfahrt-Bundesamt", "kind": "authority", "domains": ["kba.de"], "category": "government"},
+    {"name": "ARD ZDF Deutschlandradio Beitragsservice", "kind": "organization", "domains": ["rundfunkbeitrag.de", "beitragsservice.de"], "category": "bills_payments"}
+  ]
+}
