@@ -8,7 +8,7 @@ jobs:
   packs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -30,7 +30,7 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: postgres
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Supabase roles
         run: psql -v ON_ERROR_STOP=1 -c "create role anon; create role authenticated; create role service_role;"
       - name: Migrations, seed and region packs, twice (must be idempotent from 0005 on)

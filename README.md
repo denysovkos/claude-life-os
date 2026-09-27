@@ -169,8 +169,9 @@ scripts/           packaging and JSON formatting
 ```
 
 For contributors: `python3 -m unittest discover -s tests -v` runs the pack tests. Every
-push to `main` builds `life-os.zip` and publishes it as release `v<VERSION>`
-(`.github/workflows/release.yml`); bump `VERSION` for a new release. CI also
+push to `main` is a new version: CI tags it and publishes a GitHub release with
+`life-os.zip` (`.github/workflows/release.yml`). The patch number counts up by itself;
+set `VERSION` to a new MAJOR.MINOR.0 to start a new line. CI also
 applies every migration and pack to a fresh Postgres 16 twice, checks that the database
 counts deadlines exactly like the pack examples, and that it stays closed to the public
 API.
