@@ -147,3 +147,6 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Built skill zips (scripts/package_skills.sh)
+dist/
