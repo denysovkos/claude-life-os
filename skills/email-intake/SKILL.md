@@ -34,7 +34,8 @@ follow from that and are not optional.
 ```sql
 select key, value from life_settings
 where key in ('timezone','output_locale','input_locales','region','owner_name',
-              'task_provider','task_targets','bridge_categories');
+              'owner_email','task_provider','task_targets','bridge_categories',
+              'lang_hints','region_rules');
 select * from take_snapshot('email-intake pre-run');
 
 insert into run_locks (skill_name, expires_at, holder)
@@ -49,9 +50,9 @@ Zero rows from the lock means another run holds it. Stop. Delete the lock row at
 If `schema_version` is missing, the database was never set up: say so and point to the
 `life-os-setup` skill.
 
-Write the brief, tasks and notes in `output_locale`. Read mail in any language; the
-language packs for `input_locales` (keywords, date and amount formats) are hints, not
-filters.
+Write the brief, tasks and notes in `output_locale`. Read mail in any language;
+`lang_hints` (the language packs for `input_locales`: keywords, date and amount formats)
+are hints, not filters.
 
 ## Step 1: open the run
 
@@ -141,7 +142,8 @@ Then:
 Every `due_date` becomes a `deadlines` row, `source_kind = 'email'`, `source_id` = the
 email row. `payment_due` for bills, `legal_response` for lawyers, notaries and
 authorities. A response window from an authority is `hard = true` with lead ladder
-`{30,14,7,3,1}` (the region pack says which letters carry such windows). Bills are soft,
+`{30,14,7,3,1}` (`region_rules.term_rules` says which letters carry such windows and how
+they are counted). Bills are soft,
 `{7,1}`. A direct-debit bill gets the record but no task: nothing can be done about it,
 and the nightly job closes it three days after the due date.
 
@@ -195,9 +197,11 @@ Zero items: write a `briefings` row with `suppressed = true` and deliver nothing
 ignored on the one day it matters.
 
 Above zero: with Todoist, one task in `task_targets.system_project`, due today, titled
-`📅 Brief <date>: <the single most important fact>`, `text` as the description, unchanged.
-Without a task provider, send it as an email to `owner_email` through Gmail with the same
-subject. Log the `briefings` row. One per day.
+`📅 Daily brief <date>: <the single most important fact>`, `text` as the description,
+unchanged. Without a task provider, send it as an email to `owner_email` through Gmail
+with the same subject. Keep the words `Daily brief` in English whatever `output_locale`
+is: the classification rule that stops the system from filing its own brief matches on
+them. Log the `briefings` row. One per day.
 
 Deadlines speak only when today hits a rung of their own `lead_days` ladder, and
 `deadlines.snoozed_until` silences one without closing it.
