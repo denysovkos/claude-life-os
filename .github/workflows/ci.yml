@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  packs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Pack contract tests
+        run: python -m unittest discover -s tests -v
+
+  schema:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v5
+      - name: Supabase roles
+        run: psql -v ON_ERROR_STOP=1 -c "create role anon; create role authenticated; create role service_role;"
+      - name: Migrations, seed and region packs, twice (must be idempotent from 0005 on)
+        run: |
+          set -e
+          run() { psql -v ON_ERROR_STOP=1 -q -f "$1"; }
+          for f in supabase/migrations/*.sql supabase/seed/*.sql packs/region/*/classification_rules.sql; do echo "== $f"; run "$f"; done
+          for f in supabase/migrations/0005_*.sql supabase/migrations/0006_*.sql supabase/migrations/0007_*.sql supabase/migrations/0008_*.sql supabase/seed/*.sql packs/region/*/classification_rules.sql; do echo "== again $f"; run "$f"; done
+      - name: Invariants and health views answer
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "select * from v_system_invariants" -c "select * from v_system_health" \
+               -c "select emergency_dossier()" -c "select briefing_text()"
+      - name: Region rules in SQL match the packs
+        run: python3 tests/sql_rules_check.py
+      - name: Deny-all holds
+        run: |
+          test "$(psql -tAc "select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity")" = "0"
+          test "$(psql -tAc "select count(*) from information_schema.role_table_grants where table_schema = 'public' and grantee in ('anon','authenticated')")" = "0"

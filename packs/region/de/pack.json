@@ -1,0 +1,17 @@
+{
+  "region": "de",
+  "name": "Germany",
+  "status": "stable",
+  "version": "1.1.0",
+  "currency": "EUR",
+  "default_timezone": "Europe/Berlin",
+  "default_input_locales": [
+    "de",
+    "en"
+  ],
+  "tax_year_start": "01-01",
+  "maintainers": [
+    "claude-life-os core"
+  ],
+  "disclaimer": "Encodes common statutory defaults so the system asks the right question on time. It is not legal advice. The document in hand always wins over a default here."
+}
