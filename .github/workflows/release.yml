@@ -1,0 +1,70 @@
+name: release
+
+# Every push to main becomes a new version: a new tag and a new GitHub release with
+# life-os.zip attached. README links to releases/latest/download/life-os.zip, so the
+# download always serves the newest one.
+#
+# Version numbers:
+#   VERSION holds MAJOR.MINOR.PATCH. If the tag vVERSION does not exist yet, that is the
+#   release. If it does, the patch number counts up past the highest existing tag of the
+#   same MAJOR.MINOR (4.0.0, 4.0.1, 4.0.2 ...). To start a new line, set VERSION to 4.1.0
+#   or 5.0.0 in the commit. Nothing is committed back to main.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Pack tests must pass before anything is published
+        run: python3 -m unittest discover -s tests
+
+      - name: Pick the version
+        id: version
+        run: |
+          set -euo pipefail
+          base="$(tr -d '[:space:]' < VERSION)"
+          [[ "$base" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || { echo "VERSION must be MAJOR.MINOR.PATCH, got '$base'"; exit 1; }
+          major="${BASH_REMATCH[1]}"; minor="${BASH_REMATCH[2]}"; patch="${BASH_REMATCH[3]}"
+          if git rev-parse -q --verify "refs/tags/v$base" >/dev/null; then
+            highest="$(git tag -l "v$major.$minor.*" | sed "s/^v$major\.$minor\.//" | grep -E '^[0-9]+$' | sort -n | tail -1)"
+            patch=$(( ${highest:-$patch} + 1 ))
+          fi
+          version="$major.$minor.$patch"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Releasing v$version"
+
+      - name: Build the skill zip
+        run: scripts/package_skills.sh
+
+      - name: Tag and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="v$VERSION"
+          cat > notes.md <<EOF
+          **Install:** download [life-os.zip](https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/life-os.zip), then in Claude open Settings → Capabilities → Skills → Upload skill and choose it. Write \`set up life os\` in a new chat. Already installed: upload the new zip, then write \`life os doctor\`.
+          EOF
+          gh release create "$tag" dist/life-os.zip \
+            --target "$GITHUB_SHA" \
+            --title "claude-life-os $tag" \
+            --notes-file notes.md \
+            --generate-notes \
+            --latest

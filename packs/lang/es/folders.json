@@ -1,0 +1,11 @@
+{
+  "inbox": "Entrada",
+  "emergency": "Emergencia",
+  "catch_all": "Documentos",
+  "finance": "Finanzas",
+  "taxes": "Impuestos",
+  "housing": "Vivienda",
+  "insurance": "Seguros",
+  "work": "Trabajo",
+  "health": "Salud"
+}

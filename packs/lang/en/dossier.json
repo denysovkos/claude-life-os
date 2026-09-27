@@ -1,0 +1,22 @@
+{
+  "title": "Emergency binder",
+  "generated": "generated",
+  "intro": "Built automatically from the document index. If something looks wrong, Supabase and Google Drive hold the latest truth.",
+  "matters": "Open matters and what to do about them",
+  "hard_deadlines": "Deadlines that cannot be missed",
+  "loans": "Loans and leasing",
+  "insurance": "Insurance",
+  "subscriptions": "Housing, telecom, subscriptions (what can be paused or cancelled)",
+  "notice": "notice",
+  "months": "mo.",
+  "notice_unknown": "notice period unknown",
+  "until": "until",
+  "total": "Total recurring commitments",
+  "per_month": "per month",
+  "identity": "Identity documents and where the originals are",
+  "valid_until": "valid until",
+  "original": "original",
+  "property": "Property",
+  "contacts": "Contacts",
+  "none": "- none"
+}

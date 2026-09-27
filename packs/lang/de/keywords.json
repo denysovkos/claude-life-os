@@ -1,0 +1,17 @@
+{
+  "categories": {
+    "purchases": ["kaufbeleg", "quittung", "vielen dank für ihren einkauf", "ihre bestellung", "bestellbestätigung", "kassenbon", "zahlungsbestätigung"],
+    "orders_delivery": ["zugestellt", "sendungsverfolgung", "paket", "versandbestätigung", "unterwegs", "lieferung", "sendungsnummer"],
+    "government": ["bescheid", "finanzamt", "ausländerbehörde", "landesamt für einwanderung", "bürgeramt", "behörde", "aktenzeichen", "rechtsbehelfsbelehrung", "aufenthaltstitel"],
+    "bank_finance": ["kontoauszug", "depot", "kontostand", "sparplan", "zinsen", "girokonto", "kreditkartenabrechnung", "finanzstatus"],
+    "bills_payments": ["rechnung", "abschlag", "lastschrift", "beitrag", "fälligkeit", "rechnungsbetrag", "zahlungserinnerung", "mahnung"],
+    "legal_notary": ["notar", "rechtsanwalt", "kanzlei", "vertragsentwurf", "urkunde", "vollmacht", "gericht", "kaufvertrag"],
+    "work": ["gehaltsabrechnung", "entgeltabrechnung", "arbeitgeber", "personalabteilung", "arbeitsvertrag", "lohnsteuerbescheinigung", "urlaubsantrag"],
+    "health": ["termin", "arztpraxis", "rezept", "krankenkasse", "befund", "zahnarzt", "überweisung zum facharzt"],
+    "travel": ["flug", "bordkarte", "buchungsbestätigung", "hotel", "check-in", "reiseplan", "reservierung"],
+    "personal_social": ["geburtstag", "abendessen", "bis bald", "familie", "hochzeit", "feier", "treffen wir uns"]
+  },
+  "action_phrases": ["bitte überweisen", "bitte bis", "wir bitten um", "rückmeldung bis", "unterschrieben zurück", "handlungsbedarf", "frist"],
+  "deadline_phrases": ["fällig am", "zahlbar bis", "spätestens", "innerhalb von 14 tagen", "innerhalb eines monats", "bis zum"],
+  "amount_labels": ["gesamtbetrag", "rechnungsbetrag", "zu zahlen", "summe", "betrag"]
+}

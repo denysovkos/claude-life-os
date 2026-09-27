@@ -1,0 +1,86 @@
+{
+  "dates": [
+    {
+      "text": "Der Betrag ist fällig am 05.03.2026.",
+      "expect": "2026-03-05"
+    },
+    {
+      "text": "Berlin, den 1. Februar 2026",
+      "expect": "2026-02-01"
+    },
+    {
+      "text": "gültig bis 14. Sept. 2027",
+      "expect": "2027-09-14"
+    },
+    {
+      "text": "Abbuchung am 31.01.26",
+      "expect": "2026-01-31"
+    }
+  ],
+  "amounts": [
+    {
+      "text": "Rechnungsbetrag: 1.234,56 €",
+      "expect": "1234.56"
+    },
+    {
+      "text": "Abschlag 89,00 EUR monatlich",
+      "expect": "89.00"
+    },
+    {
+      "text": "Beitrag 42,10€ pro Monat",
+      "expect": "42.10"
+    }
+  ],
+  "emails": [
+    {
+      "subject": "Ihr Kaufbeleg",
+      "body": "Vielen Dank für Ihren Einkauf. Quittung Nr. 4411, bezahlt mit EC-Karte.",
+      "expect_category": "purchases"
+    },
+    {
+      "subject": "Ihr Paket wurde zugestellt",
+      "body": "Sendungsnummer 00340434. Das Paket wurde heute zugestellt.",
+      "expect_category": "orders_delivery"
+    },
+    {
+      "subject": "Bescheid über Ihren Antrag",
+      "body": "Anbei erhalten Sie den Bescheid der Behörde, Aktenzeichen 12-345. Bitte beachten Sie die Rechtsbehelfsbelehrung.",
+      "expect_category": "government"
+    },
+    {
+      "subject": "Ihr Kontoauszug Januar",
+      "body": "Ihr Kontoauszug für das Girokonto liegt im Postfach. Kontostand zum Monatsende siehe Anlage.",
+      "expect_category": "bank_finance"
+    },
+    {
+      "subject": "Rechnung 2026-0113",
+      "body": "Ihre Rechnung liegt bei. Der Rechnungsbetrag wird per Lastschrift eingezogen.",
+      "expect_category": "bills_payments"
+    },
+    {
+      "subject": "Vertragsentwurf vom Notar",
+      "body": "Sehr geehrte Frau Beispiel, anbei der Vertragsentwurf für den Kaufvertrag. Das Notar-Büro bittet um Durchsicht vor der Beurkundung.",
+      "expect_category": "legal_notary"
+    },
+    {
+      "subject": "Ihre Entgeltabrechnung Januar",
+      "body": "Die Gehaltsabrechnung steht bereit. Fragen richten Sie bitte an die Personalabteilung Ihres Arbeitgebers.",
+      "expect_category": "work"
+    },
+    {
+      "subject": "Terminerinnerung",
+      "body": "Wir erinnern an Ihren Termin in unserer Arztpraxis am Dienstag. Bitte die Karte der Krankenkasse mitbringen.",
+      "expect_category": "health"
+    },
+    {
+      "subject": "Buchungsbestätigung Flug nach Lissabon",
+      "body": "Ihr Flug ist bestätigt. Online-Check-in öffnet 24 Stunden vor Abflug, die Bordkarte folgt.",
+      "expect_category": "travel"
+    },
+    {
+      "subject": "Geburtstag am Samstag",
+      "body": "Wir feiern Mias Geburtstag mit einem Abendessen. Die ganze Familie kommt, bis bald!",
+      "expect_category": "personal_social"
+    }
+  ]
+}

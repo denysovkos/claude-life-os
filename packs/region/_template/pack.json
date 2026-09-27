@@ -1,0 +1,11 @@
+{
+  "region": "xx",
+  "name": "Country name",
+  "status": "skeleton",
+  "version": "0.1.0",
+  "currency": "EUR",
+  "default_timezone": "Europe/...",
+  "default_input_locales": ["en"],
+  "tax_year_start": "01-01",
+  "maintainers": []
+}
