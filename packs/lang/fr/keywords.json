@@ -1,0 +1,22 @@
+{
+  "categories": {
+    "bills_payments": [
+      "facture",
+      "montant à payer",
+      "prélèvement",
+      "échéance"
+    ],
+    "government": [
+      "impots.gouv",
+      "préfecture",
+      "avis d'imposition",
+      "administration"
+    ],
+    "orders_delivery": [
+      "colis",
+      "livré",
+      "numéro de suivi",
+      "expédié"
+    ]
+  }
+}

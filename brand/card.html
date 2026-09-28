@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Inter;font-weight:400;src:url(fonts/inter-400.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:600;src:url(fonts/inter-600.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:800;src:url(fonts/inter-800.woff2) format("woff2")}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1200px;height:627px;overflow:hidden;background:#0F141C}
+body{font-family:Inter,sans-serif;color:#F7F3EE;
+  background:
+    radial-gradient(900px 500px at 88% 10%, rgba(217,119,87,.28), transparent 60%),
+    radial-gradient(700px 500px at 0% 100%, rgba(80,110,160,.22), transparent 60%),
+    #0F141C;}
+.wrap{position:absolute;inset:0;padding:64px 64px 56px 72px;display:flex;gap:40px}
+.left{flex:1.05;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:14px;font-weight:800;font-size:26px;letter-spacing:-.3px}
+.brand img{width:52px;height:52px}
+.brand span{color:#E8896A}
+.eyebrow{margin-top:44px;font-size:17px;font-weight:600;color:#E8896A;letter-spacing:.14em;text-transform:uppercase}
+h1{margin-top:14px;font-size:64px;line-height:1.02;font-weight:800;letter-spacing:-2px}
+.sub{margin-top:22px;font-size:21px;line-height:1.45;color:#C9C3BB;max-width:520px}
+.pills{margin-top:auto;display:flex;gap:10px;flex-wrap:wrap}
+.pill{padding:9px 15px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font-size:15px;font-weight:600;color:#E9E4DD}
+.url{margin-top:16px;font-size:16px;color:#9AA3AF}
+.right{flex:.95;position:relative}
+.panel{position:absolute;right:0;top:6px;width:452px;border-radius:26px;background:#FBF8F4;color:#1B2230;
+  box-shadow:0 40px 80px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.06);padding:24px 24px 18px;transform:rotate(1.2deg)}
+.ph{display:flex;align-items:center;justify-content:space-between}
+.ph b{font-size:19px;font-weight:800;letter-spacing:-.2px}
+.ph small{font-size:13px;color:#8A8F98;font-weight:600}
+.item{margin-top:12px;display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:#fff;border:1px solid #EFE8DF}
+.dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:6px}
+.t{font-size:15.5px;font-weight:600;line-height:1.3}
+.m{font-size:13px;color:#7B818B;margin-top:3px}
+.tag{margin-left:auto;flex:none;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:7px}
+.hard{background:#FCE3DA;color:#B4432A}
+.soft{background:#EAF1FB;color:#35609B}
+.chat{position:absolute;left:-34px;bottom:-4px;width:400px;transform:rotate(-1.5deg)}
+.q{margin-left:auto;width:max-content;max-width:320px;background:#E8896A;color:#fff;padding:12px 16px;border-radius:18px 18px 4px 18px;font-size:15px;font-weight:600;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.a{margin-top:10px;background:#1E2633;border:1px solid rgba(255,255,255,.08);color:#F1ECE6;padding:13px 16px;border-radius:18px 18px 18px 4px;font-size:15px;line-height:1.4;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.a em{font-style:normal;color:#F5B49C;font-weight:600}
+</style></head>
+<body><div class="wrap">
+  <div class="left">
+    <div class="brand"><img src="logo.svg" alt="">Life <span>OS</span></div>
+    <div class="eyebrow">Open source Claude skill</div>
+    <h1>Your paperwork,<br>handled.</h1>
+    <p class="sub">Mail, documents, contracts and deadlines, filed and tracked every night. Ask Claude anything and get the answer with a link to the source.</p>
+    <div class="pills"><span class="pill">Gmail</span><span class="pill">Google Drive</span><span class="pill">Supabase</span><span class="pill">10 languages</span><span class="pill">MIT</span></div>
+    <div class="url">github.com/denysovkos/claude-life-os</div>
+  </div>
+  <div class="right">
+    <div class="panel">
+      <div class="ph"><b>Daily brief</b><small>Tue 6 Oct · 07:00</small></div>
+      <div class="item"><span class="dot" style="background:#D9573A"></span><div><div class="t">Tax objection ends in 7 days</div><div class="m">Tax assessment 2025 · notified 11 Sep</div></div><span class="tag hard">Hard</span></div>
+      <div class="item"><span class="dot" style="background:#E0A33A"></span><div><div class="t">Electricity bill €61.20 due Friday</div><div class="m">Direct debit · closes itself when paid</div></div><span class="tag soft">Soft</span></div>
+      <div class="item"><span class="dot" style="background:#4C8BD9"></span><div><div class="t">Residence permit: apply in 90 days</div><div class="m">Card expires 31 Dec · reminders at 60, 30, 14</div></div><span class="tag hard">Hard</span></div>
+    </div>
+    <div class="chat">
+      <div class="q">When can I cancel my phone contract?</div>
+      <div class="a">Send the notice by <em>14 Feb 2028</em>. After that it runs monthly with one month's notice. <em>Contract ↗</em></div>
+    </div>
+  </div>
+</div></body></html>

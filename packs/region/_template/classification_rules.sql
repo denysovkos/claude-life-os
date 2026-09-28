@@ -1,0 +1,2 @@
+-- Region pack template. Must be idempotent: guard every insert with `where not exists`
+-- or `on conflict do nothing`, exactly like packs/region/de/classification_rules.sql.

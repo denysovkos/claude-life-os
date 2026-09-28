@@ -1,0 +1,46 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_tax",
+      "label": "Скарга на податкове повідомлення-рішення",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_business_days": 10}],
+      "roll_to_business_day": false,
+      "hard": true,
+      "lead_days": [7, 3, 1],
+      "basis": "Пункт 56.3 статті 56 Податкового кодексу України: скарга подається протягом 10 робочих днів з дня отримання податкового повідомлення-рішення.",
+      "notes": "Counted from the date on the notice, which is before receipt; errs early. Public holidays are not skipped here. Court action is a separate route with its own periods."
+    },
+    {
+      "key": "consumer_withdrawal",
+      "label": "Строк відмови від договору",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "Закон України «Про захист прав споживачів»: відмова від договору, укладеного на відстані, протягом 14 днів з моменту отримання продукції.",
+      "notes": "v_purchase_rights counts from the order mail, which errs early."
+    }
+  ],
+  "annual_dates": [
+    {
+      "key": "tax_return_due",
+      "label": "Подати декларацію про майновий стан і доходи",
+      "month_day": "05-01",
+      "year_offset_from_tax_year": 1,
+      "hard": true,
+      "basis": "Підпункт 49.18.4 Податкового кодексу України: декларація фізичної особи подається до 1 травня року, що настає за звітним.",
+      "notes": "Only needed when there is income not taxed at source, such as foreign income or rental income."
+    }
+  ],
+  "facts": [],
+  "authorities": [],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}

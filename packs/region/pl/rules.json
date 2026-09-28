@@ -1,0 +1,71 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_administrative",
+      "label": "Odwołanie od decyzji",
+      "applies_to": ["official_decision"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [10, 7, 3, 1],
+      "basis": "Art. 129 § 2 Kodeksu postępowania administracyjnego: czternaście dni od doręczenia decyzji. Art. 57 § 4: termin kończący się w sobotę lub dzień wolny od pracy upływa następnego dnia roboczego.",
+      "notes": "Counted from the date on the decision, which is before delivery; errs early."
+    },
+    {
+      "key": "objection_tax",
+      "label": "Odwołanie od decyzji podatkowej",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [10, 7, 3, 1],
+      "basis": "Art. 223 § 2 Ordynacji podatkowej: czternaście dni od doręczenia decyzji. Art. 12 § 5: termin kończący się w sobotę lub dzień ustawowo wolny upływa następnego dnia roboczego."
+    },
+    {
+      "key": "consumer_withdrawal",
+      "label": "Termin odstąpienia od umowy",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": true,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "Art. 27 i 28 ustawy o prawach konsumenta: czternaście dni od objęcia rzeczy w posiadanie (dyrektywa 2011/83/UE).",
+      "notes": "v_purchase_rights counts from the order mail, which is earlier than delivery, so it errs on the safe side. Without proper withdrawal information the period extends by up to 12 months (Directive 2011/83/EU, art. 10)."
+    },
+    {
+      "key": "statutory_warranty",
+      "label": "Koniec odpowiedzialności za zgodność towaru",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_months": 24}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [30],
+      "basis": "Art. 43d ustawy o prawach konsumenta: przedsiębiorca odpowiada za brak zgodności z umową ujawniony w ciągu dwóch lat od dostarczenia towaru.",
+      "notes": "A manufacturer's guarantee is voluntary and separate; its terms are in the guarantee document."
+    }
+  ],
+  "annual_dates": [
+    {
+      "key": "tax_return_due",
+      "label": "Złożyć zeznanie PIT",
+      "month_day": "04-30",
+      "year_offset_from_tax_year": 1,
+      "hard": true,
+      "basis": "Art. 45 ust. 1 ustawy o podatku dochodowym od osób fizycznych: zeznanie do 30 kwietnia roku następującego po roku podatkowym.",
+      "notes": "Twój e-PIT accepts the prepared return automatically on 30 April if you do nothing."
+    }
+  ],
+  "facts": [],
+  "authorities": [],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}
