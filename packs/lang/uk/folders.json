@@ -1,0 +1,17 @@
+{
+  "root": "Life OS",
+  "inbox": "Вхідні",
+  "emergency": "Аварійне",
+  "backups": "Резервні копії",
+  "catch_all": "Документи",
+  "identity": "Посвідчення особи",
+  "finance": "Фінанси",
+  "taxes": "Податки",
+  "housing": "Житло",
+  "insurance": "Страхування",
+  "work": "Робота",
+  "legal": "Юридичне",
+  "health": "Здоров'я",
+  "vehicle": "Автомобіль",
+  "education": "Освіта"
+}

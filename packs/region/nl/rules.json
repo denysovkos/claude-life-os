@@ -1,0 +1,63 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_administrative",
+      "label": "Bezwaartermijn",
+      "applies_to": ["official_decision"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 42}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [21, 14, 7, 3, 1],
+      "basis": "Artikel 6:7 en 6:8 Awb: zes weken, te rekenen vanaf de dag na bekendmaking. Algemene termijnenwet: een termijn die eindigt op een zaterdag, zondag of feestdag loopt door tot de eerstvolgende werkdag.",
+      "notes": "Counted from the date on the decision; the real start is the day after it was sent, so this errs early."
+    },
+    {
+      "key": "objection_tax",
+      "label": "Bezwaartermijn (belastingen)",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 42}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [21, 14, 7, 3, 1],
+      "basis": "Artikel 26 AWR met artikel 6:7 Awb: zes weken na de dagtekening van de aanslag."
+    },
+    {
+      "key": "consumer_withdrawal",
+      "label": "Bedenktijd",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": true,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "Artikel 6:230o BW: veertien dagen na ontvangst van de zaak (richtlijn 2011/83/EU).",
+      "notes": "v_purchase_rights counts from the order mail, which is earlier than delivery, so it errs on the safe side. Without proper withdrawal information the period extends by up to 12 months (Directive 2011/83/EU, art. 10)."
+    }
+  ],
+  "annual_dates": [
+    {
+      "key": "tax_return_due",
+      "label": "Aangifte inkomstenbelasting doen",
+      "month_day": "05-01",
+      "year_offset_from_tax_year": 1,
+      "hard": true,
+      "basis": "De Belastingdienst vraagt de aangifte inkomstenbelasting vóór 1 mei van het volgende jaar.",
+      "notes": "Uitstel can be requested online before that date."
+    }
+  ],
+  "facts": [
+    {
+      "key": "conformity",
+      "text": "Dutch law has no fixed statutory warranty period: a product must last as long as can reasonably be expected (artikel 7:17 BW), with the burden of proof on the seller in the first year."
+    }
+  ],
+  "authorities": [],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}

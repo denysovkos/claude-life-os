@@ -1,0 +1,72 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_administrative",
+      "label": "Reclamação administrativa",
+      "applies_to": ["official_decision"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_business_days": 15}],
+      "roll_to_business_day": false,
+      "hard": true,
+      "lead_days": [10, 5, 2, 1],
+      "basis": "Artigo 191.º do Código do Procedimento Administrativo: reclamação no prazo de 15 dias; artigo 87.º: os prazos contam-se em dias úteis.",
+      "notes": "Public holidays are not skipped here, so the result can be early. Court action against the decision has a longer period (three months, artigo 58.º CPTA)."
+    },
+    {
+      "key": "objection_tax",
+      "label": "Reclamação graciosa",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 120}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [30, 14, 7, 3, 1],
+      "basis": "Artigo 70.º, n.º 1, do Código de Procedimento e de Processo Tributário: 120 dias; artigo 20.º remete para o artigo 279.º do Código Civil, que transfere o termo em dia não útil para o primeiro dia útil.",
+      "notes": "Counted from the date on the notice, which is earlier than the legal start; errs early."
+    },
+    {
+      "key": "consumer_withdrawal",
+      "label": "Prazo de livre resolução",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": true,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "Artigo 10.º do Decreto-Lei 24/2014: catorze dias a contar da receção do bem.",
+      "notes": "v_purchase_rights counts from the order mail, which is earlier than delivery, so it errs on the safe side. Without proper withdrawal information the period extends by up to 12 months (Directive 2011/83/EU, art. 10)."
+    },
+    {
+      "key": "statutory_warranty",
+      "label": "Fim da garantia legal",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_months": 36}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [30],
+      "basis": "Artigo 12.º do Decreto-Lei 84/2021: garantia legal de três anos a contar da entrega.",
+      "notes": "A manufacturer's guarantee is voluntary and separate; its terms are in the guarantee document."
+    }
+  ],
+  "annual_dates": [
+    {
+      "key": "tax_return_due",
+      "label": "Entregar a declaração de IRS",
+      "month_day": "06-30",
+      "year_offset_from_tax_year": 1,
+      "hard": true,
+      "basis": "Artigo 60.º do Código do IRS: declaração entregue de 1 de abril a 30 de junho do ano seguinte.",
+      "notes": "IRS Automático, where available, confirms itself on 30 June if not changed."
+    }
+  ],
+  "facts": [],
+  "authorities": [],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}

@@ -1,0 +1,77 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_administrative",
+      "label": "Beschwerdefrist",
+      "applies_to": ["official_decision"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 28}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [21, 14, 7, 3, 1],
+      "basis": "§ 7 Abs. 4 VwGVG: Beschwerde an das Verwaltungsgericht binnen vier Wochen ab Zustellung. § 33 Abs. 2 AVG: fällt das Ende auf einen Samstag, Sonntag oder Feiertag, endet die Frist am nächsten Werktag.",
+      "notes": "Counted from the date on the decision, which is before delivery, so the result is early rather than late. Some decisions name a different remedy in the Rechtsmittelbelehrung; that text wins."
+    },
+    {
+      "key": "objection_tax",
+      "label": "Beschwerdefrist (Abgaben)",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_months": 1}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [21, 14, 7, 3, 1],
+      "basis": "§ 245 Abs. 1 BAO: Bescheidbeschwerde binnen eines Monats ab Bekanntgabe. § 108 Abs. 3 BAO: Ende an Samstag, Sonntag oder Feiertag verschiebt sich auf den nächsten Werktag.",
+      "notes": "The Finanzamt can extend the period on request (§ 245 Abs. 3 BAO); ask before it expires."
+    },
+    {
+      "key": "consumer_withdrawal",
+      "label": "Rücktrittsfrist",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": true,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "§ 11 FAGG: 14 Tage ab Erhalt der Ware (Richtlinie 2011/83/EU). Verordnung (EWG) 1182/71: Ende an Wochenende oder Feiertag verschiebt sich auf den nächsten Werktag.",
+      "notes": "v_purchase_rights counts from the order mail, which is earlier than delivery, so it errs on the safe side. Without proper withdrawal information the period extends by up to 12 months (Directive 2011/83/EU, art. 10)."
+    },
+    {
+      "key": "statutory_warranty",
+      "label": "Gewährleistung endet",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_months": 24}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [30],
+      "basis": "§ 933 ABGB und § 10 VGG: Gewährleistung zwei Jahre ab Übergabe bei beweglichen Sachen.",
+      "notes": "A manufacturer's guarantee is voluntary and separate; its terms are in the guarantee document."
+    }
+  ],
+  "annual_dates": [
+    {
+      "key": "tax_return_due",
+      "label": "Einkommensteuererklärung abgeben",
+      "month_day": "06-30",
+      "year_offset_from_tax_year": 1,
+      "hard": true,
+      "basis": "§ 134 Abs. 1 BAO: Abgabeerklärungen bis 30. April, elektronisch über FinanzOnline bis 30. Juni des Folgejahres, für Pflichtveranlagungen.",
+      "notes": "An Arbeitnehmerveranlagung that is only voluntary can be filed for five years back."
+    }
+  ],
+  "facts": [
+    {
+      "key": "orf_beitrag",
+      "text": "Since 2024 the ORF-Beitrag is charged per household registered at an Austrian address. It cannot be cancelled while someone in the household is registered there."
+    }
+  ],
+  "authorities": [],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}
