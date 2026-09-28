@@ -1,0 +1,72 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_administrative",
+      "label": "Ricorso al TAR",
+      "applies_to": ["official_decision"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 60}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [30, 14, 7, 3, 1],
+      "basis": "Articoli 29 e 41 del codice del processo amministrativo: sessanta giorni dalla notificazione. Articolo 52: il termine che scade in un giorno festivo è prorogato al primo giorno non festivo.",
+      "notes": "Court deadlines are suspended from 1 to 31 August (legge 742/1969); this rule ignores that and errs early."
+    },
+    {
+      "key": "objection_tax",
+      "label": "Ricorso tributario",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 60}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [30, 14, 7, 3, 1],
+      "basis": "Articolo 21 del d.lgs. 546/1992: sessanta giorni dalla notifica dell'atto.",
+      "notes": "The August suspension applies here too; counting without it errs early."
+    },
+    {
+      "key": "consumer_withdrawal",
+      "label": "Termine di recesso",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": true,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "Articolo 52 del codice del consumo: quattordici giorni dalla consegna del bene (direttiva 2011/83/UE).",
+      "notes": "v_purchase_rights counts from the order mail, which is earlier than delivery, so it errs on the safe side. Without proper withdrawal information the period extends by up to 12 months (Directive 2011/83/EU, art. 10)."
+    },
+    {
+      "key": "statutory_warranty",
+      "label": "Fine della garanzia legale",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_months": 24}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [30],
+      "basis": "Articolo 133 del codice del consumo: garanzia legale di conformità di due anni dalla consegna.",
+      "notes": "A manufacturer's guarantee is voluntary and separate; its terms are in the guarantee document."
+    }
+  ],
+  "annual_dates": [
+    {
+      "key": "tax_return_due",
+      "label": "Presentare la dichiarazione dei redditi",
+      "month_day": "10-31",
+      "year_offset_from_tax_year": 1,
+      "hard": true,
+      "basis": "Modello Redditi persone fisiche in via telematica: entro il 31 ottobre dell'anno successivo.",
+      "notes": "The 730 for employees and pensioners is due earlier, by 30 September; check which model applies."
+    }
+  ],
+  "facts": [],
+  "authorities": [],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}
