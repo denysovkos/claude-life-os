@@ -5,9 +5,11 @@
 --   was from its slot: a job that still runs but hours away from its slot (which is how a
 --   scheduler outage starts) is visible before it misses a night. v_intake_watchdog is
 --   unchanged.
--- * take_snapshot() also captures life_settings, so a bad settings write can be undone
---   from the same snapshot as the data.
+-- * Every snapshot also captures life_settings (a trigger on backup_snapshots), so a bad
+--   settings write can be undone from the same snapshot as the data.
 -- * New settings get defaults only where the key is missing; existing values are kept.
+--
+-- Additive; neither drops an object nor removes a row.
 
 -- 1. Defaults for the new settings -------------------------------------------------------
 
@@ -52,46 +54,26 @@ from w;
 comment on view public.v_schedule_drift is 'How far each night job''s last start was from its slot (life_settings.schedule_slots, local time). drifted: more than schedule_drift_hours away. A job that still runs but hours late is how a scheduler outage starts; v_intake_watchdog only speaks once a run is missed.';
 
 -- 3. Snapshots include the settings ----------------------------------------------------
+-- take_snapshot() is left as it is; every snapshot row gets the settings added as it is
+-- written, so the function's signature and retention behaviour do not change.
 
-create or replace function public.take_snapshot(p_reason text default null::text)
-returns table(snapshot_id uuid, taken timestamptz, counts jsonb)
-language plpgsql security definer set search_path to 'public' as $function$
-declare
-  v_id uuid;
-  v_counts jsonb;
+create or replace function public.backup_snapshot_add_settings()
+returns trigger language plpgsql security definer set search_path to 'public' as $function$
 begin
-  v_counts := jsonb_build_object(
-    'documents', (select count(*) from documents),
-    'emails', (select count(*) from emails),
-    'deadlines', (select count(*) from deadlines),
-    'corrections', (select count(*) from corrections),
-    'improvement_proposals', (select count(*) from improvement_proposals),
-    'skill_revisions', (select count(*) from skill_revisions),
-    'life_settings', (select count(*) from life_settings));
+  new.payload := coalesce(new.payload, '{}'::jsonb)
+    || jsonb_build_object('life_settings',
+         (select coalesce(jsonb_agg(to_jsonb(s)), '[]'::jsonb) from life_settings s));
+  new.row_counts := coalesce(new.row_counts, '{}'::jsonb)
+    || jsonb_build_object('life_settings', (select count(*) from life_settings));
+  return new;
+end $function$;
 
-  insert into backup_snapshots (reason, row_counts, payload)
-  values (
-    p_reason,
-    v_counts,
-    jsonb_build_object(
-      'documents', (select coalesce(jsonb_agg(to_jsonb(d)), '[]'::jsonb) from documents d),
-      'emails', (select coalesce(jsonb_agg(to_jsonb(e)), '[]'::jsonb) from emails e),
-      'deadlines', (select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) from deadlines x),
-      'corrections', (select coalesce(jsonb_agg(to_jsonb(c)), '[]'::jsonb) from corrections c),
-      'improvement_proposals', (select coalesce(jsonb_agg(to_jsonb(p)), '[]'::jsonb) from improvement_proposals p),
-      'skill_revisions', (select coalesce(jsonb_agg(to_jsonb(r)), '[]'::jsonb) from skill_revisions r),
-      'life_settings', (select coalesce(jsonb_agg(to_jsonb(s)), '[]'::jsonb) from life_settings s)))
-  returning id into v_id;
+create or replace trigger backup_snapshots_add_settings before insert on public.backup_snapshots
+  for each row execute function public.backup_snapshot_add_settings();
 
-  -- keep the last 12 snapshots, they are cheap but not free
-  delete from backup_snapshots
-  where id in (select id from backup_snapshots order by taken_at desc offset 12);
-
-  return query select v_id, now(), v_counts;
-end;
-$function$;
+revoke execute on function public.backup_snapshot_add_settings() from anon, authenticated, public;
 
 -- Verification:
---   select (counts ? 'life_settings') from take_snapshot('verify 0013');                -- true
+--   select row_counts ? 'life_settings' from backup_snapshots order by taken_at desc limit 1;  -- true after the next snapshot
 --   select skill, slot, drift_hours, drifted from v_schedule_drift;                     -- slots filled
 --   select slot_drift_hours('2026-10-14 23:50+00', '01:05');                            -- tz dependent, small

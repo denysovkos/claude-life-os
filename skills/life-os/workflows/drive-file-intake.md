@@ -238,8 +238,8 @@ mixed PDFs it returns the text layer of some pages and nothing for the scanned o
    select * from ingest_assemble(:doc, :method, :pages, :chunk_count, :md5_of_whole_body);
    ```
    It refuses a missing chunk, a chunk whose md5 does not match and a body whose md5 does
-   not match, and stores the text only when all three hold. Never remove the chunks; the
-   nightly maintenance does. Before schema 0.6.0 (`text_ingest_chunks` missing) leave the
+   not match, and stores the text only when all three hold. It reads only chunks 1..n, so
+   chunks left from an earlier upload never need removing. Before schema 0.6.0 (`text_ingest_chunks` missing) leave the
    row `pending` and name it in the notes.
 6. **Hard cap.** A file over 100 MB, or a body over 400,000 characters after
    normalisation, is not extracted. Write `extraction_status = 'skipped'` with a human
@@ -418,7 +418,7 @@ run, answer in chat too, short. If `errors` is not empty, one failure task
   without errors. Sweep only what `select * from v_sweepable_staging;` returns: trash the
   Drive copy (already gone counts as trashed), then mark the row with one short UPDATE,
   `update attachment_staging set drive_trashed_at = now() where id = :id returning id;`.
-  `nightly_maintenance()` removes marked rows; the skill never removes them itself.
+  The row stays as a record and leaves `v_sweepable_staging`; nothing removes it.
 - **Recall sample.** Draw 20 random Drive files modified in the last month and assert
   each is in `documents` or named in a run's `skipped`. Log it in `recall_samples`. It is
   the one metric the skill cannot flatter.

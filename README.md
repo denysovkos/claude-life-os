@@ -87,8 +87,8 @@ the whole system and tells you exactly what to fix.
 
 **Updating:** download the new `life-os.zip` and upload it again the same way (remove the
 old skill first if Claude does not replace it). Then write `life os doctor`. It shows you
-which database updates are missing and what they would change, applies them when you
-say yes, and runs the release checks afterwards. Updates never move a deadline you already
+which database updates are missing and what they would change, applies them itself
+(no SQL editor needed), and runs the release checks afterwards. Updates never move a deadline you already
 have, never remove data, and an older skill keeps working against an updated database, so
 nothing breaks if the two are updated a day apart. Every release is tested by upgrading
 the previous one with data in it ([CHANGELOG.md](CHANGELOG.md) says what changed). When

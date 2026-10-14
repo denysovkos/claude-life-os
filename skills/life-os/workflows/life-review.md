@@ -63,9 +63,12 @@ pack, say that a local rule applies and ask.
      `direction` (`debit`/`credit`), `counterparty`, `reference`, `method`
      (`sepa_direct_debit`, `transfer`, `card`, `fee`, `cash_deposit`), `account_iban`,
      `source = 'statement_import'`. Insert with a plain `on conflict do nothing` (no
-     conflict target: the dedupe index changed in schema 0.6.1 and is now per account).
-     `account_iban` is the account key: the IBAN, or for a card statement without one a
-     masked card id `CARD-<scheme>-<last digits as printed>`, the same string every month. Record the import with parsed and inserted counts. A parsed count
+     conflict target). `account_iban` is the account key: the IBAN, or for a card
+     statement without one a masked card id `CARD-<scheme>-<last digits as printed>`, the
+     same string every month. The dedupe index does not include the account yet, so two
+     accounts with an identical booking (same day, amount, direction, empty reference)
+     keep only one row: when you import a second account, compare the parsed count with
+     the inserted count and name any shortfall in the report. Record the import with parsed and inserted counts. A parsed count
      that does not match the statement's own line count is an `errors` entry, never a
      silent pass.
    - Many people pay from more than one account. A contract paid from an account whose

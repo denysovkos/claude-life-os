@@ -2,7 +2,7 @@
 
 ## 4.2.0 (workflow release v3.2), 2026-10-14
 
-Schema 0.6.1. Upgrading from 4.1.x is additive: no open deadline moves, every view keeps
+Schema 0.6.0. Upgrading from 4.1.x is additive: no open deadline moves, every view keeps
 its columns, and a 4.1 skill keeps working against the new database until the new zip is
 uploaded. `tests/upgrade_check.sh` proves it in CI on every push.
 
@@ -16,9 +16,11 @@ uploaded. `tests/upgrade_check.sh` proves it in CI on every push.
 - **Unattended writes no longer hang.** The Supabase connector holds large UPDATEs and any
   row removal for confirmation. Bulky text now goes in through `skill_writebacks`
   (INSERT, applied by trigger as the skill, refuses a missing row) or an upsert; locks are
-  released by expiring them; staging rows, used text chunks and old locks are removed by
-  the new `nightly-maintenance` pg_cron job. Every write-back ends in `returning`, and
-  zero rows is an `errors` entry. (0011, SKILL.md)
+  released by expiring them; nothing removes rows in normal operation (cleared staging
+  rows are marked, text chunks are reused, `ingest_assemble()` reads only chunks 1..n).
+  Every write-back ends in `returning`, and zero rows is an `errors` entry. No migration
+  contains a top-level DROP or a row removal, so the doctor applies upgrades unattended;
+  a test enforces it. (0011, SKILL.md)
 - `v_system_health.text_coverage_pct` could exceed 100. (0015)
 - Doctor reported `pg_trgm` extension functions as executable by anon. (setup)
 - `ingest_assemble()` was executable by anyone holding the public key. (0010)
@@ -36,7 +38,7 @@ uploaded. `tests/upgrade_check.sh` proves it in CI on every push.
   deadline, which no view reported before. `contract_cancel_by()`, `contract_term_end()`.
 - `v_schedule_drift` with `life_settings.schedule_slots`: a night job that starts hours
   away from its slot is reported before it misses a night.
-- `take_snapshot()` includes `life_settings`.
+- Every snapshot includes `life_settings` (trigger on `backup_snapshots`).
 - Emergency binder: overdue next actions say so, unknown persons are labelled, a document
   whose Drive file is gone is marked instead of linked. Bridge 3.1 rewrites the binder
   only when its content changed and checks daily that indexed Drive files still exist
@@ -44,7 +46,6 @@ uploaded. `tests/upgrade_check.sh` proves it in CI on every push.
 - `v_unmapped_folders` and `documents.drive_parent_id`; `life_settings.area_aliases`.
 - `v_address_audit` matches masked addresses; `v_purchase_rights` counts the withdrawal
   period from the delivery mail when there is one.
-- Bank dedupe per account (0016, applied after the new skill is installed).
 - Region pack de 1.2.0: telecom carrier mail rules. Language packs en/de/uk 1.1.0: new
   binder labels.
 - Backups are due-based (any night when the last one is over 30 days old).

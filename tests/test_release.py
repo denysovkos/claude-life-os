@@ -82,6 +82,19 @@ class Schema(unittest.TestCase):
                 with self.subTest(migration=p.name):
                     self.assertIn("-- Verification", read(p))
 
+    def test_new_migrations_apply_unattended(self):
+        # The Supabase connector holds, for a person to confirm, a migration whose text
+        # drops an object or removes rows. The doctor applies upgrades through it, often
+        # with nobody there to confirm, so from 0010 on no migration may contain either.
+        for p in MIGRATIONS:
+            if int(p.name[:4]) < 10:
+                continue
+            code = "\n".join(l.split("--")[0] for l in read(p).splitlines())   # comments do not count
+            with self.subTest(migration=p.name):
+                self.assertNotRegex(code, r"(?im)^\s*drop\s", "top-level DROP")
+                self.assertNotRegex(code, r"(?i)\bdelete\s+from\b", "row removal")
+                self.assertNotRegex(code, r"(?i)\btruncate\b", "row removal")
+
     def test_setup_lists_every_migration(self):
         setup = read(WORKFLOWS["setup"])
         for p in MIGRATIONS:

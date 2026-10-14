@@ -220,8 +220,9 @@ those first if they matter.
 The Supabase connector holds two kinds of statement for a person to confirm: an UPDATE
 that carries a large SET value, and anything that removes rows. At night nobody confirms.
 Since skill 4.2 the workflows avoid both: bulky text goes in through `skill_writebacks`
-or an upsert, locks are released by expiring them, and rows are removed only by the
-database's own `nightly-maintenance` job. If a run still reports a stall, the run's
+or an upsert, locks are released by expiring them, and nothing removes rows in normal
+operation (cleared staging rows are marked, text chunks are reused). Migrations follow the
+same rule, so the doctor can apply them without anyone confirming. If a run still reports a stall, the run's
 `errors` names the statement; it is a skill bug worth an improvement proposal, not
 something to retry by hand.
 

@@ -32,7 +32,7 @@ Code, routines), `assets/` does not exist and the same files are at the reposito
 `supabase/migrations`, `supabase/seed`, `packs`, `apps-script`, `docs`.
 
 ```
-assets/migrations/0001_tables.sql … 0016_bank_dedupe_per_account.sql
+assets/migrations/0001_tables.sql … 0015_audits_health_invariants.sql
 assets/seed/document_types.sql
 assets/packs/lang/<locale>/{dossier,folders,keywords,formats}.json
 assets/packs/region/<code>/{rules.json,classification_rules.sql}
@@ -122,7 +122,7 @@ Apply in this order with `apply_migration`, each named after its file without `.
 0005_settings_and_localization, 0006_pack_settings, 0007_region_rules_in_sql,
 0008_nightly_check_watchdog, 0009_business_days, 0010_hotfixes_and_safe_recount,
 0011_mcp_safe_writes, 0012_notice_periods, 0013_watchdog_and_snapshot,
-0014_successors_binder_folders, 0015_audits_health_invariants, 0016_bank_dedupe_per_account
+0014_successors_binder_folders, 0015_audits_health_invariants
 ```
 
 Then run `assets/seed/document_types.sql` with `execute_sql` (or as migration
@@ -133,11 +133,11 @@ region pack was chosen. Stop at the first error, show it, and look for it in
 Verify:
 
 ```sql
-select value from life_settings where key = 'schema_version';            -- "0.6.1"
-select count(*) from pg_tables where schemaname = 'public';              -- 38
+select value from life_settings where key = 'schema_version';            -- "0.6.0"
+select count(*) from pg_tables where schemaname = 'public';              -- 37
 select count(*) from pg_views  where schemaname = 'public';              -- 39
 select count(*) from document_types;                                     -- 43
-select jobname, schedule, active from cron.job;                          -- nightly-derivations, nightly-maintenance
+select jobname, schedule, active from cron.job;                          -- nightly-derivations
 ```
 
 `get_advisors` (security) will list `rls_enabled_no_policy` for every table. That is the
@@ -399,9 +399,8 @@ apply a fix without the person saying yes.
    shows what is applied; the fix is to apply the missing files from `assets/migrations`
    in order (after a `take_snapshot('pre-upgrade')`), then the pack check below, because
    a migration can start reading a setting the old installation never wrote. Every
-   migration is additive and can run twice; one that drops something says so in its
-   header (0016 drops the old bank dedupe index and is meant for after the new skill is
-   installed, which it is if this doctor is running). After upgrading, run
+   migration is additive, can run twice, and contains no top-level DROP and no row
+   removal, so the connector applies it without asking. After upgrading, run
    `assets/tests/release_checks.sql` if present (or the repository's
    `tests/sql/release_checks.sql`): it must end with "release checks: all passed".
    Before applying, show the person `select * from rederive_deadlines(false) where action
@@ -435,9 +434,8 @@ apply a fix without the person saying yes.
    where jobid = (select jobid from cron.job where jobname = 'nightly-derivations')
    order by start_time desc limit 3;
    select ran_at, error from derivation_runs order by ran_at desc limit 3;
-   select ran_at, counts, error from maintenance_runs order by ran_at desc limit 3;
    ```
-   Both `nightly-derivations` and `nightly-maintenance` must exist and be active.
+   `nightly-derivations` must exist and be active.
 7. **Jobs running on time**: `select * from v_intake_watchdog;` Every `overdue` row is a
    problem; `runs_7d` well below `runs_7d_expected` is a warning even if the last run is
    recent (a job that runs every other night looks fine on `last_run`).

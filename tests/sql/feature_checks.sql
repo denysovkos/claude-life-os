@@ -110,27 +110,29 @@ begin
   if position(dossier_label('subject_unknown') || ': ' in s) = 0 then raise exception 'binder prints "?" for an unknown person'; end if;
   if position(dossier_label('overdue_since') in s) = 0 then raise exception 'binder does not mark an overdue matter'; end if;
 
-  -- 10. nightly maintenance removes only what it should ------------------------------------
+  -- 10. nothing needs removing: cleared staging rows leave the sweep, old chunks are ignored --
   insert into attachment_staging (gmail_message_id, filename, drive_file_id, drive_url, saved_at, resolution, drive_trashed_at)
   values (tag || '-m1', 'a.pdf', tag || '-s1', 'https://example.invalid/s1', now() - interval '40 days', 'out_of_scope', now()),
          (tag || '-m2', 'b.pdf', tag || '-s2', 'https://example.invalid/s2', now() - interval '40 days', 'out_of_scope', null);
-  insert into text_ingest_chunks (document_id, seq, chunk, expected_md5, created_at)
-  values (doc, 1, 'x', md5('x'), now() - interval '1 hour');
-  insert into document_texts (document_id, body, extraction_method, extraction_status, extracted_at)
-  values (doc, 'x', 'local_text', 'done', now())
-  on conflict (document_id) do update set extraction_status = 'done', extracted_at = now();
-  j := nightly_maintenance();
-  if j ? 'error' then raise exception 'nightly_maintenance: %', j->>'error'; end if;
-  select count(*) into n from attachment_staging where gmail_message_id = tag || '-m1';
-  if n <> 0 then raise exception 'a swept staging row was not removed'; end if;
-  select count(*) into n from attachment_staging where gmail_message_id = tag || '-m2';
-  if n <> 1 then raise exception 'a staging row whose Drive copy is not trashed was removed'; end if;
-  select count(*) into n from text_ingest_chunks where document_id = doc;
-  if n <> 0 then raise exception 'chunks of an assembled text were not removed'; end if;
+  select count(*) into n from v_sweepable_staging where gmail_message_id = tag || '-m1';
+  if n <> 0 then raise exception 'a staging row marked as cleared is still offered for sweeping'; end if;
+  select count(*) into n from v_sweepable_staging where gmail_message_id = tag || '-m2';
+  if n <> 1 then raise exception 'an uncleared staging row is not offered for sweeping'; end if;
+
+  -- an earlier upload left three chunks; the new one has two: chunk 3 must not count
+  insert into text_ingest_chunks (document_id, seq, chunk, expected_md5)
+  values (doc, 1, 'old1', md5('old1')), (doc, 2, 'old2', md5('old2')), (doc, 3, 'old3', md5('old3'));
+  insert into text_ingest_chunks (document_id, seq, chunk, expected_md5)
+  values (doc, 1, 'new1', md5('new1')), (doc, 2, 'new2', md5('new2'))
+  on conflict (document_id, seq) do update set chunk = excluded.chunk, expected_md5 = excluded.expected_md5;
+  perform ingest_assemble(doc, 'local_text', 1, 2, md5('new1new2'));
+  select count(*) into n from document_texts where document_id = doc and body = 'new1new2';
+  if n <> 1 then raise exception 'ingest_assemble did not ignore a leftover chunk'; end if;
 
   -- 11. snapshots include settings; drift view answers; health stays within bounds ---------
-  select counts into j from take_snapshot('feature checks');
-  if not (j ? 'life_settings') then raise exception 'take_snapshot does not cover life_settings'; end if;
+  perform take_snapshot('feature checks');
+  select row_counts, payload ? 'life_settings' into j, ok from backup_snapshots order by taken_at desc limit 1;
+  if not (j ? 'life_settings') or not ok then raise exception 'snapshots do not cover life_settings'; end if;
   select count(*) into n from v_schedule_drift;
   if n <> 3 then raise exception 'v_schedule_drift should have 3 jobs, has %', n; end if;
   select count(*) into n from v_system_health where coalesce(text_coverage_pct, 0) > 100;

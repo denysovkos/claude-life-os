@@ -35,7 +35,7 @@ the Supabase dashboard also works; the history then shows `human`.
 
 | Key | Example | Written by | Read by |
 |---|---|---|---|
-| `schema_version` | `"0.6.1"` | migrations | setup (doctor, upgrades); every workflow compares it with `SKILL.md` |
+| `schema_version` | `"0.6.0"` | migrations | setup (doctor, upgrades); every workflow compares it with `SKILL.md` |
 | `owner_name` | `"Anna Beispiel"` | setup | reports |
 | `owner_email` | `"anna@example.com"` | setup | brief and review by email |
 | `timezone` | `"Europe/Berlin"` | setup | every skill, the bridge, the binder date |

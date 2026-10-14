@@ -17,7 +17,7 @@ compatibility: Requires Supabase, Google Drive and Gmail connectors. Google Cale
 metadata:
   version: v4.2
   product: claude-life-os
-  schema_version: 0.6.1
+  schema_version: 0.6.0
 ---
 
 # Life OS
@@ -108,10 +108,12 @@ nothing. So:
    Long document text goes through `text_ingest_chunks` (see drive-file-intake step 4).
 3. Every write-back ends in `returning` something. Zero rows back, an exception or a
    timeout is an `errors` entry naming the row; never assume it landed.
-4. The skill never removes rows. Sweeping staging rows, used text chunks and old locks is
-   `nightly_maintenance()`, run by `pg_cron`. Before schema 0.6.0 that function and
-   `skill_writebacks` do not exist: fall back to the short UPDATE and put the bulky text in
-   the run's `notes`.
+4. Nothing removes rows in normal operation. A staging row whose Drive copy is gone is
+   marked (`drive_trashed_at`) and leaves the sweep view; text chunks and expired lock rows
+   simply stay and are reused. A migration must not contain a top-level DROP or row
+   removal either: the connector holds it, and an unattended upgrade would stall. Before
+   schema 0.6.0 `skill_writebacks` does not exist: fall back to the short UPDATE and put
+   the bulky text in the run's `notes`.
 
 **Tasks are created once.** Both intakes write to the task app and can overlap. Before
 creating a task for a row, claim it with a short UPDATE that only succeeds while the row

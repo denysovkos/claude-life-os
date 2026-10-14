@@ -46,8 +46,7 @@ The read-only checks of setup's doctor mode, without the connector calls:
 select invariant, severity, failing, meaning from v_system_invariants where failing > 0;
 select skill, hours_since, sla_hours, overdue, runs_7d, runs_7d_expected from v_intake_watchdog;
 select started_at, errors from bridge_runs order by started_at desc limit 3;
-select jobname, active from cron.job where jobname in ('nightly-derivations','nightly-maintenance');
-select ran_at, counts, error from maintenance_runs order by ran_at desc limit 1;
+select jobname, active from cron.job where jobname = 'nightly-derivations';
 select skill, slot, last_start, drift_hours from v_schedule_drift where drifted;
 select hours_since_snapshot, days_since_offsite_backup, attachment_backlog from v_system_health;
 ```
@@ -55,12 +54,11 @@ select hours_since_snapshot, days_since_offsite_backup, attachment_backlog from 
 Keep a short list of findings, each one line in `output_locale` with what to do:
 `high` invariants, overdue jobs, a job that drifted from its slot (it still runs, but
 hours late: say which and by how much, because this is how the September outages began),
-bridge errors in the last runs, an inactive or missing cron job, a derivation or
-maintenance error, a snapshot older than 48 hours, an off-site backup older than 35 days
+bridge errors in the last runs, an inactive or missing cron job, a derivation error, a snapshot older than 48 hours, an off-site backup older than 35 days
 or none at all ("the last off-site backup is 41 days old: the next Drive intake takes one
 when it is over 30 days; if it does not, run it by hand").
-On a database older than schema 0.6.0, `v_schedule_drift` and `maintenance_runs` do not
-exist: skip those two lines and add the "run life os doctor" finding instead. Name things ("the Drive intake has not run for 41 hours"), never a bare
+On a database older than schema 0.6.0, `v_schedule_drift` does not
+exist: skip that line and add the "run life os doctor" finding instead. Name things ("the Drive intake has not run for 41 hours"), never a bare
 count. Ignore `low` invariants here; the monthly review deals with them.
 
 ## Step 3: the daily brief
