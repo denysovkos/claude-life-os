@@ -1,17 +1,18 @@
 name: release
 
-# Every push to main becomes a new version: a new tag and a new GitHub release with
-# life-os.zip attached. README links to releases/latest/download/life-os.zip, so the
-# download always serves the newest one.
+# A merge to main is released when, and only when, it brings a new VERSION.
 #
-# Version numbers:
-#   VERSION holds MAJOR.MINOR.PATCH. If the tag vVERSION does not exist yet, that is the
-#   release. If it does, the patch number counts up past the highest existing tag of the
-#   same MAJOR.MINOR (4.0.0, 4.0.1, 4.0.2 ...). To start a new line, set VERSION to 4.1.0
-#   or 5.0.0 in the commit. Nothing is committed back to main.
+# The tag is exactly v<VERSION>: the number in the repository, in SKILL.md, in the
+# CHANGELOG and on the release are the same. Nothing is computed or committed back.
+# The release waits for the ci workflow to pass on that exact commit, and its notes are
+# the CHANGELOG section for that version. A merge that does not change VERSION (tests,
+# README) publishes nothing; the version check on the pull request makes sure that a
+# change that ships to users always does change it.
 
 on:
-  push:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -24,47 +25,63 @@ concurrency:
 
 jobs:
   release:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Pack tests must pass before anything is published
-        run: python3 -m unittest discover -s tests
-
-      - name: Pick the version
+      - name: Version from VERSION
         id: version
         run: |
           set -euo pipefail
-          base="$(tr -d '[:space:]' < VERSION)"
-          [[ "$base" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || { echo "VERSION must be MAJOR.MINOR.PATCH, got '$base'"; exit 1; }
-          major="${BASH_REMATCH[1]}"; minor="${BASH_REMATCH[2]}"; patch="${BASH_REMATCH[3]}"
-          if git rev-parse -q --verify "refs/tags/v$base" >/dev/null; then
-            highest="$(git tag -l "v$major.$minor.*" | sed "s/^v$major\.$minor\.//" | grep -E '^[0-9]+$' | sort -n | tail -1)"
-            patch=$(( ${highest:-$patch} + 1 ))
-          fi
-          version="$major.$minor.$patch"
+          version="$(tr -d '[:space:]' < VERSION)"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "VERSION must be MAJOR.MINOR.PATCH, got '$version'"; exit 1; }
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "Releasing v$version"
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::v$version is already released; this merge publishes nothing."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Releasing v$version"
+          fi
 
-      - name: Build the skill zip
-        run: scripts/package_skills.sh
-
-      - name: Tag and publish
+      - name: Release notes from CHANGELOG
+        if: steps.version.outputs.exists == 'false'
         env:
-          GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          tag="v$VERSION"
-          cat > notes.md <<EOF
-          **Install:** download [life-os.zip](https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/life-os.zip), then in Claude open Settings → Capabilities → Skills → Upload skill and choose it. Write \`set up life os\` in a new chat. Already installed: upload the new zip, then write \`life os doctor\`.
-          EOF
-          gh release create "$tag" dist/life-os.zip \
-            --target "$GITHUB_SHA" \
-            --title "claude-life-os $tag" \
+          awk -v v="$VERSION" '
+            $0 ~ "^## " v "([^0-9.]|$)" { on = 1; next }
+            on && /^## / { exit }
+            on { print }
+          ' CHANGELOG.md > section.md
+          [ -s section.md ] || { echo "CHANGELOG.md has no section for $VERSION"; exit 1; }
+          {
+            echo "**Install:** download [life-os.zip](https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/life-os.zip), then in Claude open Settings → Capabilities → Skills → Upload skill and choose it. Write \`set up life os\` in a new chat. Already installed: upload the new zip, then write \`life os doctor\`; it applies the database upgrade after showing you what changes."
+            echo
+            cat section.md
+          } > notes.md
+
+      - name: Build the skill zip
+        if: steps.version.outputs.exists == 'false'
+        run: scripts/package_skills.sh
+
+      - name: Tag and publish
+        if: steps.version.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          gh release create "v$VERSION" dist/life-os.zip \
+            --target "$SHA" \
+            --title "claude-life-os v$VERSION" \
             --notes-file notes.md \
-            --generate-notes \
             --latest

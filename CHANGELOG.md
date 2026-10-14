@@ -52,6 +52,18 @@ uploaded. `tests/upgrade_check.sh` proves it in CI on every push.
 - Claude Code routines are documented again, and the skill is linked at
   `.claude/skills/life-os` for routines that start from a clone.
 
+### Development
+- Tests: `tests/test_release.py` (VERSION, CHANGELOG, SKILL.md, workflow versions,
+  migration lists, bridge version and packaging agree), `tests/sql/feature_checks.sql`
+  (every new database feature end to end), `tests/sql/release_checks.sql`,
+  `tests/upgrade_check.sh` (previous release with data, upgraded, nothing moves).
+- CI runs on every pull request: unit tests, fresh install twice, rules, release and
+  feature checks, the upgrade test, deny-all checks, a downloadable `life-os.zip`, and a
+  guard that a change which ships raises `VERSION`.
+- Releases: the tag is exactly `v<VERSION>`, published only when a merge to main brings a
+  new `VERSION` and CI passed on that commit; the notes are this file's section. The patch
+  number no longer counts up by itself (that is why 4.1.0 shipped as v4.1.5).
+
 ### Workflow versions
 setup v1.3, email-intake v3.2, drive-file-intake v3.2, nightly-check v1.1,
 context-lookup v2.2, life-review v2.2.

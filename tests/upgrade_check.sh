@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Upgrade test: an installation of the previous release, with data, upgraded to this one.
 #
-# 1. Builds a database from the BASE release (git tag, default v4.1.5): its migrations,
+# 1. Builds a database from the BASE release (a git tag; default: the previous release): its migrations,
 #    seed and the de region pack, and configures region de the way setup does.
 # 2. Adds fixture data shaped like real installations: a residence permit whose "apply by"
 #    deadline was set deliberately before the expiry date, a telecom contract with a
@@ -9,16 +9,19 @@
 #    deadline, an auto-renewing payment with no exit on record.
 # 3. Applies this checkout's migrations, seed and packs, twice.
 # 4. Asserts: no open deadline moved, the recount dry run moves nothing later or into the
-#    past, schema_version is current, and tests/sql/release_checks.sql passes.
+#    past, schema_version is current, and tests/sql/release_checks.sql and
+#    tests/sql/feature_checks.sql pass on the upgraded data.
 #
 # Needs git with the BASE tag fetched and a Postgres reachable through the PG* variables
 # (CI: the service container). Creates and drops the database $UPG_DB (KEEP_DB=1 keeps it).
 #
-# Usage: tests/upgrade_check.sh [base-tag]
+# Usage: tests/upgrade_check.sh [base-tag]      e.g. tests/upgrade_check.sh v4.1.5
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-BASE="${1:-v4.1.5}"
+# default: the newest release tag that is not this checkout's own version
+BASE="${1:-$(git tag -l 'v*' --sort=-v:refname | grep -vx "v$(tr -d '[:space:]' < VERSION)" | head -1)}"
+[ -n "$BASE" ] || { echo "no previous release tag found (fetch tags: git fetch --tags)"; exit 1; }
 DB="${UPG_DB:-lifeos_upgrade_check}"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
@@ -115,6 +118,7 @@ unwatched="$(psql -tAc "select count(*) from v_auto_renew_unwatched where name =
 [ "$unwatched" = "1" ] || { echo "FAIL: v_auto_renew_unwatched misses the gym"; exit 1; }
 
 psql -v ON_ERROR_STOP=1 -q -f tests/sql/release_checks.sql 2>&1 | grep -v '^$'
+psql -v ON_ERROR_STOP=1 -q -f tests/sql/feature_checks.sql 2>&1 | grep -v '^$'
 
 [ -n "${KEEP_DB:-}" ] || psql -qd postgres -c "drop database $DB"
 echo "upgrade $BASE -> $(cat VERSION): ok"
