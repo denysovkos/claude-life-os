@@ -153,3 +153,7 @@ dist/
 
 # Downloaded web fonts for rendering brand/ images (OFL, not redistributed here)
 brand/fonts/
+
+# Python bytecode
+__pycache__/
+*.pyc
