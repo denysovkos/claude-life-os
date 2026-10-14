@@ -1,6 +1,6 @@
 # Nightly check
 
-Workflow `nightly-check` v1.0 of the `life-os` skill: the last run of the night. The
+Workflow `nightly-check` v1.1 of the `life-os` skill: the last run of the night. The
 shared rules in `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 It runs after both intakes (typically 03:05, after email at 01:05 and Drive at 02:05), so
@@ -22,7 +22,9 @@ where run_locks.expires_at < now()
 returning skill_name;
 ```
 
-No snapshot: nothing here edits indexed data.
+No snapshot: nothing here edits indexed data. Every write in this workflow (the
+`briefings` row, the lock) is an INSERT or a short UPDATE with `returning`, as SKILL.md
+requires.
 
 ## Step 1: derivations
 
@@ -44,14 +46,21 @@ The read-only checks of setup's doctor mode, without the connector calls:
 select invariant, severity, failing, meaning from v_system_invariants where failing > 0;
 select skill, hours_since, sla_hours, overdue, runs_7d, runs_7d_expected from v_intake_watchdog;
 select started_at, errors from bridge_runs order by started_at desc limit 3;
-select jobname, active from cron.job where jobname = 'nightly-derivations';
+select jobname, active from cron.job where jobname in ('nightly-derivations','nightly-maintenance');
+select ran_at, counts, error from maintenance_runs order by ran_at desc limit 1;
+select skill, slot, last_start, drift_hours from v_schedule_drift where drifted;
 select hours_since_snapshot, days_since_offsite_backup, attachment_backlog from v_system_health;
 ```
 
 Keep a short list of findings, each one line in `output_locale` with what to do:
-`high` invariants, overdue jobs, bridge errors in the last runs, an inactive or missing
-cron job, a derivation error, a snapshot older than 48 hours, an off-site backup older
-than 35 days. Name things ("the Drive intake has not run for 41 hours"), never a bare
+`high` invariants, overdue jobs, a job that drifted from its slot (it still runs, but
+hours late: say which and by how much, because this is how the September outages began),
+bridge errors in the last runs, an inactive or missing cron job, a derivation or
+maintenance error, a snapshot older than 48 hours, an off-site backup older than 35 days
+or none at all ("the last off-site backup is 41 days old: the next Drive intake takes one
+when it is over 30 days; if it does not, run it by hand").
+On a database older than schema 0.6.0, `v_schedule_drift` and `maintenance_runs` do not
+exist: skip those two lines and add the "run life os doctor" finding instead. Name things ("the Drive intake has not run for 41 hours"), never a bare
 count. Ignore `low` invariants here; the monthly review deals with them.
 
 ## Step 3: the daily brief
@@ -85,7 +94,7 @@ Deadlines speak only when today hits a rung of their own `lead_days` ladder;
 
 ## Step 4: finish
 
-Delete the lock row. If this workflow itself failed before step 3 (for example the
+Release the lock by expiring it (SKILL.md). If this workflow itself failed before step 3 (for example the
 database was unreachable), create one task `⚠️ nightly-check failed <date>` in the system
 project, or send it by email without a task provider, unless an open one exists.
 

@@ -18,5 +18,9 @@
   "original": "original",
   "property": "Property",
   "contacts": "Contacts",
-  "none": "- none"
+  "none": "- none",
+  "overdue_since": "OVERDUE since",
+  "close_or_reschedule": "close the matter or set a new date",
+  "subject_unknown": "person not recorded",
+  "file_missing": "file missing in Drive since"
 }

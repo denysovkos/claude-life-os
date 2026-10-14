@@ -29,11 +29,12 @@ CATEGORIES = {
     "legal_notary", "work", "health", "travel", "personal_social",
 }
 
-# Must match dossier_label() in supabase/migrations/0005_settings_and_localization.sql.
+# Must match dossier_label() in supabase/migrations/0014_successors_binder_folders.sql.
 DOSSIER_KEYS = {
     "title", "generated", "intro", "matters", "hard_deadlines", "loans", "insurance",
     "subscriptions", "notice", "months", "notice_unknown", "until", "total", "per_month",
     "identity", "valid_until", "original", "property", "contacts", "none",
+    "overdue_since", "close_or_reschedule", "subject_unknown", "file_missing",
 }
 
 FOLDER_KEYS = {

@@ -18,5 +18,9 @@
   "original": "Original",
   "property": "Immobilie",
   "contacts": "Kontakte",
-  "none": "- keine"
+  "none": "- keine",
+  "overdue_since": "ÜBERFÄLLIG seit",
+  "close_or_reschedule": "Vorgang abschließen oder neues Datum setzen",
+  "subject_unknown": "Person nicht erfasst",
+  "file_missing": "Datei fehlt in Drive seit"
 }

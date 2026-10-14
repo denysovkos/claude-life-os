@@ -1,12 +1,19 @@
 /**
- * claude-life-os: the Google side of the system.  bridge-3.0
+ * claude-life-os: the Google side of the system.  bridge-3.1
  *
  * Runs inside your own Google account every 15 minutes, with or without Claude:
  *   1. Copies email attachments that matter (bills, contracts, letters from authorities)
  *      from Gmail into Drive/Inbox, so the document intake can index them.
  *   2. Re-copies any of those files that vanished from Drive before they were indexed.
  *   3. Emails you when one of the Claude jobs has not run for too long.
- *   4. Once a day, rewrites the "Emergency binder" Google Doc from the index.
+ *   4. Once a day, rewrites the "Emergency binder" Google Doc from the index, only when
+ *      its content changed (the date line alone does not count).
+ *   5. Once a day, checks that the Drive files behind indexed documents still exist, so
+ *      the binder never presents a dead link as a document.
+ *
+ * UPGRADING from an older bridge: paste this file over the old code. Script Properties
+ * and the trigger stay. If the property `dossier_doc_id` is missing, add it first with
+ * the id of your existing binder Google Doc, or a second binder is created.
  *
  * It moves files as native Google objects. No file ever passes through an AI model,
  * so nothing can get corrupted on the way.
@@ -31,11 +38,12 @@
  * is read from the `life_settings` table in Supabase, so there is nothing to edit here.
  */
 
-const SCRIPT_VERSION = 'bridge-3.0';
+const SCRIPT_VERSION = 'bridge-3.1';
 const QUEUE_BATCH = 20;                        // messages per run, the next run takes the rest
 const HEAL_BATCH = 50;                         // staged files re-verified per run
 const WATCHDOG_MAIL_EVERY_HOURS = 12;          // at most one alert per job per 12 hours
 const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
+const DRIVE_CHECK_BATCH = 150;                 // indexed files checked per day, oldest check first
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -116,6 +124,9 @@ function run() {
 
     // 4. Once a day: the emergency binder.
     try { dailyDossier_(settings); } catch (e) { stats.errors.push('dossier: ' + e.message); }
+
+    // 5. Once a day: do the indexed Drive files still exist?
+    try { dailyDriveCheck_(settings); } catch (e) { stats.errors.push('drive check: ' + e.message); }
   } catch (e) {
     stats.errors.push('fatal: ' + e.message);
   } finally {
@@ -283,10 +294,18 @@ function dailyDossier_(settings) {
   const today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
   if (props.getProperty('dossier_date') === today) return;
 
-  const text = sb_('POST', '/rest/v1/rpc/emergency_dossier', {});
+  const text = String(sb_('POST', '/rest/v1/rpc/emergency_dossier', {}));
+  // The first line carries the date; a binder whose content did not change is not
+  // rewritten, so its Drive modifiedTime (and the document intake) stay quiet.
+  const hash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5,
+    text.split('\n').slice(1).join('\n'), Utilities.Charset.UTF_8));
   let doc = null;
   const docId = props.getProperty('dossier_doc_id');
   if (docId) { try { doc = DocumentApp.openById(docId); } catch (e) { doc = null; } }
+  if (doc && props.getProperty('dossier_hash') === hash) {
+    props.setProperty('dossier_date', today);
+    return;
+  }
   if (!doc) {
     doc = DocumentApp.create('Emergency binder');
     DriveApp.getFileById(doc.getId()).moveTo(DriveApp.getFolderById(folderId));
@@ -310,6 +329,41 @@ function dailyDossier_(settings) {
   }
   doc.saveAndClose();
   props.setProperty('dossier_date', today);
+  props.setProperty('dossier_hash', hash);
+}
+
+// ------------------------------------------------------------------------------------
+// Drive resolvability: an indexed document whose file is gone is marked, not removed.
+// ------------------------------------------------------------------------------------
+
+function dailyDriveCheck_(settings) {
+  const tz = settings.timezone || 'UTC';
+  const props = PropertiesService.getScriptProperties();
+  const today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  if (props.getProperty('drivecheck_date') === today) return;
+
+  let batch;
+  try {
+    batch = sb_('POST', '/rest/v1/rpc/drive_check_batch', { p_limit: DRIVE_CHECK_BATCH });
+  } catch (e) {
+    // database older than schema 0.6.0: the function does not exist yet, nothing to do
+    if (String(e.message).indexOf('-> 404') >= 0) { props.setProperty('drivecheck_date', today); return; }
+    throw e;
+  }
+  const checked = [], missing = [];
+  (batch || []).forEach(function (row) {
+    const id = row.drive_file_id;
+    checked.push(id);
+    try {
+      if (DriveApp.getFileById(id).isTrashed()) missing.push(id);
+    } catch (e) {
+      missing.push(id);                                   // "No item with the given ID"
+    }
+  });
+  if (checked.length > 0) {
+    sb_('POST', '/rest/v1/rpc/mark_drive_check', { p_checked: checked, p_missing: missing });
+  }
+  props.setProperty('drivecheck_date', today);
 }
 
 // ------------------------------------------------------------------------------------

@@ -29,7 +29,7 @@ job's SLA (email 36h, Drive 30h, bridge 1h), and the Apps Script bridge, which r
 Google independently of Claude, emails you at most every 12 hours per job.
 
 **Fix.** Open Claude and say "run email-intake" (or the named job). Then check the
-scheduled task in Claude still exists and is enabled, see
+routine (claude.ai/code/routines) or scheduled task still exists and is enabled, see
 [scheduling.md](scheduling.md). A job that runs but less often than
 expected shows as `runs_7d` below `runs_7d_expected` in `v_intake_watchdog`.
 
@@ -214,3 +214,28 @@ rebuild the index from scratch, keep Drive and Gmail (they are the originals), c
 new Supabase project, run setup, and let the intakes run with a wide window. Documents
 and mail are re-indexed; your manual corrections, notes and matters are not, so export
 those first if they matter.
+
+## A night run "stalled 180 s" on a database write and committed nothing
+
+The Supabase connector holds two kinds of statement for a person to confirm: an UPDATE
+that carries a large SET value, and anything that removes rows. At night nobody confirms.
+Since skill 4.2 the workflows avoid both: bulky text goes in through `skill_writebacks`
+or an upsert, locks are released by expiring them, and rows are removed only by the
+database's own `nightly-maintenance` job. If a run still reports a stall, the run's
+`errors` names the statement; it is a skill bug worth an improvement proposal, not
+something to retry by hand.
+
+## "schema 0.x is older than 0.y: run life os doctor"
+
+The skill is newer than the database. Nothing is broken: each workflow uses its
+documented fallback. Write "life os doctor"; it lists the missing migrations and applies
+them after you say yes, then runs `release_checks.sql`.
+
+## Upgrading the Apps Script bridge without a second binder
+
+Paste the new `Code.gs` over the old code. Before running anything, open **Project
+Settings → Script Properties** and check that `dossier_doc_id` holds the id of the
+existing emergency binder (the part of its URL between `/d/` and `/edit`). If it is
+missing, add it; otherwise the new bridge creates a fresh "Emergency binder" next to the
+old one. Then run `install` once and check `bridge_runs.script_version`.
+

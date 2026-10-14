@@ -39,3 +39,13 @@ from (values
 ) v(domain, category, entity)
 where not exists (select 1 from public.classification_rules r
                   where r.scope = 'email' and r.match_field = 'sender_domain' and r.match_value = v.domain);
+
+-- Telecom carriers: contract mail (order confirmations, tariff changes, number porting,
+-- cancellation confirmations) is a contract record, never "other". Whether a mail needs
+-- action (a Kündigungsbestätigung with a date, a porting deadline) is still read, not ruled.
+insert into public.classification_rules (scope, priority, match_field, match_op, match_value, set_category, set_tags, notes)
+select 'email', 60, 'sender_domain', 'domain', v.domain, 'bills_payments', array['telecom','contract'],
+       'region pack de: telecom carrier'
+from (values ('telekom.de'), ('telekom.com'), ('o2.de'), ('o2online.de'), ('vodafone.de'), ('1und1.de')) v(domain)
+where not exists (select 1 from public.classification_rules r
+                  where r.scope = 'email' and r.match_field = 'sender_domain' and r.match_value = v.domain);

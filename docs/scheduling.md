@@ -2,8 +2,7 @@
 
 [Українською](scheduling.uk.md)
 
-Claude does not start by itself. Four scheduled tasks in Claude make the system
-automatic:
+Claude does not start by itself. Four scheduled runs make the system automatic:
 
 | When (your time zone) | Prompt | What it does |
 |---|---|---|
@@ -17,16 +16,6 @@ tasks and the brief come in the language you chose.
 
 Two more things run without Claude and need no setup here: the Apps Script bridge every
 15 minutes, and the database's own job `nightly-derivations` (`pg_cron`, 01:15 UTC).
-
-## Create the tasks
-
-In Claude, open **Scheduled tasks** and create a new task four times: the prompt from the
-table, the frequency (daily, or monthly for the review) and the time. The setup workflow
-walks you through it at the end of "set up life os" and checks afterwards that the first
-runs arrived.
-
-To try one immediately, run it once by hand from the task list, or just write its prompt
-in a chat.
 
 ## Why at night, and why in this order
 
@@ -51,6 +40,77 @@ between runs leaves room for a slow night.
 
 **The review on the 1st.** It reviews a finished month. Any time after the nightly check
 works; 04:05 keeps it apart from the other runs.
+
+## Option A: Claude Code routines (recommended)
+
+Routines run in Anthropic's cloud, so your computer can be off. They are available on
+Pro, Max, Team and Enterprise plans.
+
+A routine clones a GitHub repository at the start of every run and loads the skills
+committed in it. This repository ships the skill at `.claude/skills/life-os`, so the
+routine needs a copy of it on your GitHub:
+
+1. On GitHub open the claude-life-os repository and click **Fork** (or **Use this
+   template** → **Create a new repository**). Private is fine. It contains no personal
+   data: everything personal is in your Supabase project.
+2. Make sure your Google, Gmail and Supabase connectors (and Todoist or Craft if you use
+   them) are connected at claude.ai/customize/connectors. Routines use the same
+   connectors as your chats.
+
+### In the browser
+
+Open **claude.ai/code/routines** → **New routine**, and fill the form four times:
+
+| Field | Value |
+|---|---|
+| Name | `Life OS: email` (then `Life OS: files`, `Life OS: nightly check`, `Life OS: monthly review`) |
+| Instructions (prompt) | the prompt from the table above |
+| Repository | your copy of claude-life-os |
+| Environment | **Default** |
+| Trigger | **Schedule** → **Daily** at the time from the table (entered in your local time) |
+| Connectors | keep Gmail, Google Drive, Supabase, Google Calendar, and Todoist / Craft if you use them; remove every other one |
+
+Click **Create**. For the monthly review choose any preset, save, then set the exact
+schedule from the Claude Code command line with `/schedule update` and the cron
+expression `5 4 1 * *` (04:05 on the 1st of every month).
+
+To try one immediately, open it and click **Run now**, then open the run to read what
+Claude did. A green status only means the session ran; the transcript tells you whether
+the work succeeded.
+
+### From the Claude Code command line
+
+In any Claude Code session signed in with your claude.ai account:
+
+```
+/schedule every day at 01:05 in the <your repo> repository: Run the life-os email-intake workflow.
+/schedule every day at 02:05 in the <your repo> repository: Run the life-os drive-file-intake workflow.
+/schedule every day at 03:05 in the <your repo> repository: Run the life-os nightly-check workflow.
+/schedule on the 1st of every month at 04:05 in the <your repo> repository: Run the life-os life-review workflow.
+```
+
+Claude asks follow-up questions (connectors, environment) and saves each routine to your
+account; it shows up at claude.ai/code/routines too. `/schedule list` shows them all.
+
+### Limits worth knowing
+
+- Routines count against your plan's usage and a daily number of routine runs per
+  account. Life OS is three runs a day plus one a month; check
+  your remaining runs at claude.ai/code/routines.
+- A routine can do everything its connectors allow without asking. That is why the
+  connectors list should hold only what Life OS needs.
+- If your GitHub connection expires, routines skip runs until you reconnect (up to 72
+  hours), then switch off.
+
+## Option B: scheduled tasks in the Claude desktop app
+
+The desktop app can run the same prompts as local scheduled tasks. They need your
+computer switched on and awake at those times, so for night runs they only suit a
+computer that stays on. Create four tasks with the times and prompts from the table.
+
+If you choose other times, tell the setup workflow (or update `life_settings.schedule_slots`):
+the watchdog compares each run's start with its slot and reports a job that drifts by
+more than three hours, which is how a scheduler outage usually begins.
 
 ## When a night is missed
 

@@ -1,6 +1,6 @@
 # Life OS setup
 
-Workflow `setup` v1.2 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
+Workflow `setup` v1.3 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Three modes. Pick from what the person said; if unclear, ask.
@@ -27,10 +27,12 @@ The person may never have used a database or a script editor. So:
 ## Where the files are
 
 The database migrations, the packs and the Apps Script ship in the skill's own folder
-(`assets/`, next to `SKILL.md`).
+(`assets/`, next to `SKILL.md`). When the skill runs from a clone of the repository (Claude
+Code, routines), `assets/` does not exist and the same files are at the repository root:
+`supabase/migrations`, `supabase/seed`, `packs`, `apps-script`, `docs`.
 
 ```
-assets/migrations/0001_tables.sql … 0009_business_days.sql
+assets/migrations/0001_tables.sql … 0016_bank_dedupe_per_account.sql
 assets/seed/document_types.sql
 assets/packs/lang/<locale>/{dossier,folders,keywords,formats}.json
 assets/packs/region/<code>/{rules.json,classification_rules.sql}
@@ -95,8 +97,9 @@ Read the available packs from `assets/packs/lang/*/pack.json` and
 Check first: `list_projects`. If one is named `life-os` (or the person names one), look
 inside with `list_tables` (schema `public`):
 
-- has `life_settings` and `schema_version` is set: the database exists. Skip to step 5
-  (or run the upgrade in doctor mode if the version is older than `0.5.0`).
+- has `life_settings`, or any rows in `documents`, `emails` or `deadlines`: the database
+  exists. Never install into it. Skip to step 5, and run the upgrade in doctor mode if
+  `schema_version` is missing or older than `schema_version` in `../SKILL.md`.
 - has other tables: it is not ours. Do not install into it. Create a new project.
 - empty: use it.
 
@@ -117,7 +120,9 @@ Apply in this order with `apply_migration`, each named after its file without `.
 ```
 0001_tables, 0002_functions, 0003_views, 0004_triggers_and_security,
 0005_settings_and_localization, 0006_pack_settings, 0007_region_rules_in_sql,
-0008_nightly_check_watchdog, 0009_business_days
+0008_nightly_check_watchdog, 0009_business_days, 0010_hotfixes_and_safe_recount,
+0011_mcp_safe_writes, 0012_notice_periods, 0013_watchdog_and_snapshot,
+0014_successors_binder_folders, 0015_audits_health_invariants, 0016_bank_dedupe_per_account
 ```
 
 Then run `assets/seed/document_types.sql` with `execute_sql` (or as migration
@@ -128,11 +133,11 @@ region pack was chosen. Stop at the first error, show it, and look for it in
 Verify:
 
 ```sql
-select value from life_settings where key = 'schema_version';            -- "0.5.0"
-select count(*) from pg_tables where schemaname = 'public';              -- 35
-select count(*) from pg_views  where schemaname = 'public';              -- 35
-select count(*) from document_types;                                     -- 40
-select jobname, schedule, active from cron.job;                          -- nightly-derivations
+select value from life_settings where key = 'schema_version';            -- "0.6.1"
+select count(*) from pg_tables where schemaname = 'public';              -- 38
+select count(*) from pg_views  where schemaname = 'public';              -- 39
+select count(*) from document_types;                                     -- 43
+select jobname, schedule, active from cron.job;                          -- nightly-derivations, nightly-maintenance
 ```
 
 `get_advisors` (security) will list `rls_enabled_no_policy` for every table. That is the
@@ -170,7 +175,9 @@ insert into life_settings (key, value) values
   ('current_address',   to_jsonb(:address::text)),        -- or 'null'::jsonb
   ('former_address_patterns', $j$[...]$j$::jsonb),
   ('emergency_contacts',      $j$[...]$j$::jsonb),
-  ('tax_year',          to_jsonb(extract(year from now())::int))
+  ('tax_year',          to_jsonb(extract(year from now())::int)),
+  ('schedule_slots',    $j${"email-intake": "01:05", "drive-file-intake": "02:05", "nightly-check": "03:05"}$j$::jsonb),
+  ('area_aliases',      '{}'::jsonb)
 on conflict (key) do update set value = excluded.value, updated_at = now();
 ```
 
@@ -186,7 +193,12 @@ on conflict (key) do update set value = excluded.value, updated_at = now();
 - `installed_packs`: `{"lang": {"<locale>": "<version>", …}, "region": {"<code>": "<version>"}}`
   for every pack written. Doctor compares it with the packs in `assets/` to offer updates.
 - `former_address_patterns`: short, distinctive fragments (a street name and house
-  number), never a whole address, so they match however a sender formats it.
+  number), never a whole address, so they match however a sender formats it. Patterns of
+  eight letters or more also match masked forms (`Wass********llee`).
+- `schedule_slots`: the local start time of each night job, as created in step 10. The
+  watchdog reports a job that starts hours away from its slot (`v_schedule_drift`).
+- `area_aliases`: when the person names areas differently elsewhere (a notes app), map
+  that name to the Drive area: `{"Home": "Household"}`. Nothing is renamed.
 
 Check: `select emergency_dossier();` should come back in the chosen language.
 
@@ -281,7 +293,7 @@ from bridge_runs order by started_at desc limit 1;
 ```
 
 A row from the last few minutes with `finished_at` set, `errors = []` and
-`script_version = 'bridge-3.0'` means the bridge works. Say so plainly.
+`script_version = 'bridge-3.1'` means the bridge works. Say so plainly.
 
 No row at all: `install` did not reach the database. Ask what the log said. Common:
 
@@ -327,11 +339,26 @@ late):
 Night, because nobody is working with the mail or the Drive then, the runs do not
 compete with the person's own Claude use, and the brief is ready in the morning.
 
-Walk them through creating four scheduled tasks in Claude (**Scheduled tasks** → new
-task): the prompt from the table, the frequency (daily; monthly for the review) and the
-time, one task at a time. The next morning, `v_intake_watchdog` should show a fresh run for
-each nightly job; the doctor mode checks it. Full walkthrough for the person:
-`assets/docs/scheduling.md`.
+Where to create them depends on what the person uses. Explain the choice in two
+sentences and walk them through one:
+
+- **Claude Code routines (recommended).** They run in Anthropic's cloud, so the computer
+  can be off. At claude.ai/code/routines → **New routine**: name, the prompt from the
+  table, a repository to start in (a fork of claude-life-os is the natural choice; it
+  holds no personal data), the **Default** environment, trigger **Schedule** → daily
+  (monthly: pick a preset, then `/schedule update` in the Claude Code CLI to set
+  `5 4 1 * *`), connectors: keep Gmail, Google Drive, Supabase, Google Calendar and, if
+  used, Todoist and Craft, remove the rest. Four routines. A routine loads the skill from
+  the clone (`.claude/skills/life-os` in the repository), so a fork must be kept in sync
+  with new releases; a skill uploaded to the Claude account works as well. From the CLI,
+  `/schedule` creates the same thing conversationally. Full walkthrough: `assets/docs/scheduling.md`.
+- **Claude desktop app, scheduled tasks.** Same prompts and times (**Scheduled tasks** →
+  new task), but they run on the person's computer, so it must be on and awake at night.
+
+If the person picks other times, write them into `life_settings.schedule_slots` so the
+watchdog's drift check compares against the real slots. The next morning,
+`v_intake_watchdog` should show a fresh run for each nightly job; the doctor mode checks
+it.
 
 Say honestly: a scheduled run can still be skipped. That is why the database keeps a
 watchdog and the bridge emails them when a job has not run within its window (36 hours
@@ -346,13 +373,13 @@ the installed versions:
 
 ```sql
 insert into skill_revisions (skill_name, version, change_type, summary)
-values ('life-os', 'v4.0', 'baseline', 'installed'),
-       ('setup', 'v1.2', 'baseline', 'installed with life-os v4.0'),
-       ('email-intake', 'v3.1', 'baseline', 'installed with life-os v4.0'),
-       ('drive-file-intake', 'v3.1', 'baseline', 'installed with life-os v4.0'),
-       ('nightly-check', 'v1.0', 'baseline', 'installed with life-os v4.0'),
-       ('context-lookup', 'v2.1', 'baseline', 'installed with life-os v4.0'),
-       ('life-review', 'v2.1', 'baseline', 'installed with life-os v4.0');
+values ('life-os', 'v4.2', 'baseline', 'installed'),
+       ('setup', 'v1.3', 'baseline', 'installed with life-os v4.2'),
+       ('email-intake', 'v3.2', 'baseline', 'installed with life-os v4.2'),
+       ('drive-file-intake', 'v3.2', 'baseline', 'installed with life-os v4.2'),
+       ('nightly-check', 'v1.1', 'baseline', 'installed with life-os v4.2'),
+       ('context-lookup', 'v2.2', 'baseline', 'installed with life-os v4.2'),
+       ('life-review', 'v2.2', 'baseline', 'installed with life-os v4.2');
 ```
 
 Finish with doctor mode, then a three-line summary: what runs when, where the emergency
@@ -371,7 +398,14 @@ apply a fix without the person saying yes.
    Older than `schema_version` in `../SKILL.md`: an upgrade is available. `list_migrations`
    shows what is applied; the fix is to apply the missing files from `assets/migrations`
    in order (after a `take_snapshot('pre-upgrade')`), then the pack check below, because
-   a migration can start reading a setting the old installation never wrote.
+   a migration can start reading a setting the old installation never wrote. Every
+   migration is additive and can run twice; one that drops something says so in its
+   header (0016 drops the old bank dedupe index and is meant for after the new skill is
+   installed, which it is if this doctor is running). After upgrading, run
+   `assets/tests/release_checks.sql` if present (or the repository's
+   `tests/sql/release_checks.sql`): it must end with "release checks: all passed".
+   Before applying, show the person `select * from rederive_deadlines(false) where action
+   <> 'unchanged';` and do not run the recount with `true` unless they agree.
 3. **Packs current**: compare `installed_packs` with `version` in
    `assets/packs/*/*/pack.json`. A newer region pack means the legal rules changed:
    the fix is "update the region pack", done as in reconfigure → Country (rules, then the
@@ -388,9 +422,12 @@ apply a fix without the person saying yes.
    select table_name, grantee, privilege_type from information_schema.role_table_grants
    where table_schema = 'public' and grantee in ('anon','authenticated');       -- empty
    select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-   where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute');  -- empty
+   where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')
+     and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e');  -- empty
    ```
-   Plus `get_advisors` (security), ignoring `rls_enabled_no_policy`.
+   (Functions that belong to an extension, such as `pg_trgm`'s `similarity`, are excluded:
+   they hold no data.) Plus `get_advisors` (security), ignoring `rls_enabled_no_policy`;
+   `extension_in_public` for `pg_trgm` is a warning, not a problem.
 6. **Nightly database job**:
    ```sql
    select jobname, schedule, active from cron.job;
@@ -398,18 +435,28 @@ apply a fix without the person saying yes.
    where jobid = (select jobid from cron.job where jobname = 'nightly-derivations')
    order by start_time desc limit 3;
    select ran_at, error from derivation_runs order by ran_at desc limit 3;
+   select ran_at, counts, error from maintenance_runs order by ran_at desc limit 3;
    ```
+   Both `nightly-derivations` and `nightly-maintenance` must exist and be active.
 7. **Jobs running on time**: `select * from v_intake_watchdog;` Every `overdue` row is a
    problem; `runs_7d` well below `runs_7d_expected` is a warning even if the last run is
    recent (a job that runs every other night looks fine on `last_run`).
+   `select * from v_schedule_drift where drifted;` is a warning: the job runs, but hours
+   away from its slot, which is how scheduler outages have started.
 8. **Night schedule**: `select * from v_intake_watchdog;` has a row per nightly job,
    `nightly-check` included; a job with `runs_7d = 0` was never scheduled.
 9. **Bridge**: `select started_at, errors, script_version from bridge_runs order by started_at desc limit 5;`
-   Errors in the last runs, or a `script_version` other than `bridge-3.0`.
+   Errors in the last runs, or a `script_version` other than `bridge-3.1`. An older
+   bridge keeps working; the fix is to paste the new `assets/apps-script/Code.gs` over the
+   old code (Script Properties and the trigger stay). Before that, make sure the
+   emergency binder is not recreated: in **Project Settings → Script Properties**, the
+   property `dossier_doc_id` must hold the id of the existing binder Google Doc in the
+   emergency folder (add it if it is missing). Then run `install` once.
 10. **Invariants**: `select invariant, severity, failing, meaning from v_system_invariants where failing > 0 order by severity;`
 11. **Health numbers**: `select * from v_system_health;` Flag
    `hours_since_snapshot > 48`, `days_since_offsite_backup > 35`, `attachment_backlog > 0`,
-   `text_coverage_pct < 80`, `recall_miss_pct_60d > 10`, `hard_deadlines_missed > 0`.
+   `text_coverage_pct < 80`, `recall_miss_pct_60d > 10`, `hard_deadlines_missed > 0`,
+   `expired_without_successor > 0`, `docs_drive_missing > 0`, `unmapped_folders > 0`.
 
 The fixes for recurring patterns are in `assets/docs/troubleshooting.md`; use the same
 wording. Order the answer by severity: anything that can make a hard
@@ -437,9 +484,12 @@ To undo a change, write the `old_value` back.
      are only rules); list them and offer to deactivate (`active = false`), never delete.
   2. `select * from rederive_deadlines(false);` is a dry run over every open deadline
      that remembers the rule it was counted with (`deadlines.rule_key`). Show the person
-     the rows with `action = 'moved'` (old and new date) and `rule_gone` (the new
-     country has no such rule: the deadline stays as it is until they decide to keep or
-     cancel it). A date that moves earlier comes first in the list.
+     the rows with `action = 'moved'` (earlier) or `moved_later` (old and new date),
+     `later_kept` (the recount gives a later date for a row whose origin is unknown, so it
+     is left alone: often a date chosen early on purpose), `stated_kept` (the document
+     states the date; never recounted), `no_start_date` and `rule_gone` (the new country
+     has no such rule: the deadline stays as it is until they decide). A date that moves
+     earlier comes first in the list.
   3. On yes: `select * from rederive_deadlines(true);` Moved deadlines get a note with
      both dates. With a task provider, update the due date of each moved deadline's task
      (`todoist_task_id`) the same way.

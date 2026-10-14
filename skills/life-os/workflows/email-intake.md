@@ -1,9 +1,9 @@
 # Email intake
 
-Workflow `email-intake` v3.1 of the `life-os` skill: nightly mail intake. The shared rules in
+Workflow `email-intake` v3.2 of the `life-os` skill: nightly mail intake. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
-Write `v3.1` into `email_processing_runs.skill_version` on every run.
+Write `v3.2` into `email_processing_runs.skill_version` on every run.
 
 This job usually runs unattended, at night, with nobody reading the chat. Three rules
 follow from that and are not optional.
@@ -20,7 +20,7 @@ follow from that and are not optional.
 select key, value from life_settings
 where key in ('timezone','output_locale','input_locales','region','owner_name',
               'owner_email','task_provider','task_targets','bridge_categories',
-              'lang_hints','region_rules');
+              'lang_hints','region_rules','schema_version','former_address_patterns');
 select * from take_snapshot('email-intake pre-run');
 
 insert into run_locks (skill_name, expires_at, holder)
@@ -31,9 +31,9 @@ where run_locks.expires_at < now()
 returning skill_name;
 ```
 
-Zero rows from the lock means another run holds it. Stop. Delete the lock row at the end.
-If `schema_version` is missing, the database was never set up: say so and point to the
-setup workflow (`workflows/setup.md`).
+Zero rows from the lock means another run holds it. Stop. At the end release it by
+expiring it (SKILL.md), never by removing the row. Whether the database is installed, and
+what to do when its schema is older than this file, is decided as SKILL.md says.
 
 Write the brief, tasks and notes in `output_locale`. Read mail in any language;
 `lang_hints` (the language packs for `input_locales`: keywords, date and amount formats)
@@ -65,7 +65,11 @@ select * from match_rules('email', :sender_email, :sender_name, :subject) limit 
 ```
 
 A hit fixes category, entity, tags, action_needed and matter with no reasoning. That is
-cheaper and gives the same answer every month. `set_category = 'none'` means "do not log
+cheaper and gives the same answer every month. Rules come back by `priority` ascending:
+the lowest number wins, take the first row. A region pack's carrier rules (telecom
+contracts, priority 60) put contract mail in `bills_payments`; whether a given mail needs
+action (a cancellation confirmation with a date, a number-porting deadline) is still read,
+not ruled. `set_category = 'none'` means "do not log
 this at all" (that is how the system's own alerts and brief stay out). Increment `hits`,
 set `last_hit_at`. Resolve the sender through `entity_aliases` (address or domain) into
 `sender_entity_id`.
@@ -80,7 +84,7 @@ For each kept thread, `get_thread` in `PLAIN_TEXT`, then pick exactly one catego
 | category | What goes here |
 |---|---|
 | `purchases` | Receipts: what, where, when, how much |
-| `orders_delivery` | Order confirmation and final delivery only. Tracking pings go to `skipped`. |
+| `orders_delivery` | Order confirmation and the final "delivered" mail only (its date is when a withdrawal period starts; put it in `event_date`). Shipping and tracking pings go to `skipped`. |
 | `government` | Authorities: immigration office, tax office, city registry |
 | `bank_finance` | Bank statements, advisor mail, investments |
 | `bills_payments` | Bills: utilities, rent, insurance premiums, subscription invoices |
@@ -94,6 +98,12 @@ Then:
 
 - Extract only what is stated: `vendor`, `item`, `amount` + `currency`, `event_date`,
   `due_date`, and for travel and health a time of day if the message gives one.
+- `content_excerpt` is what the address audit reads. When the body names a postal address,
+  delivery point (Lieferstelle) or contract address, make sure that line is in the
+  excerpt, even if it sits further down; senders mask it (`Wass********llee`), and
+  `v_address_audit` matches the masked form against `former_address_patterns`. A mail
+  that clearly concerns a former address (a contract still running there) is worth an
+  `action_note` even when the audit would catch it later.
 - If the amount is only in the attached PDF, read the attachment read-only: `get_message`
   with `messageFormat: RAW` returns the whole MIME message. It is usually too big for the
   tool result and gets saved to a file, which is the correct path. Decode it in a
@@ -120,7 +130,8 @@ Then:
   `decisions`. That is what the monthly review learns from.
 - Upsert on `gmail_message_id` with `last_intake_at = clock_timestamp()` in the same
   statement (`clock_timestamp()`, not `now()`, or a double write looks like a human
-  correction).
+  correction). A later change to the summary or action note goes through the same upsert,
+  never an UPDATE with the text (SKILL.md, writes that pass the connector).
 
 ## Step 5: deadlines
 
@@ -146,6 +157,8 @@ For rows with `action_needed` and no `todoist_task_id`:
   the task closes the deadline), in one `execute_sql` that starts with
   `select set_config('app.actor','skill',true);`.
   Todoist's `deadlineDate` is premium-only: use `dueString` and put hard dates in the title.
+  Claim the row before creating the task and write the id back after, as SKILL.md "Tasks
+  are created once" says: the Drive intake may be creating tasks at the same time.
 - `task_provider = 'none'`: create nothing. The row stays `action_needed` and the daily
   brief lists it.
 
@@ -154,7 +167,7 @@ For rows with `action_needed` and no `todoist_task_id`:
 `travel` and `health` rows with a concrete `event_date` and no `calendar_event_id` get a
 Google Calendar event: title `[vendor]: [item]`, the stated time or an all-day event (never
 a guessed time), location if given, `gmail_url` and row id in the description. Write the id
-back with the same `app.actor` prefix. Other categories never get calendar events without
+back with the same `app.actor` prefix and `returning id`. Other categories never get calendar events without
 the person asking.
 
 ## Step 7: feeder check and run log
@@ -215,10 +228,12 @@ on conflict (gmail_message_id) do update set
   item = excluded.item, amount = excluded.amount, due_date = excluded.due_date,
   action_needed = excluded.action_needed, action_note = excluded.action_note,
   has_attachments = excluded.has_attachments, attachment_names = excluded.attachment_names,
-  last_intake_at = clock_timestamp(), updated_at = now();
+  last_intake_at = clock_timestamp(), updated_at = now()
+returning id;
 
 insert into email_processing_runs (skill_version, started_at, emails_scanned, emails_added,
   emails_updated, actions_flagged, category_counts, errors, skipped, decisions, notes)
-values ('v3.1', :started_at, ..., :category_counts::jsonb, :errors::jsonb,
-        :skipped::jsonb, :decisions::jsonb, :notes);
+values ('v3.2', :started_at, ..., :category_counts::jsonb, :errors::jsonb,
+        :skipped::jsonb, :decisions::jsonb, :notes)
+returning id;
 ```
