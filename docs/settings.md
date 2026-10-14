@@ -35,7 +35,7 @@ the Supabase dashboard also works; the history then shows `human`.
 
 | Key | Example | Written by | Read by |
 |---|---|---|---|
-| `schema_version` | `"0.5.0"` | migrations | setup (doctor, upgrades) |
+| `schema_version` | `"0.6.0"` | migrations | setup (doctor, upgrades); every workflow compares it with `SKILL.md` |
 | `owner_name` | `"Anna Beispiel"` | setup | reports |
 | `owner_email` | `"anna@example.com"` | setup | brief and review by email |
 | `timezone` | `"Europe/Berlin"` | setup | every skill, the bridge, the binder date |
@@ -54,6 +54,9 @@ the Supabase dashboard also works; the history then shows `human`.
 | `current_address`, `former_address_patterns`, `address_audit_ignore` | street fragments | setup, review | `v_address_audit` |
 | `tax_year` | `2026` | setup, review | `v_tax_items` |
 | `emergency_contacts` | `[{"name":"…","role":"sister","contact":"+49…"}]` | setup | `emergency_dossier()` |
+| `schedule_slots` | `{"email-intake":"01:05","drive-file-intake":"02:05","nightly-check":"03:05"}` | setup (defaults in 0013) | `v_schedule_drift`, nightly check |
+| `schedule_drift_hours` | `3` | 0013 default | `v_schedule_drift` |
+| `area_aliases` | `{"Home":"Household"}` | setup, reconfigure | Drive intake: an area name used elsewhere (a notes app) mapped to a `drive_folder_areas.area_name`. Nothing is renamed. |
 
 The folder-to-area map is a table of its own, `drive_folder_areas`, because it has many
 rows; it is written by setup and read by the Drive intake.

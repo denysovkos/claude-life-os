@@ -1,9 +1,9 @@
 # Life review
 
-Workflow `life-review` v2.1 of the `life-os` skill: the monthly review. The shared rules in
+Workflow `life-review` v2.2 of the `life-os` skill: the monthly review. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
-Write `v2.1` into `life_review_runs.skill_version`.
+Write `v2.2` into `life_review_runs.skill_version`.
 
 ## How the work is split, and why this skill exists
 
@@ -19,7 +19,9 @@ into a short list of decisions for the person.
 
 Never delete rows. Never cancel or change anything with a vendor. Every write that is not
 an insert starts with `select set_config('app.actor','skill',true);` in the same
-`execute_sql` call, so `corrections` records it as the skill's, not a human's.
+`execute_sql` call, so `corrections` records it as the skill's, not a human's. Notes,
+quoted clauses and evidence go through `skill_writebacks` (SKILL.md); an UPDATE carries
+only the short value itself (an amount, a date, a status).
 
 ## Step 0: settings, snapshot, lock
 
@@ -39,7 +41,8 @@ where run_locks.expires_at < now()
 returning skill_name;
 ```
 
-Zero rows from the lock: another run holds it, stop. Delete the lock row at the end.
+Zero rows from the lock: another run holds it, stop. Release it at the end by expiring it
+(SKILL.md).
 Write everything for the person in `output_locale`. Legal statements come from
 `region_rules` (its `basis`, `notes` and `facts`), never from memory; with no region
 pack, say that a local rule applies and ask.
@@ -59,8 +62,13 @@ pack, say that a local rule applies and ask.
    - Otherwise extract every line: `booked_on`, `value_date`, `amount` (always positive),
      `direction` (`debit`/`credit`), `counterparty`, `reference`, `method`
      (`sepa_direct_debit`, `transfer`, `card`, `fee`, `cash_deposit`), `account_iban`,
-     `source = 'statement_import'`. Insert with `on conflict do nothing` against the
-     dedupe index. Record the import with parsed and inserted counts. A parsed count
+     `source = 'statement_import'`. Insert with a plain `on conflict do nothing` (no
+     conflict target). `account_iban` is the account key: the IBAN, or for a card
+     statement without one a masked card id `CARD-<scheme>-<last digits as printed>`, the
+     same string every month. The dedupe index does not include the account yet, so two
+     accounts with an identical booking (same day, amount, direction, empty reference)
+     keep only one row: when you import a second account, compare the parsed count with
+     the inserted count and name any shortfall in the report. Record the import with parsed and inserted counts. A parsed count
      that does not match the statement's own line count is an `errors` entry, never a
      silent pass.
    - Many people pay from more than one account. A contract paid from an account whose
@@ -80,8 +88,13 @@ pack, say that a local rule applies and ask.
 4. **Triage payment exceptions.** `select * from v_payment_exceptions;`
    - `amount_changed`: find the evidence, a price-change letter in `emails` or
      `documents` (`ask_documents('<vendor> <price change words in the letter''s language>', 8)`).
-     Evidence found: update `recurring_payments.amount` and cite the source in `notes`.
-     None: it goes to the person.
+     Evidence found: update `recurring_payments.amount` (short UPDATE, `returning id`) and
+     cite the source in `notes` through `skill_writebacks` (`mode = 'append'`). None: it
+     goes to the person.
+   - A single debit that equals the sum of two or more active contracts of the same vendor
+     (one insurer collecting several policies together) cannot be linked to both yet: the
+     link holds one contract. Say so once in the report and add an `explanation` to the
+     second contract's notes, rather than reporting it as `missing` every month.
    - `missing`: a contract that stopped debiting. Look for a cancellation confirmation
      from the vendor. Found: `status = 'ended'` with a note. Otherwise it goes to the
      person; a savings or insurance contract that silently stopped is exactly the case
@@ -91,10 +104,15 @@ pack, say that a local rule applies and ask.
    - `select * from v_invoice_reconciliation where period_covered and matched_tx is null;`
      same treatment.
 
-5. **Fill unknown exits.** `select * from v_notice_calendar where not exit_known;` For up
-   to five rows with a `document_id`, read the contract for the notice period, minimum
-   term and contract term, and write `notice_period_months`, `contract_end`,
-   `auto_renews` only if stated. Quote the clause in `notes`. Where the law answers it
+5. **Fill unknown exits.** `select * from v_auto_renew_unwatched;` first (auto-renewing,
+   no end, no notice, no deadline: these renew unannounced), then
+   `select * from v_notice_calendar where not exit_known;`. For up to five rows with a
+   `document_id`, read the contract for the notice period, minimum term and contract
+   term, and write `notice_period_months`, `contract_end`, `auto_renews` only if stated.
+   A cancellation date the contract states is a `notice_period` deadline with
+   `date_basis = 'stated'`; one you derive from start, term and notice is counted with
+   `contract_cancel_by()` and gets `date_basis = 'derived'`. A contract cancellable any
+   time gets `notice_period_months` and no `contract_end`. Quote the clause in `notes`. Where the law answers it
    rather than the contract, use the matching `region_rules.term_rules` entry (for
    example `telecom_cancel_by`, `insurance_cancel_by`) or `facts` entry (for example an
    obligation that cannot be cancelled at all), cite its `basis` in `notes`, and write
@@ -106,8 +124,11 @@ pack, say that a local rule applies and ask.
    that was ported to another provider, a finished course, a sold car. Propose, never
    change status without evidence (a confirmation letter in the index).
 
-7. **Address audit.** `select * from v_address_audit;` Every counterparty listed gets one
-   line in the person's task: "update address at X". Confirmed false positives (the old
+7. **Address audit.** `select * from v_address_audit;` (it also matches masked addresses
+   such as `Wass********llee`). Every counterparty listed gets one line in the person's
+   task: "update address at X". A counterparty that still bills for a former address is
+   more than an address change: look for its contract in `recurring_payments`; none means
+   an obligation the index does not know about, which is the first line of the report. Confirmed false positives (the old
    landlord, a closed account) go into `life_settings.address_audit_ignore`.
 
 8. **Tax year.** `select * from v_tax_items;` and the open tax bundle, if one exists:
@@ -123,9 +144,10 @@ pack, say that a local rule applies and ask.
    it. The nightly job then derives the deadline. If the window has clearly passed, leave
    it: `derive_deadlines()` ignores dates more than 7 days gone.
 
-10. **Backup check (first Sunday).** Latest `backups` row: download the CSV from the
-    backups folder in `drive_folders.backups`, count data rows per table, compare with
-    `row_counts`. Mismatch, or no backup in 35 days, is an `errors` entry.
+10. **Backup check.** Latest `backups` row: download the CSV from the backups folder in
+    `drive_folders.backups`, count data rows per table, compare with `row_counts`.
+    Mismatch, or no backup in 35 days, is an `errors` entry. The Drive intake takes a
+    backup on any night the last one is over 30 days old.
 
 11. **System quality.** From `monthly_review()->'system_quality'`: human corrections by
     field (where does intake misjudge?), `emails_other_pct`, `rules_zero_hits`,
@@ -150,7 +172,7 @@ pack, say that a local rule applies and ask.
       - otherwise: an email to `owner_email` with that subject.
     - Log `life_review_runs` (`mode`, `review_month`, `skill_version`, `summary` jsonb,
       `errors`, `notes`).
-    - Release the lock.
+    - Release the lock (expire it).
 
 ## On-demand modes
 

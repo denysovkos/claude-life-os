@@ -77,15 +77,24 @@ runs, best at night and in this order: mail at **01:05**, files at **02:05**, th
 check with your daily brief at **03:05**, and the monthly review on the 1st at **04:05**.
 Mail goes first because its sorting tells the bridge which attachments to copy; an hour
 later the file run indexes them the same night; the check comes last so the morning brief
-includes everything. Create them as scheduled tasks in Claude, each with the prompt from
+includes everything. The recommended way is four **Claude Code routines**: they run in
+Anthropic's cloud, so your computer can be off. Scheduled tasks in the Claude desktop app
+work too, if the computer stays on at night. Both, step by step, with the prompts:
 [docs/scheduling.md](docs/scheduling.md).
 
 That is all, about 30 minutes. Later, at any time, write **`life os doctor`**: it checks
 the whole system and tells you exactly what to fix.
 
 **Updating:** download the new `life-os.zip` and upload it again the same way (remove the
-old skill first if Claude does not replace it). Then write `life os doctor`; it applies
-database updates and new rules for you.
+old skill first if Claude does not replace it). Then write `life os doctor`. It shows you
+which database updates are missing and what they would change, applies them itself
+(no SQL editor needed), and runs the release checks afterwards. Updates never move a deadline you already
+have, never remove data, and an older skill keeps working against an updated database, so
+nothing breaks if the two are updated a day apart. Every release is tested by upgrading
+the previous one with data in it ([CHANGELOG.md](CHANGELOG.md) says what changed). When
+the doctor says the Apps Script bridge is outdated, paste the new code over the old one;
+[docs/troubleshooting.md](docs/troubleshooting.md) shows how to keep your existing
+emergency binder.
 
 
 ### What you need
@@ -112,8 +121,13 @@ database updates and new rules for you.
 - **A short daily brief**, only on days when something matters. No "all clear" messages.
 - **A monthly review**: what you pay every month, what changed, what you can cancel and
   by when, what goes into your tax return, and anything that looks wrong.
-- **An emergency binder**: a Google Doc, rewritten daily, with your open matters,
+- **It catches contracts that renew themselves.** Insurance, phone, internet, energy:
+  each needs a cancellation date, and anything that renews with no known exit is listed
+  until you or the monthly review fill it in.
+- **An emergency binder**: a Google Doc, updated daily, with your open matters,
   deadlines, contracts, insurance, where your original documents are, and who to call.
+  Overdue items say so, and a file that disappeared from Drive is marked instead of
+  linked.
 
 ## Tasks in your task manager
 
@@ -191,21 +205,53 @@ database is the single source of truth; Todoist, Craft and the calendar only mir
 
 ```
 skills/life-os/    the Claude skill: SKILL.md and its six workflows
+                   (also linked at .claude/skills/life-os for Claude Code and routines)
 apps-script/       the Google Apps Script bridge (Code.gs)
 supabase/          database migrations and the document type registry
 packs/             language and region packs
 docs/              documentation
-tests/             pack contract tests and the SQL rule check
+tests/             unit tests, SQL checks, the upgrade test, the version guard
 scripts/           packaging and JSON formatting
+CHANGELOG.md       what each version changed
 ```
 
-For contributors: `python3 -m unittest discover -s tests -v` runs the pack tests. Every
-push to `main` is a new version: CI tags it and publishes a GitHub release with
-`life-os.zip` (`.github/workflows/release.yml`). The patch number counts up by itself;
-set `VERSION` to a new MAJOR.MINOR.0 to start a new line. CI also
-applies every migration and pack to a fresh Postgres 16 twice, checks that the database
-counts deadlines exactly like the pack examples, and that it stays closed to the public
-API.
+## Development
+
+**Tests.** Without a database:
+
+```
+python3 -m unittest discover -s tests -v
+```
+
+runs the pack contract tests and the release consistency tests (VERSION, CHANGELOG,
+SKILL.md, workflow versions, migration lists and the bridge version agree). With a Postgres
+reachable through the usual `PG*` variables:
+
+| Command | What it proves |
+|---|---|
+| `python3 tests/sql_rules_check.py` | the database counts every region pack example exactly like the packs |
+| `psql -f tests/sql/release_checks.sql` | end-of-run views empty, every German term rule, `ingest_assemble` refusing bad md5s, write-backs, recount safety |
+| `psql -f tests/sql/feature_checks.sql` | each database feature end to end on throwaway rows |
+| `tests/upgrade_check.sh [tag]` | the previous release, with data, upgraded to this checkout: no deadline moves, all checks pass |
+
+The SQL checks run in a transaction that is rolled back, so they are also safe on a live
+installation (the doctor runs `release_checks.sql` after an upgrade).
+
+**Pull requests.** CI (`.github/workflows/ci.yml`) runs on every pull request and shows as
+checks on it: unit tests; a fresh install of every migration and pack, twice, on
+Postgres 16; the rules, release and feature checks; the upgrade test; the deny-all checks
+(no table, grant or function open to the public API); and a build of `life-os.zip`,
+downloadable from the run. A pull request that changes anything that ships (the skill,
+migrations, seed, packs, Apps Script, docs) must also raise `VERSION` and add a section on
+top of `CHANGELOG.md`; the version check fails it otherwise.
+
+**Releases.** The version is the number in `VERSION`, nothing else: SKILL.md, the
+CHANGELOG, the git tag and the GitHub release all say the same. When a merge to `main`
+brings a `VERSION` that has no tag yet and CI passes on that commit,
+`.github/workflows/release.yml` tags it `v<VERSION>` and publishes a release with
+`life-os.zip` and that version's CHANGELOG section as notes. A merge that does not change
+`VERSION` publishes nothing. Patch for fixes, minor for new features, and every database
+change is a new, additive migration.
 
 ## License
 
@@ -213,6 +259,7 @@ API.
 
 ## Status
 
-Early. The database, the bridge and the email intake ran daily for a month in the
-original private version and were then generalised. The setup skill and the packs are
-new. Expect rough edges and please report them.
+Early, and in daily use. The database, the bridge and the intakes have run every night
+since the original private version and were then generalised; 4.2 fixed what a month of
+unattended night runs exposed (see [CHANGELOG.md](CHANGELOG.md)). The setup skill and the
+beta packs are newer. Expect rough edges and please report them.

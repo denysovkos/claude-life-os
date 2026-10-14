@@ -18,5 +18,9 @@
   "original": "оригінал",
   "property": "Нерухомість",
   "contacts": "Контакти",
-  "none": "- немає"
+  "none": "- немає",
+  "overdue_since": "ПРОСТРОЧЕНО з",
+  "close_or_reschedule": "закрийте справу або призначте нову дату",
+  "subject_unknown": "особу не вказано",
+  "file_missing": "файл відсутній у Drive з"
 }

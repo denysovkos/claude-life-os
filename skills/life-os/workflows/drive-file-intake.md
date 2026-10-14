@@ -1,9 +1,9 @@
 # Drive file intake
 
-Workflow `drive-file-intake` v3.1 of the `life-os` skill: nightly document intake. The shared rules in
+Workflow `drive-file-intake` v3.2 of the `life-os` skill: nightly document intake. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
-Write `v3.1` into `processing_runs.skill_version` on every run, so the monthly review can
+Write `v3.2` into `processing_runs.skill_version` on every run, so the monthly review can
 attribute a change in a metric to a revision.
 
 This job usually runs unattended at night. The same three rules as `email-intake` apply:
@@ -28,13 +28,19 @@ Each rule below exists because the simpler version failed in real use.
   until closing became an explicit step here and a nightly database job.
 - **Never clear the inbox folder by hand.** Files the bridge staged there may not be
   indexed yet. Only this skill moves them out, one by one, after indexing.
+- **Long text goes in verified chunks, not retyped.** A 95,000-character contract read
+  back through a tool call and typed into one INSERT is expensive and can drift by a
+  character. Chunks carry their own md5 and the database refuses a mismatch.
+- **No bulky UPDATE, no row removal.** The database connector holds both for a human to
+  confirm; at night they hang and commit nothing (see SKILL.md).
 
 ## Step 0: settings, snapshot, lock
 
 ```sql
 select key, value from life_settings
 where key in ('timezone','output_locale','input_locales','region','region_rules',
-              'owner_name','task_provider','task_targets','drive_folders','lang_hints');
+              'owner_name','task_provider','task_targets','drive_folders','lang_hints',
+              'area_aliases','schema_version');
 select * from take_snapshot('drive-file-intake pre-run');
 
 insert into run_locks (skill_name, expires_at, holder)
@@ -45,9 +51,13 @@ where run_locks.expires_at < now()
 returning skill_name;
 ```
 
-Zero rows from the lock: another run holds it, stop and say so. Delete the lock row at
-the end. `pg_advisory_lock` does not work here: every MCP call is its own session.
-If `schema_version` is missing, the database was never set up: point to the setup workflow.
+Zero rows from the lock: another run holds it, stop and say so. At the end release it by
+expiring it (SKILL.md), never by removing the row. `pg_advisory_lock` does not work here:
+every MCP call is its own session. Whether the database is installed, and what to do when
+its schema is older than this file, is decided as SKILL.md says, not by one missing key.
+
+Also read `area_aliases` (a map from an area name used elsewhere, for example in the notes
+app, to the `drive_folder_areas.area_name` it means; `{"Home": "Household"}`).
 
 `drive_folders` gives `inbox` (where the bridge and manual drops land), `catch_all`
 (where a document goes when its area has no folder), `backups` and `emergency`. The
@@ -62,7 +72,9 @@ select coalesce(max(run_at), now() - interval '7 days') from processing_runs;
 That timestamp is the lower bound for "new". Record `capabilities` for the run row: the
 views and functions this file relies on (`v_bridge_queue`, `v_duplicate_candidates`,
 `v_overdue_deadlines`, `reconcile_passive_deadlines`, `v_sweepable_staging`,
-`v_text_extraction_queue`), so one query shows which skill file was live.
+`v_text_extraction_queue`, `ingest_assemble`, `skill_writebacks`,
+`v_expired_without_successor`, `v_auto_renew_unwatched`, `v_unmapped_folders`), so one
+query shows which skill file was live and which of them the database has.
 
 ## Step 1b: check the feeder before the scan
 
@@ -87,6 +99,18 @@ asked. Skip what is plainly not a document of the person's (code, shared files o
 someone else, media libraries), and record every skip as `{item, reason}` in `skipped`.
 A silent skip is invisible to the monthly review and can never be fixed.
 
+The emergency binder (the Google Doc in `drive_folders.emergency`) is generated from this
+index by the bridge; it is not a document to read. If it already has a `documents` row,
+leave that row alone: do not read the file, do not upsert it. If it has none, upsert it
+once from metadata only (`kind = 'reference_file'`, `document_type_key = 'reference_sheet'`,
+no text). Skip it with reason `generated binder`. The same holds for the CSV backups in
+`drive_folders.backups`.
+
+A file that Drive answers "not found" for, or that is trashed, while it has a
+`documents` row: `update documents set drive_missing_since = coalesce(drive_missing_since, now())
+where id = :id returning id;` (with the `app.actor` prefix). Never remove or archive the row
+for that alone.
+
 ## Step 3: rules before judgement
 
 ```sql
@@ -94,7 +118,8 @@ select * from match_rules('document', null, null, null, :file_name, :issuer) lim
 ```
 
 A hit gives type, entity and matter deterministically and guarantees the same file
-classifies the same way next month. Increment `hits`, set `last_hit_at`. When you
+classifies the same way next month. Rules come back by `priority` ascending, so the
+lowest number wins; take the first row. Increment `hits`, set `last_hit_at`. When you
 classify something by hand that will clearly recur, propose a rule.
 
 ## Step 4: read and classify each candidate
@@ -105,21 +130,12 @@ invoice, identity or residence paper, policy, lease, official letter. Working fi
 
 For each:
 
-- **Metadata:** name, id, `webViewLink`, `mimeType`, `parentId`.
-- **Text.** `read_file_content` (Drive runs OCR on scanned PDFs). Keep ~500 characters in
-  `content_excerpt` and the full text in `document_texts` (`extraction_method =
-  'drive_ocr'` when the PDF had no text layer, `'drive_text'` when it did,
-  `extraction_status = 'done'`). On failure write `'failed'` with the error, never leave
-  the row absent, so `v_text_extraction_queue` stays an honest backlog.
-  `read_file_content` can return only `Page 1 … Page N` placeholders for large scans,
-  with no error. That is a failure, not an empty document. Fallback: `download_file_content`
-  (it spills to a file), decode in a subprocess, `pdftoppm -r 200 -png`, then `tesseract`
-  with the languages of `input_locales` (install `tesseract-ocr-<lang>` first; the sandbox
-  ships English only). Documents over ~60,000 characters are left `pending` and named in
-  the notes: extraction costs about twice the length in tokens.
-  Boilerplate repeated across documents (standard clause catalogues, generic terms) may
-  be condensed. Anything specific to the person, the contract, the amounts or the dates
-  is stored verbatim.
+- **Metadata:** name, id, `webViewLink`, `mimeType`, `parentId` (stored as
+  `drive_parent_id`, which is what `v_unmapped_folders` reads).
+- **Text.** See "Getting the full text" below. Keep ~500 characters in
+  `content_excerpt` and the full text in `document_texts`. On failure write `'failed'`
+  with the error, never leave the row absent, so `v_text_extraction_queue` stays an honest
+  backlog.
 - **The file name is evidence too.** `Anna_passport.pdf` states `subject_person` and half
   the type before you open it. Content wins on conflict, but never leave a field null
   that the name plainly answers.
@@ -132,7 +148,10 @@ For each:
   a policy or contract end).
 - **Area, deterministically first.** Check `parentId` and its ancestors against
   `drive_folder_areas`. A hit sets `area_name` and `para_category` outright. Only when
-  the file is not under a mapped folder, infer them.
+  the file is not under a mapped folder, infer them, and map any name you infer from
+  elsewhere (a notes-app area) through `area_aliases` first, so "Home" files as
+  "Household". An area name that still matches no `drive_folder_areas` row is left null
+  and the folder goes to the weekly folder check.
 - **Classify into the registry, never into a new string.**
   `select key, label, domain, expiry_expected, notice_period_expected, hints from document_types where active;`
   Pick exactly one `document_type_key`. Put the observed wording in `document_type` if it
@@ -142,7 +161,11 @@ For each:
 - **The registry decides whether a date is expected.** `expiry_expected` means a null
   `expiry_date` is a failed extraction. `notice_period_expected` means the real deadline
   is a cancellation date, not an expiry: those contracts renew silently and never appear
-  in an expiry check, which is what `v_missing_notice_period` catches.
+  in an expiry check, which is what `v_missing_notice_period` catches. A supply contract
+  with a term is `utility_contract`; a grid operator's or meter letter without a contract
+  of its own is `utility_notice`. An authority's letter that is not a decision is
+  `authority_letter`, an insurer's letter that is not the policy is
+  `insurance_correspondence`.
 - **Resolve entities, do not write strings.** `select entity_id from entity_aliases where alias = lower(:value);`
   for `issuer_entity_id` and `subject_entity_id`. No alias: the string goes to
   `v_unresolved_entities` for the monthly review. Do not create entities mid-run for
@@ -163,8 +186,66 @@ For each:
   Prefer a non-default row when the document's type matches it more specifically (a tax
   assessment goes to the taxes folder, not its parent finance folder); otherwise take the
   default. A hit: `update_file` with that parent. No hit: move it to
-  `drive_folders.catch_all`. Either way, store the new location. Never reorganise files
+  `drive_folders.catch_all`. Either way, store the new location in the step 6 upsert
+  (`drive_parent_id`, `drive_url`, `area_name`), not in a separate UPDATE. Never reorganise files
   that already live elsewhere: that is a separate, explicit task.
+
+### Getting the full text
+
+`read_file_content` is the cheap path and is fine for short files. It fails in two quiet
+ways: on large scans it returns only `Page 1 … Page N` placeholders with no error, and on
+mixed PDFs it returns the text layer of some pages and nothing for the scanned ones. So:
+
+1. **Count pages first.** `download_file_content` the file (above the token cap it spills to
+   a local file; decode it in a subprocess, never pull base64 into context), then
+   `pdfinfo` for the page count and `pdftotext -layout` for the text layer, page by page
+   (`-f n -l n`).
+2. **Decide per page.** A page with fewer than ~40 non-blank characters has no text layer:
+   OCR it with `pdftoppm -r 200 -png -f n -l n` and `tesseract` in the languages of
+   `input_locales` (install `tesseract-ocr-deu`, `tesseract-ocr-ukr` and the others first;
+   the sandbox ships English only). Drive's own text covering 2 of 4 pages is exactly this
+   case: keep its pages, OCR the rest, and append them in page order.
+   `extraction_method` is `local_text` (all pages had text), `local_ocr` (all were
+   scanned) or `drive_text+local_ocr` (mixed); `drive_text` / `drive_ocr` when
+   `read_file_content` returned every page.
+3. **Normalise**, in this order: form feeds become newlines, trailing spaces are stripped
+   from every line, three or more blank lines collapse to two, private-use glyphs
+   (U+E000–U+F8FF, which some PDF fonts emit for bullets and ligatures) map to `•` or are
+   dropped. Nothing else changes.
+4. **Never condense** employment contracts, official decisions and tax assessments,
+   notarial deeds, purchase, rental, loan and insurance contracts, or anything with a
+   signature: every word is stored. **Bank statements only** may drop the legal footer
+   that repeats on every page: keep its first occurrence, remove the repeats, and start
+   the body with one line `[footer repeated on N pages kept once]` so the reader knows.
+   Generic terms catalogues attached to other documents may be condensed the same way,
+   with the same kind of header line. Anything specific to the person, the contract, the
+   amounts or the dates is stored verbatim.
+5. **Chunk and verify.** Up to ~16,000 characters, insert the body directly with the step 6
+   style upsert into `document_texts`. Above that, cut into ~16,000-character chunks on a
+   line boundary, compute each chunk's md5 locally (`hashlib.md5(chunk.encode()).hexdigest()`,
+   UTF-8, the exact string you send), and insert each:
+   ```sql
+   insert into text_ingest_chunks (document_id, seq, chunk, expected_md5)
+   values (:doc, :seq, $c$...$c$, :md5)
+   on conflict (document_id, seq) do update set chunk = excluded.chunk,
+     expected_md5 = excluded.expected_md5, created_at = now()
+   returning md5(chunk) = expected_md5 as ok;
+   ```
+   Use a dollar-quote tag that does not occur in the chunk. `ok = false`, zero rows or a
+   timeout: resend that chunk only. Chunk uploads may be handed to subagents, one chunk
+   each, as long as each returns its `ok`. Then:
+   ```sql
+   select * from ingest_assemble(:doc, :method, :pages, :chunk_count, :md5_of_whole_body);
+   ```
+   It refuses a missing chunk, a chunk whose md5 does not match and a body whose md5 does
+   not match, and stores the text only when all three hold. It reads only chunks 1..n, so
+   chunks left from an earlier upload never need removing. Before schema 0.6.0 (`text_ingest_chunks` missing) leave the
+   row `pending` and name it in the notes.
+6. **Hard cap.** A file over 100 MB, or a body over 400,000 characters after
+   normalisation, is not extracted. Write `extraction_status = 'skipped'` with a human
+   action in `extraction_error` ("182 MB scan: index by description only, or split the
+   PDF and drop the parts into the inbox"), so `v_text_extraction_queue` does not carry
+   it forever, and describe the document from its first pages instead.
 
 ## Step 5: deduplicate after the text is stored
 
@@ -177,13 +258,21 @@ select * from v_duplicate_candidates where :id = any(document_ids);
 
 It groups on `body_fingerprint` (full text) and falls back to the excerpt fingerprint
 only for documents without text. On a hit: no second row. Set `duplicate_of` to the
-canonical row, `status = 'to_archive'`, and carry over any field the canonical row lacks.
-Never delete a duplicate; its `drive_file_id` must stay resolvable.
+canonical row and `status = 'to_archive'` in one short UPDATE with the `app.actor` prefix
+and `returning id`; carry over any field the canonical row lacks through its own upsert
+(step 6) or `skill_writebacks`. Never delete a duplicate; its `drive_file_id` must stay
+resolvable.
+
+A document that replaces an earlier one (a renewed contract, a new permit card) is not a
+duplicate: set the earlier row's `superseded_by` to the new row's id, the same way.
 
 ## Step 6: upsert
 
 Insert or update on `drive_file_id` with `last_intake_at = clock_timestamp()` in the same
-statement. That marks the write as the machine's; a later change without it moving is
+statement. This upsert is also how a description, review reason or new location is
+changed later: it is an INSERT, so the connector lets it through at any size, where an
+UPDATE of the same text would hang. `drive_url` is NOT NULL, so even a re-upsert that only
+changes the description carries it. End with `returning id`. That marks the write as the machine's; a later change without it moving is
 logged by trigger to `corrections`, which is how the system learns what it got wrong.
 `clock_timestamp()`, not `now()`: `now()` is transaction-stable, so a double write would
 look like a human correction.
@@ -191,7 +280,7 @@ look like a human correction.
 ## Step 7: transition state
 
 `select * from v_stale_status;` and set `status = 'expired'` on each (with
-`last_intake_at = clock_timestamp()`). The view must be empty when the run ends,
+`last_intake_at = clock_timestamp()`, `returning id`; two short values, so it passes). The view must be empty when the run ends,
 otherwise "what is valid right now" returns expired papers.
 
 ## Step 8: deadlines, not just dates
@@ -209,20 +298,34 @@ coming up".
   rule's `deadline_type`, `hard` and `lead_days`, put its `basis` in `notes`, and set
   `rule_key` and `rule_version` (`region_rules.version`). A deadline with a `rule_key` is
   recounted automatically when the rules change; one without is left alone.
+- **Stated beats counted.** When the document states the date in words ("Eingang der
+  Kündigung spätestens am 23.07.28", "gültig bis", "Ende der Mindestvertragslaufzeit"),
+  that date is the deadline: `date_basis = 'stated'`, the sentence quoted in `notes`, and
+  `rule_key` may still name the rule for reference (a recount never moves a stated date).
+  Only a date the document does not state is counted, with `date_basis = 'derived'`.
+  For a contract's own term and notice period use
+  `contract_cancel_by(<start>, <term months>, <notice months>)`, which ends a term the day
+  before the corresponding day (24.08.2026 + 24 months ends 23.08.2028, so one month's
+  notice must arrive by 23.07.2028). Never add months by hand: that is how four Telekom
+  deadlines ended up one day too late.
   Objection deadlines for official decisions and tax assessments are not written here at
   all: set `issued_on` and the nightly `derive_deadlines()` makes them.
-- For every document whose type has `notice_period_expected`, there must be a
-  `notice_period` deadline with `hard = true`, dated at renewal minus the notice period.
-  `select * from v_missing_notice_period;` at the end of every run.
+- For every document whose type has `notice_period_expected` (insurance, rental,
+  telecom, utility supply contracts), there must be a `notice_period` deadline with
+  `hard = true`, dated at renewal minus the notice period.
+  `select * from v_missing_notice_period;` at the end of every run. A contract cancellable
+  any time (no fixed end) needs no deadline: record its `notice_period_months` on the
+  `recurring_payments` row with `contract_end` null instead.
 - A source that becomes stale, `to_archive` or a duplicate gets its deadlines set to
   `cancelled` rather than left to fire.
 
 ## Step 8a: work the text queue, every run
 
 Including a run whose scan found nothing. `select * from v_text_extraction_queue;` take up
-to five `pending` rows under ~60,000 characters, highest-value types first, and record
-the remaining depth in `processing_runs.text_queue_depth`. Never re-extract a `done` row
-unless the Drive file changed.
+to five `pending` or `failed` rows, highest-value types first, extract them as in
+"Getting the full text" (chunked above 16,000 characters, the hard cap above 400,000), and
+record the remaining depth in `processing_runs.text_queue_depth`. Never re-extract a
+`done` row unless the Drive file changed.
 
 ## Step 8b: close what is finished
 
@@ -238,7 +341,9 @@ select * from v_overdue_deadlines;
 completed means `status = 'done'` with the completion time appended to `notes`. An open
 task is real overdue work. `escalate` rows more than 7 days overdue, and any open overdue
 p1 task, go into the run notes by name, not as a count. Every write here starts with
-`select set_config('app.actor','skill',true);`.
+`select set_config('app.actor','skill',true);`. The status change is one short UPDATE
+(`set status = 'done' ... returning id`); the completion time goes into the notes through
+`skill_writebacks` with `mode = 'append'`, not into the same UPDATE.
 
 ## Step 9: expiring and untasked
 
@@ -248,16 +353,27 @@ an auto-renewing `recurring_payments` row (a billing-period end is not an expiry
 
 - `task_provider = 'todoist'`: one task, `⚠️ <type label> expires <date>: <name>`, due seven
   days before expiry, project from `task_targets` (`default_project`, or an area-specific
-  project if the setting maps one), description = `drive_url` plus the row id. Write the
-  id back to `documents.todoist_task_id`.
+  project if the setting maps one), description = `drive_url` plus the row id. Claim the
+  row first and write the id back after, as SKILL.md "Tasks are created once" says
+  (`documents.todoist_task_id`).
 - `task_provider = 'none'`: create nothing. The deadline exists and the daily brief
   surfaces it on its ladder.
 
 ## Step 10: expired without a successor
 
-An expired document where an application or renewal for the same `subject_person` and
-type exists but no successor document does is a distinct alert: say it by name in the
-notes and, with a task provider, as a task. It is the most expensive thing to miss.
+```sql
+select * from v_expired_without_successor;
+```
+
+Lists expired identity and hard-deadline documents with no successor for the same person.
+"Successor" is defined by `document_types.successor_types`: a temporary residence permit
+is succeeded by a new temporary one or by a permanent one, so a settlement permit closes
+the case. `application_on_file = true` (an application exists, the title lapsed while it
+is pending) is the most expensive thing to miss: say it by name in the notes and, with a
+task provider, as a task. When you can see which document succeeded which, set the old
+row's `superseded_by` so the view no longer needs to infer it. Before schema 0.6.0 (no
+view), compare by type and person by hand, counting a permanent title as the successor of
+a temporary one.
 
 ## Step 11: bundles and recurring payments
 
@@ -271,7 +387,10 @@ notes and, with a task provider, as a task. It is the most expensive thing to mi
   pension, loan, rent, subscription) gets a `recurring_payments` row with amount,
   period, `contract_end`, `notice_period_months`. Then `select * from v_renewal_watch;`
   every `deadline_recorded = false` is a contract that will renew itself unannounced:
-  create the `notice_period` deadline and link it back.
+  create the `notice_period` deadline and link it back. Then
+  `select * from v_auto_renew_unwatched;`: auto-renewing payments with no end date, no
+  notice period and no deadline, which no other view shows. Fill what the linked document
+  states; the rest goes into the notes for the monthly review.
 
 ## Step 12: log and report
 
@@ -282,25 +401,36 @@ into `notes`: scanned, added, updated, expiring flagged, errors. If a human star
 run, answer in chat too, short. If `errors` is not empty, one failure task
 "⚠️ drive-file-intake failed <date>" in the system project, unless an open one exists.
 
-## Weekly extras (Sunday run)
+## Weekly extras (Sunday run, except the backup, which is checked every run)
 
-- **Off-site backup, first Sunday of the month.** Export `documents` and `deadlines` as
-  CSV to `drive_folders.backups`, named `backup_YYYY-MM-DD_documents_deadlines.csv`, and
-  log a `backups` row with `row_counts`. This is the only tier that survives losing the
-  Supabase project (free projects have no point-in-time recovery). Emails are left out:
-  Gmail can rebuild them. Monthly, not weekly: it is the one step that passes through
-  context, so it is expensive.
+- **Off-site backup, when due (any night, not only Sundays).**
+  `select max(run_at) from backups;` older than 30 days, or none: take it now. Export
+  `documents` and `deadlines` as CSV to `drive_folders.backups`, named
+  `backup_YYYY-MM-DD_documents_deadlines.csv`, verify the uploaded size against the local
+  file, and log a `backups` row with `row_counts`. This is the only tier that survives
+  losing the Supabase project (free projects have no point-in-time recovery). Emails are
+  left out: Gmail can rebuild them. Due-based rather than calendar-based, because a
+  backup tied to one night is lost for a month when that night is missed; about monthly,
+  because it is the one step that passes through context and is expensive.
 - **Attachment staging audit.** The bridge copies, heals and sets flags; this is audit
   only. `v_attachment_backlog` should be empty and
   `select * from bridge_runs order by started_at desc limit 5;` should show recent runs
   without errors. Sweep only what `select * from v_sweepable_staging;` returns: trash the
-  Drive copy, then delete the row. A delete trigger refuses any row that backs a document.
+  Drive copy (already gone counts as trashed), then mark the row with one short UPDATE,
+  `update attachment_staging set drive_trashed_at = now() where id = :id returning id;`.
+  The row stays as a record and leaves `v_sweepable_staging`; nothing removes it.
 - **Recall sample.** Draw 20 random Drive files modified in the last month and assert
   each is in `documents` or named in a run's `skipped`. Log it in `recall_samples`. It is
   the one metric the skill cannot flatter.
-- **Folder check.** List the folders under the Life OS root and diff against
-  `drive_folder_areas`. A new folder not in the table: add a row, asking the person for
-  `area_name` if it is not obvious.
+- **Folder check.** `select * from v_unmapped_folders;` lists folders that hold indexed
+  documents but have no `drive_folder_areas` row (it reads `drive_parent_id`, so it
+  sees folders outside the Life OS root too). Also list the folders under the Life OS
+  root and diff against `drive_folder_areas`. For each new folder resolve its ancestors
+  first: a mapped parent already covers it. Otherwise add a row (`is_filing_default =
+  false` unless it is a top-level area), with `area_name` from `area_aliases` or an
+  existing area when obvious. When it is not, do not guess: write the folder path and
+  document count into the notes and, with a task provider, one task asking the person for
+  the area name.
 
 ## A document attached in chat
 
@@ -330,26 +460,32 @@ exactly how the corrupted upload happened. Treat every upload as unverified:
 ## Reference
 
 `document_types`: closed registry: `key`, `label`, `domain`, `expiry_expected`,
-`notice_period_expected`, `hard_deadline`, `hints`. `document_type_aliases` maps old
+`notice_period_expected`, `hard_deadline`, `hints`, `successor_types`. `document_type_aliases` maps old
 free-text labels onto keys, and a trigger resolves them on write.
 
 `drive_folder_areas`: `drive_folder_id` (PK), `folder_path`, `area_name`,
 `para_category`, `document_domain_hint`, `is_filing_default`.
 
-`documents`: `drive_file_id` (unique), `name`, `drive_url`, `mime_type`, `para_category`,
+`documents`: `drive_file_id` (unique), `name`, `drive_url` (not null), `mime_type`, `para_category`,
 `area_name`, `document_type_key`, `document_type`, `issuer`, `issuer_entity_id`,
 `subject_person`, `subject_entity_id`, `description`, `tags`, `issued_on`, `expiry_date`,
 `status`, `kind`, `content_excerpt`, `body_fingerprint`, `duplicate_of`, `needs_review`,
 `review_reason`, `physical_location`, `has_original`, `source_email_id`,
-`todoist_task_id`, `last_intake_at`.
+`todoist_task_id`, `last_intake_at`, `superseded_by`, `drive_parent_id`,
+`drive_missing_since`.
 
 ```sql
 insert into documents (drive_file_id, name, drive_url, mime_type, para_category, area_name,
   document_type, document_type_key, issuer, subject_person, description, tags, issued_on,
-  expiry_date, content_excerpt, needs_review, review_reason, kind, last_intake_at)
+  expiry_date, content_excerpt, needs_review, review_reason, kind, drive_parent_id,
+  last_intake_at)
 values (..., clock_timestamp())
 on conflict (drive_file_id) do update set
   name = excluded.name, drive_url = excluded.drive_url, description = excluded.description,
+  area_name = coalesce(excluded.area_name, documents.area_name),
+  para_category = coalesce(excluded.para_category, documents.para_category),
+  drive_parent_id = coalesce(excluded.drive_parent_id, documents.drive_parent_id),
+  drive_missing_since = null,
   document_type = excluded.document_type, document_type_key = excluded.document_type_key,
   issuer = excluded.issuer,
   subject_person = coalesce(excluded.subject_person, documents.subject_person),
@@ -357,7 +493,8 @@ on conflict (drive_file_id) do update set
   expiry_date = excluded.expiry_date, content_excerpt = excluded.content_excerpt,
   tags = excluded.tags, needs_review = excluded.needs_review,
   review_reason = excluded.review_reason,
-  last_intake_at = clock_timestamp(), updated_at = now();
+  last_intake_at = clock_timestamp(), updated_at = now()
+returning id;
 
 -- must all be empty at the end of a run
 select * from v_stale_status;
@@ -368,6 +505,7 @@ select * from v_missing_notice_period;
 insert into processing_runs (skill_version, started_at, files_scanned, files_added,
   files_updated, expiring_flagged, text_queue_depth, capabilities, errors, skipped,
   decisions, notes)
-values ('v3.1', :started_at, ..., :capabilities::jsonb, :errors::jsonb, :skipped::jsonb,
-        :decisions::jsonb, :notes);
+values ('v3.2', :started_at, ..., :capabilities::jsonb, :errors::jsonb, :skipped::jsonb,
+        :decisions::jsonb, :notes)
+returning id;
 ```

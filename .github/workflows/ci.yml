@@ -1,21 +1,32 @@
 name: ci
 
+# Runs on every pull request (the checks show on the PR) and on every push to main.
+# A green run on main is what the release workflow waits for.
+
 on:
-  push:
   pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  packs:
+  unit:
+    name: Unit tests (packs, release consistency)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Pack contract tests
+      - name: Pack contracts and release consistency
         run: python -m unittest discover -s tests -v
 
-  schema:
+  database:
+    name: Database (fresh install, rules, features, upgrade)
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -31,6 +42,9 @@ jobs:
       PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - name: Supabase roles
         run: psql -v ON_ERROR_STOP=1 -c "create role anon; create role authenticated; create role service_role;"
       - name: Migrations, seed and region packs, twice (must be idempotent from 0005 on)
@@ -38,14 +52,46 @@ jobs:
           set -e
           run() { psql -v ON_ERROR_STOP=1 -q -f "$1"; }
           for f in supabase/migrations/*.sql supabase/seed/*.sql packs/region/*/classification_rules.sql; do echo "== $f"; run "$f"; done
-          for f in supabase/migrations/0005_*.sql supabase/migrations/0006_*.sql supabase/migrations/0007_*.sql supabase/migrations/0008_*.sql supabase/migrations/0009_*.sql supabase/seed/*.sql packs/region/*/classification_rules.sql; do echo "== again $f"; run "$f"; done
+          for f in $(ls supabase/migrations/*.sql | awk -F/ '$NF >= "0005"') supabase/seed/*.sql packs/region/*/classification_rules.sql; do echo "== again $f"; run "$f"; done
       - name: Invariants and health views answer
         run: |
           psql -v ON_ERROR_STOP=1 -c "select * from v_system_invariants" -c "select * from v_system_health" \
                -c "select emergency_dossier()" -c "select briefing_text()"
       - name: Region rules in SQL match the packs
         run: python3 tests/sql_rules_check.py
+      - name: Release checks
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/release_checks.sql
+      - name: Feature checks
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/feature_checks.sql
+      - name: Upgrade from the previous release keeps every deadline
+        run: tests/upgrade_check.sh
       - name: Deny-all holds
         run: |
           test "$(psql -tAc "select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity")" = "0"
           test "$(psql -tAc "select count(*) from information_schema.role_table_grants where table_schema = 'public' and grantee in ('anon','authenticated')")" = "0"
+          test "$(psql -tAc "select count(*) from pg_proc p where p.pronamespace = 'public'::regnamespace and has_function_privilege('anon', p.oid, 'execute') and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')")" = "0"
+
+  version:
+    name: Version bump for shipped changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: A change that ships needs a new VERSION
+        run: tests/check_version_bump.sh "origin/${{ github.base_ref }}"
+
+  package:
+    name: Build life-os.zip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build
+        run: scripts/package_skills.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: life-os-zip
+          path: dist/life-os.zip
+          retention-days: 14

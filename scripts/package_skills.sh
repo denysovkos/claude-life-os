@@ -19,6 +19,7 @@ cp -R supabase/migrations supabase/seed "$assets/"
 cp -R packs "$assets/packs"
 cp -R docs "$assets/docs"
 cp apps-script/Code.gs apps-script/appsscript.json "$assets/apps-script/"
+mkdir -p "$assets/tests" && cp tests/sql/*.sql "$assets/tests/"
 
 (cd dist/stage && zip -qr ../life-os.zip life-os)
 rm -rf dist/stage

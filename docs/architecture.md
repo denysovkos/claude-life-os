@@ -36,7 +36,7 @@ every open obligation.
               │ read            ▼                        │     emergency binder
               │         ┌────────────────┐   files       │
               │         │  Apps Script   │───────────────┤
-              │         │  bridge-3.0    │               │
+              │         │  bridge-3.1    │               │
               │         └──────┬─────────┘               │
               │                │ REST (secret key)       │ read, file, move
               ▼                ▼                         ▼
@@ -126,7 +126,8 @@ Claude reads only when it runs that workflow.
 | `context-lookup` | on demand, any chat | nothing |
 | `setup` | once, then as doctor | the installation itself |
 
-The night workflows run as scheduled tasks in Claude; see [scheduling.md](scheduling.md).
+The same folder is linked at `.claude/skills/life-os`, so Claude Code and its cloud
+routines load it from a clone of the repository. See [scheduling.md](scheduling.md).
 
 Every writing workflow follows the same shape: load settings, `take_snapshot()`, take a row
 in `run_locks`, work from the last run's timestamp (never "yesterday"), apply

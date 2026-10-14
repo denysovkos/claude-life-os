@@ -1,6 +1,6 @@
 # Context lookup (read-only, scope first)
 
-Workflow `context-lookup` v2.1 of the `life-os` skill: read-only answers in any chat. The shared rules in
+Workflow `context-lookup` v2.2 of the `life-os` skill: read-only answers in any chat. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Other chats regularly need one fact out of the person's documents or mail (is the
@@ -17,9 +17,9 @@ select key, value from life_settings
 where key in ('output_locale','timezone','region','schema_version');
 ```
 
-Answer in the language the person asked in. `output_locale` is only the fallback. If
-`schema_version` is missing, the system was never installed: say so and point to the
-setup workflow (`workflows/setup.md`).
+Answer in the language the person asked in. `output_locale` is only the fallback. Whether
+the system is installed is decided as SKILL.md says (by the data, not by one missing
+key); only a database with no index at all is "never installed".
 
 ## Scope before query
 
@@ -109,6 +109,11 @@ use it instead of reasoning from scratch.
 - **Tax**: `select * from v_tax_items;` These are candidates. The person, or their tax
   adviser, decides.
 - **Is anything broken**: `select invariant, severity, failing, meaning from v_system_invariants where failing > 0;`
+- **Expired, and is there a replacement**: `select * from v_expired_without_successor;`
+  An expired permit or passport with a successor of the same person (a new card, a
+  permanent title) is not listed. A document marked `drive_missing_since` is in the index
+  but its Drive file is gone: say so instead of handing over a dead link.
+- **What renews by itself without a known exit**: `select * from v_auto_renew_unwatched;`
 - **Emergency overview**: `select emergency_dossier();` The same text the bridge writes
   daily into the "Emergency binder" Google Doc in the emergency folder.
 
