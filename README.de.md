@@ -18,7 +18,7 @@
   <a href="https://github.com/denysovkos/claude-life-os/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/denysovkos/claude-life-os/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/denysovkos/claude-life-os?style=flat-square&color=1F2937" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/languages-10-4C8BD9?style=flat-square" alt="10 languages">
-  <img src="https://img.shields.io/badge/countries-11-3FA37A?style=flat-square" alt="11 countries">
+  <img src="https://img.shields.io/badge/countries-15-3FA37A?style=flat-square" alt="15 countries">
 </p>
 
 <p align="center"><a href="README.md">English</a> · <a href="README.uk.md">Українська</a> · <b>Deutsch</b> · <a href="README.pl.md">Polski</a> · <a href="README.fr.md">Français</a> · <a href="README.es.md">Español</a> · <a href="README.it.md">Italiano</a> · <a href="README.nl.md">Nederlands</a> · <a href="README.ru.md">Русский</a> · <a href="README.pt.md">Português</a></p>
@@ -158,7 +158,7 @@ Berichte, Notfallordner, Ordnernamen) gibt es in diesen Sprachen:
 | Sprache | Stand |
 |---|---|
 | English, Deutsch, Українська | vollständig und getestet |
-| Polski, Français, Español, Italiano, Nederlands, Русский, Português | erste Übersetzung, sonst Englisch |
+| Polski, Français, Español, Italiano, Nederlands, Русский, Português | vollständig, an synthetischen Beispielen geprüft; Durchsicht durch Muttersprachler willkommen |
 
 Rechtliche Regeln (wie eine Widerspruchsfrist berechnet wird, wann ein Vertrag kündbar
 ist, bis wann man einen Kauf widerrufen kann, wann die Steuererklärung fällig ist) kommen
@@ -167,11 +167,27 @@ in einem **Regionalpaket**:
 | Land | Stand |
 |---|---|
 | 🇩🇪 Deutschland | vollständig und getestet |
-| 🇦🇹 🇫🇷 🇪🇸 🇮🇹 🇳🇱 🇵🇹 🇵🇱 🇬🇧 🇺🇸 🇺🇦 Österreich, Frankreich, Spanien, Italien, Niederlande, Portugal, Polen, Vereinigtes Königreich, USA, Ukraine | Beta: nach den in jeder Regel zitierten Gesetzen geschrieben, noch nicht vor Ort geprüft |
+| 🇦🇹 🇫🇷 🇪🇸 🇮🇹 🇳🇱 🇵🇹 🇵🇱 🇬🇧 🇺🇸 🇺🇦 🇨🇭 🇧🇪 🇮🇪 🇷🇺 Österreich, Frankreich, Spanien, Italien, Niederlande, Portugal, Polen, Vereinigtes Königreich, USA, Ukraine, Schweiz, Belgien, Irland, Russland | Beta: nach den in jeder Regel zitierten Gesetzen geschrieben, noch nicht vor Ort geprüft |
 
 Überall sonst verfolgt das System weiterhin jedes gelesene Datum, verwendet aber
 vorsichtige Platzhalter und fragt nach den lokalen Regeln. Korrekturen an Beta-Paketen
 oder ein neues Land sind sehr willkommen: [packs/README.md](packs/README.md).
+
+## Keine Rechtsberatung
+
+Life OS ist ein Werkzeug, um den Überblick über Papierkram zu behalten. Es ist keine
+Rechts-, Steuer- oder Finanzberatung. Fristen, Kündigungsfristen, Widerrufsfristen und
+andere Regeln darin, einschließlich aller Regionalpakete, sind allgemeine Vorgaben, die
+aus öffentlich zugänglichen Gesetzen abgeleitet wurden. Sie können unvollständig,
+veraltet oder für Ihren Fall falsch sein und ersetzen weder Anwalt noch Steuerberater
+noch die Behörde, die Ihnen geschrieben hat. Das Dokument in Ihrer Hand geht einer
+Vorgabe hier immer vor.
+
+Die Software wird „wie besehen“ und ohne jede Gewährleistung bereitgestellt (siehe
+[LICENSE](LICENSE)). Autor und Mitwirkende übernehmen keine Verantwortung und keine
+Haftung für versäumte Fristen, Schäden, Kosten oder andere Folgen der Nutzung oder des
+Vertrauens auf ihre Ausgaben. Prüfen Sie jede Frist und jede Entscheidung, die für Sie
+wichtig ist, selbst. Volltext: [DISCLAIMER.md](DISCLAIMER.md) (Englisch).
 
 ## Datenschutz und Sicherheit
 

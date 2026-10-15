@@ -1,22 +1,17 @@
 {
   "categories": {
-    "bills_payments": [
-      "factura",
-      "importe a pagar",
-      "domiciliación",
-      "vencimiento"
-    ],
-    "government": [
-      "agencia tributaria",
-      "resolución",
-      "ayuntamiento",
-      "notificación"
-    ],
-    "orders_delivery": [
-      "paquete",
-      "entregado",
-      "número de seguimiento",
-      "enviado"
-    ]
-  }
+    "purchases": ["ticket de compra", "gracias por tu compra", "gracias por su compra", "justificante de compra", "pagado con tarjeta", "resumen de tu compra"],
+    "orders_delivery": ["paquete", "entregado", "número de seguimiento", "enviado", "en reparto", "punto de recogida", "envío"],
+    "government": ["agencia tributaria", "resolución", "notificación", "sede electrónica", "extranjería", "ayuntamiento", "expediente", "recurso de reposición", "seguridad social"],
+    "bank_finance": ["extracto", "saldo", "cuenta corriente", "depósito", "tipo de interés", "inversión", "extracto de tarjeta", "ahorro"],
+    "bills_payments": ["factura", "importe a pagar", "domiciliación", "recibo", "fecha de cargo", "vencimiento", "cuota", "aviso de pago"],
+    "legal_notary": ["notaría", "notario", "abogado", "borrador de escritura", "escritura", "poder notarial", "juzgado", "contrato de arras"],
+    "work": ["nómina", "salario", "departamento de personal", "recursos humanos", "contrato de trabajo", "certificado de retenciones", "solicitud de vacaciones"],
+    "health": ["cita", "centro de salud", "receta", "mutua", "resultados de análisis", "dentista", "tarjeta sanitaria"],
+    "travel": ["vuelo", "tarjeta de embarque", "confirmación de reserva", "hotel", "facturación online", "itinerario", "reserva"],
+    "personal_social": ["cumpleaños", "cena", "nos vemos", "familia", "boda", "fiesta", "quedamos"]
+  },
+  "action_phrases": ["rogamos abone", "acción requerida", "responder antes de", "firmar y devolver", "por favor confirme", "plazo"],
+  "deadline_phrases": ["fecha de vencimiento", "a pagar antes del", "a más tardar", "en un plazo de 14 días", "en el plazo de un mes", "hasta el"],
+  "amount_labels": ["total", "importe a pagar", "importe", "total a pagar"]
 }

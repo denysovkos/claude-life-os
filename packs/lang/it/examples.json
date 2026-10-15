@@ -1,0 +1,86 @@
+{
+  "dates": [
+    {
+      "text": "Data di scadenza: 05/03/2026",
+      "expect": "2026-03-05"
+    },
+    {
+      "text": "Roma, 1 febbraio 2026",
+      "expect": "2026-02-01"
+    },
+    {
+      "text": "valido fino al 14 set. 2027",
+      "expect": "2027-09-14"
+    },
+    {
+      "text": "addebito il 31/01/26",
+      "expect": "2026-01-31"
+    }
+  ],
+  "amounts": [
+    {
+      "text": "Importo da pagare: € 1.234,56",
+      "expect": "1234.56"
+    },
+    {
+      "text": "Rata 89,00 EUR al mese",
+      "expect": "89.00"
+    },
+    {
+      "text": "Canone 42,10€ mensile",
+      "expect": "42.10"
+    }
+  ],
+  "emails": [
+    {
+      "subject": "Il tuo scontrino",
+      "body": "Grazie per il tuo acquisto. Ricevuta n. 4411, pagato con carta.",
+      "expect_category": "purchases"
+    },
+    {
+      "subject": "Il tuo pacco è stato consegnato",
+      "body": "Numero di tracciamento 00340434. Il pacco è stato consegnato oggi dal corriere.",
+      "expect_category": "orders_delivery"
+    },
+    {
+      "subject": "Provvedimento relativo alla sua domanda",
+      "body": "In allegato il provvedimento della questura, protocollo 12-345. Contro il provvedimento è ammesso ricorso.",
+      "expect_category": "government"
+    },
+    {
+      "subject": "Il tuo estratto conto di gennaio",
+      "body": "L'estratto conto del tuo conto corrente è disponibile nell'area riservata. Il saldo di fine mese è in allegato.",
+      "expect_category": "bank_finance"
+    },
+    {
+      "subject": "Fattura 2026-0113",
+      "body": "In allegato la tua bolletta. L'importo da pagare sarà riscosso con addebito diretto.",
+      "expect_category": "bills_payments"
+    },
+    {
+      "subject": "Bozza di atto dal notaio",
+      "body": "Gentile signora, le inviamo la bozza di atto per la compravendita. Lo studio del notaio la prega di rileggerla prima del rogito.",
+      "expect_category": "legal_notary"
+    },
+    {
+      "subject": "Il tuo cedolino di gennaio",
+      "body": "La busta paga è disponibile. Per domande rivolgersi all'ufficio del personale del datore di lavoro.",
+      "expect_category": "work"
+    },
+    {
+      "subject": "Promemoria appuntamento",
+      "body": "Le ricordiamo l'appuntamento in ambulatorio martedì. Porti la tessera sanitaria e l'impegnativa.",
+      "expect_category": "health"
+    },
+    {
+      "subject": "Conferma di prenotazione: volo per Lisbona",
+      "body": "Il tuo volo è confermato. Il check-in online apre 24 ore prima della partenza, la carta d'imbarco seguirà.",
+      "expect_category": "travel"
+    },
+    {
+      "subject": "Compleanno sabato",
+      "body": "Festeggiamo il compleanno di Mia con una cena. Viene tutta la famiglia, a presto!",
+      "expect_category": "personal_social"
+    }
+  ]
+}

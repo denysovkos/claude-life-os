@@ -22,13 +22,17 @@ settings at the start of every run.
 | Pack | Status |
 |---|---|
 | `lang/en`, `lang/de`, `lang/uk` | stable, tested |
-| `lang/pl`, `fr`, `es`, `it`, `nl`, `ru`, `pt` | skeleton, community-maintained |
+| `lang/pl`, `fr`, `es`, `it`, `nl`, `ru`, `pt` | stable: complete, examples pass; review by native speakers welcome |
 | `region/de` | stable, tested |
-| `region/at`, `fr`, `es`, `it`, `nl`, `pt`, `pl`, `gb`, `us`, `ua` | beta: written from the statutes cited in each rule, date arithmetic tested, not yet reviewed by someone who practises there |
+| `region/at`, `fr`, `es`, `it`, `nl`, `pt`, `pl`, `gb`, `us`, `ua`, `ch`, `be`, `ie`, `ru` | beta: written from the statutes cited in each rule, date arithmetic tested, not yet reviewed by someone who practises there |
 
-A skeleton pack is usable: whatever it does not translate falls back to English, and
-intake still reads mail in any language because classification is judgement, not
-keyword matching. It just gets fewer free hints.
+No pack is legal advice. A region pack encodes common statutory defaults so the system
+asks the right question on time; it can be incomplete or wrong, and the document in hand
+always wins. See [DISCLAIMER.md](../DISCLAIMER.md).
+
+A skeleton pack (a new language, before it is complete) is usable: whatever it does not
+translate falls back to English, and intake still reads mail in any language because
+classification is judgement, not keyword matching. It just gets fewer free hints.
 
 ## Language pack files
 

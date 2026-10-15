@@ -15,6 +15,7 @@ cp LICENSE dist/stage/life-os/LICENSE
 
 assets=dist/stage/life-os/assets
 mkdir -p "$assets/apps-script"
+cp DISCLAIMER.md "$assets/DISCLAIMER.md"
 cp -R supabase/migrations supabase/seed "$assets/"
 cp -R packs "$assets/packs"
 cp -R docs "$assets/docs"

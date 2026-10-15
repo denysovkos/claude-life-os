@@ -18,7 +18,7 @@
   <a href="https://github.com/denysovkos/claude-life-os/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/denysovkos/claude-life-os/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/denysovkos/claude-life-os?style=flat-square&color=1F2937" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/languages-10-4C8BD9?style=flat-square" alt="10 languages">
-  <img src="https://img.shields.io/badge/countries-11-3FA37A?style=flat-square" alt="11 countries">
+  <img src="https://img.shields.io/badge/countries-15-3FA37A?style=flat-square" alt="15 countries">
 </p>
 
 <p align="center"><a href="README.md">English</a> · <a href="README.uk.md">Українська</a> · <a href="README.de.md">Deutsch</a> · <a href="README.pl.md">Polski</a> · <a href="README.fr.md">Français</a> · <a href="README.es.md">Español</a> · <b>Italiano</b> · <a href="README.nl.md">Nederlands</a> · <a href="README.ru.md">Русский</a> · <a href="README.pt.md">Português</a></p>
@@ -155,7 +155,7 @@ report, cartella di emergenza, nomi delle cartelle) sono disponibili in queste l
 | Lingua | Stato |
 |---|---|
 | English, Deutsch, Українська | complete e testate |
-| Polski, Français, Español, Italiano, Nederlands, Русский, Português | traduzione iniziale, inglese dove manca |
+| Polski, Français, Español, Italiano, Nederlands, Русский, Português | completa, verificata su esempi sintetici; benvenuta la revisione di madrelingua |
 
 Le regole legali (come si calcola un termine di ricorso, quando si può disdire un
 contratto, entro quando restituire un acquisto, quando presentare la dichiarazione)
@@ -164,11 +164,26 @@ arrivano con un **pacchetto regionale**:
 | Paese | Stato |
 |---|---|
 | 🇩🇪 Germania | completo e testato |
-| 🇦🇹 🇫🇷 🇪🇸 🇮🇹 🇳🇱 🇵🇹 🇵🇱 🇬🇧 🇺🇸 🇺🇦 Austria, Francia, Spagna, Italia, Paesi Bassi, Portogallo, Polonia, Regno Unito, Stati Uniti, Ucraina | beta: scritto a partire dalle leggi citate in ogni regola, non ancora verificato sul posto |
+| 🇦🇹 🇫🇷 🇪🇸 🇮🇹 🇳🇱 🇵🇹 🇵🇱 🇬🇧 🇺🇸 🇺🇦 🇨🇭 🇧🇪 🇮🇪 🇷🇺 Austria, Francia, Spagna, Italia, Paesi Bassi, Portogallo, Polonia, Regno Unito, Stati Uniti, Ucraina, Svizzera, Belgio, Irlanda, Russia | beta: scritto a partire dalle leggi citate in ogni regola, non ancora verificato sul posto |
 
 Altrove il sistema segue comunque ogni data che legge, ma usa valori prudenti e ti chiede
 le regole locali. Correzioni ai pacchetti beta o un nuovo paese sono benvenuti:
 [packs/README.md](packs/README.md).
+
+## Non è consulenza legale
+
+Life OS è uno strumento per tenere sotto controllo le pratiche. Non è consulenza legale,
+fiscale o finanziaria. Le scadenze, i preavvisi, i termini di recesso e le altre regole
+che contiene, compresi tutti i pacchetti regionali, sono valori predefiniti generali
+ricavati dalla legge pubblica. Possono essere incompleti, superati o non adatti al tuo
+caso e non sostituiscono un avvocato, un commercialista o l'ufficio che ti ha scritto.
+Il documento che hai in mano prevale sempre su un valore predefinito.
+
+Il software è fornito «così com'è», senza garanzie di alcun tipo (vedi
+[LICENSE](LICENSE)). L'autore e i contributori non si assumono alcuna responsabilità
+per una scadenza mancata, una perdita, un costo o qualsiasi altra conseguenza dell'uso o
+della fiducia nelle sue risposte. Controlla tu stesso ogni scadenza e ogni decisione che
+conta per te. Testo completo: [DISCLAIMER.md](DISCLAIMER.md) (in inglese).
 
 ## Privacy e sicurezza
 

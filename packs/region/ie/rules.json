@@ -1,0 +1,88 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_tax",
+      "label": "Appeal to the Tax Appeals Commission",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 30}],
+      "roll_to_business_day": false,
+      "hard": true,
+      "lead_days": [21, 14, 7, 3, 1],
+      "basis": "Section 949I Taxes Consolidation Act 1997: an appeal is made by notice to the Tax Appeals Commission within 30 days after the date of the notice of assessment.",
+      "notes": "Late appeals are accepted only for a reasonable cause (section 949O). The tax return for the year must be filed before an appeal is valid."
+    },
+    {
+      "key": "consumer_withdrawal",
+      "label": "Cancellation period",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": true,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "Consumer Rights Act 2022, Part 4 (implementing Directive 2011/83/EU): 14 days from the day the consumer takes physical possession of the goods. Regulation (EEC) 1182/71: a period ending on a weekend or public holiday runs to the next working day.",
+      "notes": "v_purchase_rights counts from the order mail when there is no delivery mail, which errs early. Without proper cancellation information the period extends by up to 12 months."
+    },
+    {
+      "key": "short_term_right_to_terminate",
+      "label": "Short-term right to terminate",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 30}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [7],
+      "basis": "Consumer Rights Act 2022, Part 2: a consumer may reject goods that do not conform to the contract and get a full refund within 30 days of delivery.",
+      "notes": "Perishable goods have a shorter period. After that, repair or replacement and then a price reduction or final termination remain; the trader is liable for a lack of conformity that appears within six years of delivery."
+    },
+    {
+      "key": "rent_tenant_exit",
+      "label": "Tenant's notice of termination",
+      "applies_to": ["rental_contract"],
+      "deadline_type": "notice_period",
+      "start": "event_date",
+      "steps": [{"add_days": 28}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [14, 7],
+      "basis": "Section 66 Residential Tenancies Act 2004: a tenant gives at least 28 days' notice for a tenancy of less than six months; longer tenancies need longer notice (35 days to 112 days by duration).",
+      "notes": "event_date is the day the notice is served. This counts the shortest period; set the real one from the tenancy's length. A fixed-term tenancy can only be ended early for a breach or by agreement."
+    }
+  ],
+  "annual_dates": [
+    {
+      "key": "tax_return_due",
+      "label": "File the Form 11 income tax return",
+      "month_day": "10-31",
+      "year_offset_from_tax_year": 1,
+      "hard": true,
+      "basis": "Section 959I Taxes Consolidation Act 1997: chargeable persons file the return for a tax year by 31 October of the following year.",
+      "notes": "Filing and paying through ROS extends the date each year, usually to mid-November. PAYE-only employees are not chargeable persons and need not file unless they have other income."
+    }
+  ],
+  "facts": [
+    {
+      "key": "tv_licence",
+      "text": "A TV licence is required for any television set at the address and is renewed every year. It is not cancelled automatically when you move."
+    },
+    {
+      "key": "local_property_tax",
+      "text": "Local Property Tax is due on residential property owned on the valuation date (1 November). Revenue sets the payment schedule; it can be paid by deduction at source, direct debit or in one sum."
+    }
+  ],
+  "authorities": [
+    {
+      "name": "Revenue Commissioners",
+      "kind": "authority",
+      "domains": ["revenue.ie"],
+      "category": "government"
+    }
+  ],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}

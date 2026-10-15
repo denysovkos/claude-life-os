@@ -1,11 +1,17 @@
 {
+  "root": "Life OS",
   "inbox": "Входящие",
   "emergency": "Экстренное",
+  "backups": "Резервные копии",
   "catch_all": "Документы",
+  "identity": "Удостоверения",
   "finance": "Финансы",
   "taxes": "Налоги",
   "housing": "Жильё",
   "insurance": "Страхование",
   "work": "Работа",
-  "health": "Здоровье"
+  "legal": "Юридическое",
+  "health": "Здоровье",
+  "vehicle": "Транспорт",
+  "education": "Образование"
 }

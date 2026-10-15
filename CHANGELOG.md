@@ -1,5 +1,29 @@
 # Changelog
 
+## 4.3.0 (workflow release v3.2), 2026-10-15
+
+No migration; schema stays 0.6.0. Upgrading is uploading the new zip: existing deadlines
+do not move, and a pack only changes an installation when it is chosen in setup or
+reconfigure.
+
+### Added
+- Language packs `pl`, `fr`, `es`, `it`, `nl`, `ru`, `pt` 1.0.0 are complete and stable:
+  every binder label and folder name, keywords for all 10 categories, action, deadline
+  and amount phrases, `formats.json` (dates, amounts, month names) and synthetic
+  `examples.json` that pass `tests/test_packs.py`. Review by native speakers is welcome.
+- Region packs (beta) `ch` Switzerland, `be` Belgium, `ie` Ireland and `ru` Russia, each
+  with term rules, examples, annual tax dates or facts, and authority mail rules. Switzerland
+  has no general online withdrawal right, so its pack has no `consumer_withdrawal` rule and
+  `v_purchase_rights` reports the return window as unknown there.
+- `DISCLAIMER.md`: Life OS is not legal, tax or financial advice, and the author and
+  contributors accept no liability. It ships in the zip, every README has a "Not legal
+  advice" section, setup says so before the first question, and answers about legal
+  rights or deadlines say it once.
+
+### Workflow versions
+setup v1.4, email-intake v3.2, drive-file-intake v3.2, nightly-check v1.1,
+context-lookup v2.2, life-review v2.2.
+
 ## 4.2.0 (workflow release v3.2), 2026-10-14
 
 Schema 0.6.0. Upgrading from 4.1.x is additive: no open deadline moves, every view keeps

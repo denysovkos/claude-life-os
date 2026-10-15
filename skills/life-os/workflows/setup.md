@@ -1,6 +1,6 @@
 # Life OS setup
 
-Workflow `setup` v1.3 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
+Workflow `setup` v1.4 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Three modes. Pick from what the person said; if unclear, ask.
@@ -21,6 +21,10 @@ The person may never have used a database or a script editor. So:
 - Never ask for, accept or repeat the Supabase **secret** key in chat. It goes only into
   Google Apps Script. If they paste it anyway: tell them to create a new secret key in
   Supabase and delete the pasted one, because chat history is not a safe place for it.
+- Before the first question, say once, in their language, that Life OS is not legal, tax
+  or financial advice: its deadlines are defaults from public law, the document in hand
+  wins, and the author accepts no liability (`assets/DISCLAIMER.md`). Continue only after
+  they acknowledge it.
 - Resume by checking reality, not memory. Before every step, run its check; if it is
   already done, say so in one line and move on. Running install twice must be harmless.
 
@@ -74,12 +78,13 @@ Ask these in one message, with the defaults filled in so they can just say "yes"
 2. The Gmail address this runs on. It must be the same Google account as Drive and the
    Apps Script (the bridge sends alerts to it).
 3. Time zone. Default: the one Google Calendar reports (`list_calendars`, primary).
-4. The language you want briefs, tasks and reports in (`output_locale`). Offer the stable
-   packs `en`, `de`, `uk` first; others work with English fallbacks.
+4. The language you want briefs, tasks and reports in (`output_locale`). Every pack in
+   `assets/packs/lang/` is complete: `en`, `de`, `uk`, `pl`, `fr`, `es`, `it`, `nl`, `ru`,
+   `pt`. Any other language works with English labels.
 5. The languages your mail and documents arrive in (`input_locales`).
 6. The country whose rules apply to your paperwork (`region`). Read the list from
    `assets/packs/region/*/pack.json`: `de` is stable; `at`, `fr`, `es`, `it`, `nl`, `pt`,
-   `pl`, `gb`, `us`, `ua` are beta (written from the statutes, not yet reviewed locally:
+   `pl`, `gb`, `us`, `ua`, `ch`, `be`, `ie`, `ru` are beta (written from the statutes, not yet reviewed locally:
    say so in one sentence when one of them is chosen). Anything else: the system still
    works, but deadlines are counted with cautious placeholders and the workflows ask about
    local rules instead of knowing them. Offer the pack's `default_timezone` and
@@ -373,13 +378,13 @@ the installed versions:
 
 ```sql
 insert into skill_revisions (skill_name, version, change_type, summary)
-values ('life-os', 'v4.2', 'baseline', 'installed'),
-       ('setup', 'v1.3', 'baseline', 'installed with life-os v4.2'),
-       ('email-intake', 'v3.2', 'baseline', 'installed with life-os v4.2'),
-       ('drive-file-intake', 'v3.2', 'baseline', 'installed with life-os v4.2'),
-       ('nightly-check', 'v1.1', 'baseline', 'installed with life-os v4.2'),
-       ('context-lookup', 'v2.2', 'baseline', 'installed with life-os v4.2'),
-       ('life-review', 'v2.2', 'baseline', 'installed with life-os v4.2');
+values ('life-os', 'v4.3', 'baseline', 'installed'),
+       ('setup', 'v1.4', 'baseline', 'installed with life-os v4.3'),
+       ('email-intake', 'v3.2', 'baseline', 'installed with life-os v4.3'),
+       ('drive-file-intake', 'v3.2', 'baseline', 'installed with life-os v4.3'),
+       ('nightly-check', 'v1.1', 'baseline', 'installed with life-os v4.3'),
+       ('context-lookup', 'v2.2', 'baseline', 'installed with life-os v4.3'),
+       ('life-review', 'v2.2', 'baseline', 'installed with life-os v4.3');
 ```
 
 Finish with doctor mode, then a three-line summary: what runs when, where the emergency

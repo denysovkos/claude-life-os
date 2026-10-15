@@ -18,7 +18,7 @@
   <a href="https://github.com/denysovkos/claude-life-os/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/denysovkos/claude-life-os/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/denysovkos/claude-life-os?style=flat-square&color=1F2937" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/languages-10-4C8BD9?style=flat-square" alt="10 languages">
-  <img src="https://img.shields.io/badge/countries-11-3FA37A?style=flat-square" alt="11 countries">
+  <img src="https://img.shields.io/badge/countries-15-3FA37A?style=flat-square" alt="15 countries">
 </p>
 
 <p align="center"><a href="README.md">English</a> · <a href="README.uk.md">Українська</a> · <a href="README.de.md">Deutsch</a> · <a href="README.pl.md">Polski</a> · <a href="README.fr.md">Français</a> · <a href="README.es.md">Español</a> · <a href="README.it.md">Italiano</a> · <b>Nederlands</b> · <a href="README.ru.md">Русский</a> · <a href="README.pt.md">Português</a></p>
@@ -155,7 +155,7 @@ rapporten, noodmap, mapnamen) bestaan in deze talen:
 | Taal | Status |
 |---|---|
 | English, Deutsch, Українська | volledig en getest |
-| Polski, Français, Español, Italiano, Nederlands, Русский, Português | eerste vertaling, Engels waar die ontbreekt |
+| Polski, Français, Español, Italiano, Nederlands, Русский, Português | volledig, getoetst aan synthetische voorbeelden; controle door moedertaalsprekers welkom |
 
 Juridische regels (hoe een bezwaartermijn wordt berekend, wanneer een contract opzegbaar
 is, tot wanneer je een aankoop kunt terugsturen, wanneer de aangifte moet worden
@@ -164,11 +164,27 @@ ingediend) komen in een **regiopakket**:
 | Land | Status |
 |---|---|
 | 🇩🇪 Duitsland | volledig en getest |
-| 🇦🇹 🇫🇷 🇪🇸 🇮🇹 🇳🇱 🇵🇹 🇵🇱 🇬🇧 🇺🇸 🇺🇦 Oostenrijk, Frankrijk, Spanje, Italië, Nederland, Portugal, Polen, Verenigd Koninkrijk, Verenigde Staten, Oekraïne | bèta: geschreven op basis van de wetten die elke regel noemt, nog niet ter plaatse gecontroleerd |
+| 🇦🇹 🇫🇷 🇪🇸 🇮🇹 🇳🇱 🇵🇹 🇵🇱 🇬🇧 🇺🇸 🇺🇦 🇨🇭 🇧🇪 🇮🇪 🇷🇺 Oostenrijk, Frankrijk, Spanje, Italië, Nederland, Portugal, Polen, Verenigd Koninkrijk, Verenigde Staten, Oekraïne, Zwitserland, België, Ierland, Rusland | bèta: geschreven op basis van de wetten die elke regel noemt, nog niet ter plaatse gecontroleerd |
 
 Elders volgt het systeem nog steeds elke datum die het leest, maar gebruikt het
 voorzichtige standaardwaarden en vraagt het je naar de lokale regels. Correcties op
 bètapakketten of een nieuw land zijn zeer welkom: [packs/README.md](packs/README.md).
+
+## Geen juridisch advies
+
+Life OS is een hulpmiddel om je papierwerk bij te houden. Het is geen juridisch, fiscaal
+of financieel advies. De termijnen, opzegtermijnen, bedenktijden en andere regels erin,
+inclusief alle regiopakketten, zijn algemene standaardwaarden op basis van openbare
+wetgeving. Ze kunnen onvolledig, verouderd of voor jouw situatie onjuist zijn en
+vervangen geen advocaat, belastingadviseur of de instantie die je heeft geschreven. Het
+document dat je in handen hebt, gaat altijd voor op een standaardwaarde.
+
+De software wordt geleverd "zoals hij is", zonder enige garantie (zie
+[LICENSE](LICENSE)). De auteur en bijdragers aanvaarden geen enkele verantwoordelijkheid
+of aansprakelijkheid voor een gemiste termijn, verlies, kosten of andere gevolgen van
+het gebruik of van vertrouwen op wat het zegt. Controleer elke termijn en elke beslissing
+die voor jou belangrijk is zelf. Volledige tekst: [DISCLAIMER.md](DISCLAIMER.md) (in
+het Engels).
 
 ## Privacy en veiligheid
 

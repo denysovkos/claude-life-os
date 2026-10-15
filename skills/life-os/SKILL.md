@@ -15,7 +15,7 @@ description: >-
   searching Drive or Gmail by hand.
 compatibility: Requires Supabase, Google Drive and Gmail connectors. Google Calendar recommended. Todoist and Craft optional.
 metadata:
-  version: v4.2
+  version: v4.3
   product: claude-life-os
   schema_version: 0.6.0
 ---
@@ -130,6 +130,13 @@ use 50 and 60). A legal date is counted with `apply_term_rule()` (or
 A date the document states in words wins over any computation: store it with
 `deadlines.date_basis = 'stated'`; a counted one gets `'derived'`. If the two disagree,
 keep the stated one and say so in the deadline's notes.
+
+**Not legal advice.** Every rule, fact and counted date is a default from the region pack,
+not legal, tax or financial advice (`assets/DISCLAIMER.md`). When an answer, brief or review
+tells the person what they may or must do by law (an objection, a cancellation, a return,
+a tax date), add once, in their language, that this is not legal advice and that the
+document in hand or a professional decides. Never present a counted date as certain when
+the document gives none.
 
 **Never**: invent an amount, date, type or category (leave it null and flag it); delete a
 document, email or deadline row; upload a file by regenerating its bytes; contact a
