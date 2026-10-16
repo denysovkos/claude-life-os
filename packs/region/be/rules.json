@@ -1,0 +1,91 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_administrative",
+      "label": "Beroep bij de Raad van State / recours au Conseil d'État",
+      "applies_to": ["official_decision"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 60}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [30, 14, 7, 3, 1],
+      "basis": "Art. 4 van het besluit van de Regent van 23 augustus 1948 / arrêté du Régent du 23 août 1948: verzoekschrift tot nietigverklaring binnen zestig dagen na de kennisgeving of bekendmaking. Een termijn die op een zaterdag, zondag of feestdag eindigt, loopt tot de volgende werkdag.",
+      "notes": "Many decisions first have their own administrative appeal with a shorter period (for example 30 days), stated on the decision; that text wins. Counted from the date on the decision, so it errs early."
+    },
+    {
+      "key": "objection_tax",
+      "label": "Bezwaarschrift / réclamation (inkomstenbelasting)",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_business_days": 3}, {"add_months": 12}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [60, 30, 14, 7, 3, 1],
+      "basis": "Art. 371 WIB 92 / CIR 92: bezwaar binnen een termijn van één jaar vanaf de derde werkdag volgend op de datum van verzending van het aanslagbiljet.",
+      "notes": "issued_on is the sending date printed on the assessment (aanslagbiljet / avertissement-extrait de rôle). Public holidays in the first three working days are not counted, so the result can be a day early."
+    },
+    {
+      "key": "consumer_withdrawal",
+      "label": "Herroepingstermijn / délai de rétractation",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": true,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "Art. VI.47 WER / CDE: veertien dagen vanaf de dag waarop de consument de goederen fysiek in bezit neemt (richtlijn 2011/83/EU). Verordening (EEG) 1182/71: een termijn die op een weekend of feestdag eindigt, loopt tot de volgende werkdag.",
+      "notes": "v_purchase_rights counts from the order mail when there is no delivery mail, which errs early. Without proper withdrawal information the period extends by up to 12 months (Directive 2011/83/EU, art. 10)."
+    },
+    {
+      "key": "statutory_warranty",
+      "label": "Wettelijke garantie / garantie légale",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_months": 24}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [30],
+      "basis": "Art. 1649quater, § 1 oud Burgerlijk Wetboek / ancien Code civil: de verkoper is aansprakelijk voor elk gebrek aan overeenstemming dat bestaat bij de levering en zich binnen twee jaar na de levering manifesteert.",
+      "notes": "For second-hand goods the parties may agree on one year. A manufacturer's guarantee is voluntary and separate."
+    },
+    {
+      "key": "rent_tenant_exit",
+      "label": "Einde huur na opzeg door huurder / fin du bail après congé du locataire",
+      "applies_to": ["rental_contract"],
+      "deadline_type": "notice_period",
+      "start": "event_date",
+      "steps": [{"end_of_month": true}, {"add_days": 1}, {"term_months": 3}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [14, 7],
+      "basis": "Regional housing law (Vlaams Woninghuurdecreet van 9 november 2018; Brusselse Huisvestingscode / Code bruxellois du Logement; décret wallon du 15 mars 2018 relatif au bail d'habitation): de huurder van een hoofdverblijfplaats kan altijd opzeggen met drie maanden opzeg, die ingaat op de eerste dag van de maand na de maand waarin de opzeg is gegeven.",
+      "notes": "event_date is the day the notice is given. In the first three years of a nine-year lease the tenant also owes an indemnity of three, two or one month's rent. Short leases (three years or less) have their own rules."
+    }
+  ],
+  "annual_dates": [],
+  "facts": [
+    {
+      "key": "tax_return_dates",
+      "text": "The income tax return is filed through MyMinfin (Tax-on-web). The deadline is set each year, usually 30 June on paper and mid-July online; many people receive a pre-filled simplified proposal instead, which is accepted unless corrected."
+    },
+    {
+      "key": "property_tax",
+      "text": "The onroerende voorheffing / précompte immobilier is billed once a year by the region and is payable within two months of the date on the bill."
+    }
+  ],
+  "authorities": [
+    {
+      "name": "FOD Financiën / SPF Finances",
+      "kind": "authority",
+      "domains": ["minfin.fgov.be"],
+      "category": "government"
+    }
+  ],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}

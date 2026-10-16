@@ -1,22 +1,17 @@
 {
   "categories": {
-    "bills_payments": [
-      "fatura",
-      "valor a pagar",
-      "débito direto",
-      "vencimento"
-    ],
-    "government": [
-      "autoridade tributária",
-      "finanças",
-      "notificação",
-      "câmara municipal"
-    ],
-    "orders_delivery": [
-      "encomenda",
-      "entregue",
-      "número de rastreio",
-      "enviado"
-    ]
-  }
+    "purchases": ["talão", "obrigado pela sua compra", "obrigado pela compra", "comprovativo de compra", "pago com cartão", "recibo de compra"],
+    "orders_delivery": ["encomenda", "entregue", "número de seguimento", "expedida", "em distribuição", "ponto de recolha", "ctt"],
+    "government": ["autoridade tributária", "portal das finanças", "notificação", "decisão", "aima", "câmara municipal", "processo n.º", "reclamação graciosa", "segurança social"],
+    "bank_finance": ["extrato", "saldo", "conta à ordem", "depósito a prazo", "taxa de juro", "investimento", "extrato do cartão", "poupança"],
+    "bills_payments": ["fatura", "valor a pagar", "débito direto", "referência multibanco", "data limite de pagamento", "aviso de pagamento", "prestação", "mensalidade"],
+    "legal_notary": ["notário", "advogado", "escritório", "minuta da escritura", "escritura", "procuração", "tribunal", "contrato-promessa"],
+    "work": ["recibo de vencimento", "vencimento", "entidade patronal", "recursos humanos", "contrato de trabalho", "declaração de rendimentos", "pedido de férias"],
+    "health": ["consulta", "centro de saúde", "receita", "seguro de saúde", "resultados das análises", "dentista", "credencial"],
+    "travel": ["voo", "cartão de embarque", "confirmação de reserva", "hotel", "check-in", "itinerário", "reserva"],
+    "personal_social": ["aniversário", "jantar", "até breve", "família", "casamento", "festa", "encontramo-nos"]
+  },
+  "action_phrases": ["queira pagar", "ação necessária", "responder até", "assinar e devolver", "queira confirmar", "prazo"],
+  "deadline_phrases": ["data limite", "a pagar até", "o mais tardar", "no prazo de 14 dias", "no prazo de um mês", "até ao dia"],
+  "amount_labels": ["total", "valor a pagar", "montante", "valor"]
 }

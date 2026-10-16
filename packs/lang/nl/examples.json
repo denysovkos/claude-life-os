@@ -1,0 +1,86 @@
+{
+  "dates": [
+    {
+      "text": "Vervaldatum: 05-03-2026",
+      "expect": "2026-03-05"
+    },
+    {
+      "text": "Amsterdam, 1 februari 2026",
+      "expect": "2026-02-01"
+    },
+    {
+      "text": "geldig tot 14 sept. 2027",
+      "expect": "2027-09-14"
+    },
+    {
+      "text": "afschrijving op 2026-01-31",
+      "expect": "2026-01-31"
+    }
+  ],
+  "amounts": [
+    {
+      "text": "Te betalen: € 1.234,56",
+      "expect": "1234.56"
+    },
+    {
+      "text": "Termijnbedrag EUR 89,00 per maand",
+      "expect": "89.00"
+    },
+    {
+      "text": "Premie €42,10 per maand",
+      "expect": "42.10"
+    }
+  ],
+  "emails": [
+    {
+      "subject": "Je kassabon",
+      "body": "Bedankt voor je aankoop. Bon nr. 4411, betaald met pin.",
+      "expect_category": "purchases"
+    },
+    {
+      "subject": "Je pakket is bezorgd",
+      "body": "Track & trace 00340434. Het pakket is vandaag bezorgd bij het afhaalpunt.",
+      "expect_category": "orders_delivery"
+    },
+    {
+      "subject": "Beschikking op uw aanvraag",
+      "body": "Bijgaand ontvangt u de beschikking van de gemeente, kenmerk 12-345. U kunt binnen zes weken bezwaar maken.",
+      "expect_category": "government"
+    },
+    {
+      "subject": "Je rekeningoverzicht van januari",
+      "body": "Het rekeningoverzicht van je betaalrekening staat klaar. Het saldo aan het einde van de maand vind je in de bijlage.",
+      "expect_category": "bank_finance"
+    },
+    {
+      "subject": "Factuur 2026-0113",
+      "body": "Je factuur staat klaar. Het bedrag wordt via automatische incasso afgeschreven.",
+      "expect_category": "bills_payments"
+    },
+    {
+      "subject": "Conceptakte van de notaris",
+      "body": "Geachte mevrouw, hierbij de conceptakte voor de levering. Het kantoor van de notaris vraagt u deze voor het passeren door te lezen.",
+      "expect_category": "legal_notary"
+    },
+    {
+      "subject": "Je loonstrook van januari",
+      "body": "Je salaris over januari is overgemaakt. Vragen kun je stellen aan personeelszaken van je werkgever.",
+      "expect_category": "work"
+    },
+    {
+      "subject": "Herinnering afspraak",
+      "body": "Wij herinneren u aan uw afspraak bij de huisarts op dinsdag. Neem de verwijzing en uw uitslag mee.",
+      "expect_category": "health"
+    },
+    {
+      "subject": "Boekingsbevestiging vlucht naar Lissabon",
+      "body": "Je vlucht is bevestigd. Online inchecken opent 24 uur voor vertrek, de instapkaart volgt.",
+      "expect_category": "travel"
+    },
+    {
+      "subject": "Verjaardag zaterdag",
+      "body": "We vieren de verjaardag van Mia met een etentje. De hele familie komt, tot snel!",
+      "expect_category": "personal_social"
+    }
+  ]
+}

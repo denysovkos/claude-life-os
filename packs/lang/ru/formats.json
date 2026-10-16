@@ -1,0 +1,33 @@
+{
+  "decimal_separator": ",",
+  "thousands_separator": " ",
+  "amount_pattern": "(?P<amount>\\d{1,3}(?:[ \\u00a0]\\d{3})*(?:,\\d{2})|\\d+(?:,\\d{2}))\\s?(?:руб\\.?|₽|RUB|€|EUR)",
+  "date_patterns": ["(?P<y>\\d{4})-(?P<m>\\d{2})-(?P<d>\\d{2})", "(?P<d>\\d{1,2})\\.(?P<m>\\d{1,2})\\.(?P<y>\\d{4}|\\d{2})\\b", "(?P<d>\\d{1,2})\\s(?P<mon>[а-яё]{3,9}\\.?)\\s(?P<y>\\d{4})"],
+  "notes": "Month names appear in the genitive case in dates (5 марта 2026 г.). Thousands are separated by a space or a no-break space; the currency follows the amount.",
+  "month_names": {
+    "января": 1,
+    "февраля": 2,
+    "марта": 3,
+    "апреля": 4,
+    "мая": 5,
+    "июня": 6,
+    "июля": 7,
+    "августа": 8,
+    "сентября": 9,
+    "октября": 10,
+    "ноября": 11,
+    "декабря": 12,
+    "янв": 1,
+    "фев": 2,
+    "мар": 3,
+    "апр": 4,
+    "июн": 6,
+    "июл": 7,
+    "авг": 8,
+    "сен": 9,
+    "сент": 9,
+    "окт": 10,
+    "ноя": 11,
+    "дек": 12
+  }
+}

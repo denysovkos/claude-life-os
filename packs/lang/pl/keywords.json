@@ -1,22 +1,17 @@
 {
   "categories": {
-    "bills_payments": [
-      "faktura",
-      "do zapłaty",
-      "polecenie zapłaty",
-      "termin płatności"
-    ],
-    "government": [
-      "urząd skarbowy",
-      "decyzja",
-      "urząd",
-      "sygnatura"
-    ],
-    "orders_delivery": [
-      "przesyłka",
-      "doręczono",
-      "numer przesyłki",
-      "kurier"
-    ]
-  }
+    "purchases": ["paragon", "dziękujemy za zakupy", "potwierdzenie zakupu", "twoje zamówienie", "potwierdzenie płatności", "zapłacono kartą"],
+    "orders_delivery": ["przesyłka", "doręczona", "numer przesyłki", "paczka", "kurier", "śledzenie przesyłki", "paczkomat"],
+    "government": ["urząd skarbowy", "decyzja", "urząd", "sygnatura", "pouczenie", "zus", "e-urząd", "urząd wojewódzki", "karta pobytu"],
+    "bank_finance": ["wyciąg z konta", "saldo", "rachunek bieżący", "lokata", "oprocentowanie", "inwestycje", "wyciąg z karty", "konto oszczędnościowe"],
+    "bills_payments": ["faktura", "do zapłaty", "polecenie zapłaty", "termin płatności", "kwota do zapłaty", "rachunek za", "wezwanie do zapłaty", "składka"],
+    "legal_notary": ["notariusz", "kancelaria", "adwokat", "radca prawny", "projekt umowy", "akt notarialny", "pełnomocnictwo", "sąd"],
+    "work": ["pasek wynagrodzenia", "wynagrodzenie", "pracodawca", "dział kadr", "umowa o pracę", "pit-11", "wniosek urlopowy"],
+    "health": ["wizyta", "przychodnia", "recepta", "nfz", "wyniki badań", "dentysta", "skierowanie"],
+    "travel": ["lot", "karta pokładowa", "potwierdzenie rezerwacji", "hotel", "odprawa", "plan podróży", "rezerwacja"],
+    "personal_social": ["urodziny", "kolacja", "do zobaczenia", "rodzina", "wesele", "impreza", "spotkajmy się"]
+  },
+  "action_phrases": ["prosimy o zapłatę", "prosimy o odpowiedź do", "wymagane działanie", "podpisać i odesłać", "prosimy o potwierdzenie", "w terminie"],
+  "deadline_phrases": ["termin płatności", "płatne do", "najpóźniej do", "w ciągu 14 dni", "w ciągu miesiąca", "do dnia"],
+  "amount_labels": ["do zapłaty", "razem", "suma", "kwota", "należność"]
 }

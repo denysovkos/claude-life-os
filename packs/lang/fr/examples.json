@@ -1,0 +1,86 @@
+{
+  "dates": [
+    {
+      "text": "Date d'échéance : 05/03/2026",
+      "expect": "2026-03-05"
+    },
+    {
+      "text": "Paris, le 1er février 2026",
+      "expect": "2026-02-01"
+    },
+    {
+      "text": "valable jusqu'au 14 sept. 2027",
+      "expect": "2027-09-14"
+    },
+    {
+      "text": "prélevé le 31/01/26",
+      "expect": "2026-01-31"
+    }
+  ],
+  "amounts": [
+    {
+      "text": "Montant à payer : 1 234,56 €",
+      "expect": "1234.56"
+    },
+    {
+      "text": "Mensualité 89,00 EUR",
+      "expect": "89.00"
+    },
+    {
+      "text": "Cotisation 42,10€ par mois",
+      "expect": "42.10"
+    }
+  ],
+  "emails": [
+    {
+      "subject": "Votre ticket de caisse",
+      "body": "Merci pour votre achat. Reçu n° 4411, payé par carte.",
+      "expect_category": "purchases"
+    },
+    {
+      "subject": "Votre colis a été livré",
+      "body": "Numéro de suivi 00340434. Le colis a été livré aujourd'hui au point relais.",
+      "expect_category": "orders_delivery"
+    },
+    {
+      "subject": "Décision concernant votre demande",
+      "body": "Veuillez trouver ci-joint la décision de la préfecture, référence du dossier 12-345. Les voies et délais de recours figurent au verso.",
+      "expect_category": "government"
+    },
+    {
+      "subject": "Votre relevé de compte de janvier",
+      "body": "Le relevé de compte de votre compte courant est disponible dans votre espace. Le solde en fin de mois figure en pièce jointe.",
+      "expect_category": "bank_finance"
+    },
+    {
+      "subject": "Facture 2026-0113",
+      "body": "Votre facture est disponible. Le montant à payer sera réglé par prélèvement.",
+      "expect_category": "bills_payments"
+    },
+    {
+      "subject": "Projet d'acte du notaire",
+      "body": "Madame, veuillez trouver ci-joint le projet d'acte pour la vente. L'étude du notaire vous remercie de le relire avant la signature de l'acte authentique.",
+      "expect_category": "legal_notary"
+    },
+    {
+      "subject": "Votre bulletin de paie de janvier",
+      "body": "Votre fiche de paie est disponible. Pour toute question, contactez les ressources humaines de votre employeur.",
+      "expect_category": "work"
+    },
+    {
+      "subject": "Rappel de rendez-vous",
+      "body": "Nous vous rappelons votre rendez-vous au cabinet médical mardi. Merci d'apporter votre carte vitale et votre ordonnance.",
+      "expect_category": "health"
+    },
+    {
+      "subject": "Confirmation de réservation : vol pour Lisbonne",
+      "body": "Votre vol est confirmé. L'enregistrement en ligne ouvre 24 heures avant le départ, la carte d'embarquement suivra.",
+      "expect_category": "travel"
+    },
+    {
+      "subject": "Anniversaire samedi",
+      "body": "Nous fêtons l'anniversaire de Mia autour d'un dîner. Toute la famille sera là, à bientôt !",
+      "expect_category": "personal_social"
+    }
+  ]
+}

@@ -18,7 +18,7 @@
   <a href="https://github.com/denysovkos/claude-life-os/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/denysovkos/claude-life-os/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/denysovkos/claude-life-os?style=flat-square&color=1F2937" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/languages-10-4C8BD9?style=flat-square" alt="10 languages">
-  <img src="https://img.shields.io/badge/countries-11-3FA37A?style=flat-square" alt="11 countries">
+  <img src="https://img.shields.io/badge/countries-15-3FA37A?style=flat-square" alt="15 countries">
 </p>
 
 <p align="center"><b>English</b> · <a href="README.uk.md">Українська</a> · <a href="README.de.md">Deutsch</a> · <a href="README.pl.md">Polski</a> · <a href="README.fr.md">Français</a> · <a href="README.es.md">Español</a> · <a href="README.it.md">Italiano</a> · <a href="README.nl.md">Nederlands</a> · <a href="README.ru.md">Русский</a> · <a href="README.pt.md">Português</a></p>
@@ -161,7 +161,7 @@ emergency binder, folder names) comes in these languages:
 | Language | Status |
 |---|---|
 | English, Deutsch, Українська | complete and tested |
-| Polski, Français, Español, Italiano, Nederlands, Русский, Português | starter translation, English where incomplete |
+| Polski, Français, Español, Italiano, Nederlands, Русский, Português | complete, checked against synthetic examples; review by native speakers welcome |
 
 Legal rules (how an objection deadline is counted, when a contract can be cancelled,
 until when a purchase can be returned, when the tax return is due) come in a **region
@@ -170,11 +170,26 @@ pack**:
 | Country | Status |
 |---|---|
 | 🇩🇪 Germany | complete and tested |
-| 🇦🇹 🇫🇷 🇪🇸 🇮🇹 🇳🇱 🇵🇹 🇵🇱 🇬🇧 🇺🇸 🇺🇦 Austria, France, Spain, Italy, Netherlands, Portugal, Poland, United Kingdom, United States, Ukraine | beta: written from the laws cited in each rule, not yet reviewed locally |
+| 🇦🇹 🇫🇷 🇪🇸 🇮🇹 🇳🇱 🇵🇹 🇵🇱 🇬🇧 🇺🇸 🇺🇦 🇨🇭 🇧🇪 🇮🇪 🇷🇺 Austria, France, Spain, Italy, Netherlands, Portugal, Poland, United Kingdom, United States, Ukraine, Switzerland, Belgium, Ireland, Russia | beta: written from the laws cited in each rule, not yet reviewed locally |
 
 Everywhere else the system still tracks every date it reads, but uses cautious
 placeholders and asks you about local rules. Corrections to a beta pack, or a new
 country, are very welcome: [packs/README.md](packs/README.md).
+
+## Not legal advice
+
+Life OS is a tool for keeping track of paperwork. It is not legal, tax or financial
+advice. The deadlines, notice periods, return windows and other rules in it, including
+every region pack, are general defaults written from public law. They can be
+incomplete, out of date or wrong for your case, and they do not replace a lawyer, a tax
+adviser or the authority that wrote to you. The document in your hand always wins over
+a default here.
+
+The software is provided "as is", without warranty of any kind (see [LICENSE](LICENSE)).
+The author and contributors accept no responsibility or liability for a missed
+deadline, a loss, a cost or any other consequence of using it or relying on what it
+says. Check every deadline and decision that matters to you yourself. Full text:
+[DISCLAIMER.md](DISCLAIMER.md).
 
 ## Privacy and security
 

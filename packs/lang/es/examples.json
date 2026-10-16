@@ -1,0 +1,86 @@
+{
+  "dates": [
+    {
+      "text": "Fecha de vencimiento: 05/03/2026",
+      "expect": "2026-03-05"
+    },
+    {
+      "text": "Madrid, 1 de febrero de 2026",
+      "expect": "2026-02-01"
+    },
+    {
+      "text": "válido hasta 14 sept. 2027",
+      "expect": "2027-09-14"
+    },
+    {
+      "text": "cargo el 31/01/26",
+      "expect": "2026-01-31"
+    }
+  ],
+  "amounts": [
+    {
+      "text": "Importe a pagar: 1.234,56 €",
+      "expect": "1234.56"
+    },
+    {
+      "text": "Cuota 89,00 EUR al mes",
+      "expect": "89.00"
+    },
+    {
+      "text": "Recibo 42,10€ mensual",
+      "expect": "42.10"
+    }
+  ],
+  "emails": [
+    {
+      "subject": "Tu ticket de compra",
+      "body": "Gracias por tu compra. Justificante n.º 4411, pagado con tarjeta.",
+      "expect_category": "purchases"
+    },
+    {
+      "subject": "Tu paquete ha sido entregado",
+      "body": "Número de seguimiento 00340434. El paquete ha sido entregado hoy en el punto de recogida.",
+      "expect_category": "orders_delivery"
+    },
+    {
+      "subject": "Notificación de resolución",
+      "body": "Le adjuntamos la resolución del expediente 12-345, disponible en la sede electrónica. Contra ella cabe recurso de reposición.",
+      "expect_category": "government"
+    },
+    {
+      "subject": "Tu extracto de enero",
+      "body": "El extracto de tu cuenta corriente ya está disponible. El saldo a fin de mes figura en el adjunto.",
+      "expect_category": "bank_finance"
+    },
+    {
+      "subject": "Factura 2026-0113",
+      "body": "Adjuntamos tu factura. El importe a pagar se cargará por domiciliación.",
+      "expect_category": "bills_payments"
+    },
+    {
+      "subject": "Borrador de escritura de la notaría",
+      "body": "Estimada señora, le enviamos el borrador de escritura de compraventa. El notario ruega que lo revise antes de la firma.",
+      "expect_category": "legal_notary"
+    },
+    {
+      "subject": "Tu nómina de enero",
+      "body": "Ya puedes descargar tu nómina. Para cualquier duda, contacta con recursos humanos.",
+      "expect_category": "work"
+    },
+    {
+      "subject": "Recordatorio de cita",
+      "body": "Le recordamos su cita en el centro de salud el martes. Traiga su tarjeta sanitaria y la receta.",
+      "expect_category": "health"
+    },
+    {
+      "subject": "Confirmación de reserva: vuelo a Lisboa",
+      "body": "Tu vuelo está confirmado. La facturación online abre 24 horas antes de la salida y la tarjeta de embarque llegará después.",
+      "expect_category": "travel"
+    },
+    {
+      "subject": "Cumpleaños el sábado",
+      "body": "Celebramos el cumpleaños de Mía con una cena. Viene toda la familia, ¡nos vemos!",
+      "expect_category": "personal_social"
+    }
+  ]
+}

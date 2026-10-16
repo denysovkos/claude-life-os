@@ -1,11 +1,17 @@
 {
+  "root": "Life OS",
   "inbox": "Inbox",
   "emergency": "Nood",
+  "backups": "Systeemback-ups",
   "catch_all": "Documenten",
+  "identity": "Identiteit",
   "finance": "Financiën",
   "taxes": "Belastingen",
   "housing": "Wonen",
   "insurance": "Verzekeringen",
   "work": "Werk",
-  "health": "Gezondheid"
+  "legal": "Juridisch",
+  "health": "Gezondheid",
+  "vehicle": "Voertuig",
+  "education": "Onderwijs"
 }

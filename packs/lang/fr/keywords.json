@@ -1,22 +1,17 @@
 {
   "categories": {
-    "bills_payments": [
-      "facture",
-      "montant à payer",
-      "prélèvement",
-      "échéance"
-    ],
-    "government": [
-      "impots.gouv",
-      "préfecture",
-      "avis d'imposition",
-      "administration"
-    ],
-    "orders_delivery": [
-      "colis",
-      "livré",
-      "numéro de suivi",
-      "expédié"
-    ]
-  }
+    "purchases": ["ticket de caisse", "merci pour votre achat", "confirmation d'achat", "reçu", "payé par carte", "récapitulatif de votre achat"],
+    "orders_delivery": ["colis", "livré", "numéro de suivi", "expédié", "en cours de livraison", "point relais", "suivi de votre colis"],
+    "government": ["impots.gouv", "préfecture", "avis d'imposition", "administration", "titre de séjour", "mairie", "décision", "voies et délais de recours", "référence du dossier"],
+    "bank_finance": ["relevé de compte", "solde", "compte courant", "livret", "taux d'intérêt", "placement", "relevé de carte", "épargne"],
+    "bills_payments": ["facture", "montant à payer", "prélèvement", "échéance", "montant ttc", "relance", "cotisation", "avis d'échéance"],
+    "legal_notary": ["notaire", "avocat", "étude notariale", "projet d'acte", "acte authentique", "procuration", "tribunal", "compromis de vente"],
+    "work": ["bulletin de paie", "fiche de paie", "salaire", "employeur", "ressources humaines", "contrat de travail", "demande de congés"],
+    "health": ["rendez-vous", "cabinet médical", "ordonnance", "mutuelle", "résultats d'analyses", "dentiste", "carte vitale"],
+    "travel": ["vol", "carte d'embarquement", "confirmation de réservation", "hôtel", "enregistrement", "itinéraire", "réservation"],
+    "personal_social": ["anniversaire", "dîner", "à bientôt", "famille", "mariage", "fête", "on se retrouve"]
+  },
+  "action_phrases": ["merci de régler", "action requise", "merci de répondre avant", "à signer et renvoyer", "merci de confirmer", "délai"],
+  "deadline_phrases": ["date d'échéance", "à payer avant le", "au plus tard le", "sous 14 jours", "dans un délai d'un mois", "avant le"],
+  "amount_labels": ["total ttc", "montant à payer", "net à payer", "total", "montant"]
 }
