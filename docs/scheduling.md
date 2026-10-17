@@ -98,7 +98,12 @@ account; it shows up at claude.ai/code/routines too. `/schedule list` shows them
   account. Life OS is three runs a day plus one a month; check
   your remaining runs at claude.ai/code/routines.
 - A routine can do everything its connectors allow without asking. That is why the
-  connectors list should hold only what Life OS needs.
+  connectors list should hold only what Life OS needs, and why the tools Life OS never
+  uses should be off. At claude.ai/customize/connectors, open each connector's tool
+  settings and switch off: in Gmail every send, draft, reply and forward tool; in Google
+  Drive sharing and permission changes. The skill reads and labels mail, and all its own
+  mail goes through the Apps Script bridge to your address, so nothing breaks. A routine
+  reads mail written by strangers; a tool that is off cannot be talked into anything.
 - If your GitHub connection expires, routines skip runs until you reconnect (up to 72
   hours), then switch off.
 

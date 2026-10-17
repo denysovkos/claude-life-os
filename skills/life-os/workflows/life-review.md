@@ -1,9 +1,9 @@
 # Life review
 
-Workflow `life-review` v2.2 of the `life-os` skill: the monthly review. The shared rules in
+Workflow `life-review` v2.3 of the `life-os` skill: the monthly review. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
-Write `v2.2` into `life_review_runs.skill_version`.
+Write `v2.3` into `life_review_runs.skill_version`.
 
 ## How the work is split, and why this skill exists
 
@@ -125,11 +125,13 @@ pack, say that a local rule applies and ask.
    change status without evidence (a confirmation letter in the index).
 
 7. **Address audit.** `select * from v_address_audit;` (it also matches masked addresses
-   such as `Wass********llee`). Every counterparty listed gets one line in the person's
+   such as `Must*****llee`). Every counterparty listed gets one line in the person's
    task: "update address at X". A counterparty that still bills for a former address is
    more than an address change: look for its contract in `recurring_payments`; none means
-   an obligation the index does not know about, which is the first line of the report. Confirmed false positives (the old
-   landlord, a closed account) go into `life_settings.address_audit_ignore`.
+   an obligation the index does not know about, which is the first line of the report.
+   Likely false positives (the old landlord, a closed account) are listed in the
+   decisions; they go into `life_settings.address_audit_ignore` only when the person
+   confirms, never in the unattended run.
 
 8. **Tax year.** `select * from v_tax_items;` and the open tax bundle, if one exists:
    `select * from v_bundle_status where bundle ilike '%tax%' or bundle ilike '%steuer%';`
@@ -169,7 +171,8 @@ pack, say that a local rule applies and ask.
       `🧾 Review YYYY-MM: <the most important decision>`, body = the decisions as a
       numbered list, each with its evidence link.
       - `task_provider = 'todoist'`: a task in `task_targets.system_project`.
-      - otherwise: an email to `owner_email` with that subject.
+      - otherwise: one `outbox` row (`kind = 'review'`, that subject, the list as body);
+        the bridge mails it to the person.
     - Log `life_review_runs` (`mode`, `review_month`, `skill_version`, `summary` jsonb,
       `errors`, `notes`).
     - Release the lock (expire it).

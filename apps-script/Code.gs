@@ -1,5 +1,5 @@
 /**
- * claude-life-os: the Google side of the system.  bridge-3.1
+ * claude-life-os: the Google side of the system.  bridge-3.2
  *
  * Runs inside your own Google account every 15 minutes, with or without Claude:
  *   1. Copies email attachments that matter (bills, contracts, letters from authorities)
@@ -10,6 +10,13 @@
  *      its content changed (the date line alone does not count).
  *   5. Once a day, checks that the Drive files behind indexed documents still exist, so
  *      the binder never presents a dead link as a document.
+ *   6. Delivers the outbox: the brief, the monthly review and failure notices that the
+ *      Claude jobs wrote to the database. They go to this Google account and nowhere
+ *      else; an outbox row has no recipient, so nothing in a letter can redirect them.
+ *
+ * UPGRADING from bridge-3.1: also replace appsscript.json (Project Settings > "Show
+ * appsscript.json manifest file in editor"). It narrows Gmail access to read-only and
+ * limits outgoing requests to Supabase. Then run `install` once and allow the new list.
  *
  * UPGRADING from an older bridge: paste this file over the old code. Script Properties
  * and the trigger stay. If the property `dossier_doc_id` is missing, add it first with
@@ -38,12 +45,14 @@
  * is read from the `life_settings` table in Supabase, so there is nothing to edit here.
  */
 
-const SCRIPT_VERSION = 'bridge-3.1';
+const SCRIPT_VERSION = 'bridge-3.2';
 const QUEUE_BATCH = 20;                        // messages per run, the next run takes the rest
 const HEAL_BATCH = 50;                         // staged files re-verified per run
 const WATCHDOG_MAIL_EVERY_HOURS = 12;          // at most one alert per job per 12 hours
 const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 const DRIVE_CHECK_BATCH = 150;                 // indexed files checked per day, oldest check first
+const OUTBOX_BATCH = 10;                       // mails to the owner per run
+const SUBJECT_PREFIX = '[Life OS] ';           // the email intake skips the system's own mail by it
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -71,6 +80,7 @@ function install() {
   const inbox = settings.drive_folders && settings.drive_folders.inbox;
   if (!inbox) throw new Error('life_settings.drive_folders.inbox is empty. Run the setup skill in Claude first.');
   DriveApp.getFolderById(inbox);                          // proves Drive access and the id
+  checkGmailRead_();                                      // proves the read-only Gmail scope is enough
 
   ScriptApp.getProjectTriggers()
     .filter(function (t) { return t.getHandlerFunction() === 'run'; })
@@ -97,7 +107,7 @@ function run() {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(1000)) return;                        // previous run still going
 
-  const stats = { queued: 0, copied: 0, healed: 0, verified: 0, errors: [] };
+  const stats = { queued: 0, copied: 0, healed: 0, verified: 0, mailed: 0, errors: [] };
   let runId = null;
   try {
     runId = sb_('POST', '/rest/v1/bridge_runs', { script_version: SCRIPT_VERSION }, 'return=representation')[0].id;
@@ -127,6 +137,9 @@ function run() {
 
     // 5. Once a day: do the indexed Drive files still exist?
     try { dailyDriveCheck_(settings); } catch (e) { stats.errors.push('drive check: ' + e.message); }
+
+    // 6. Mail to the owner that the Claude jobs queued.
+    try { deliverOutbox_(stats); } catch (e) { stats.errors.push('outbox: ' + e.message); }
   } catch (e) {
     stats.errors.push('fatal: ' + e.message);
   } finally {
@@ -141,7 +154,7 @@ function run() {
     }
     Logger.log(JSON.stringify(stats));
     if (stats.errors.length > 0) {
-      notify_('attachment-bridge: ' + stats.errors.length + ' error(s)', stats.errors.join('\n'));
+      notify_('\u26A0\uFE0F attachment-bridge: ' + stats.errors.length + ' error(s)', stats.errors.join('\n'));
     }
     lock.releaseLock();
   }
@@ -275,7 +288,7 @@ function watchdog_() {
     if (r.skill === 'attachment-bridge') return;
     const key = 'watchdog_mail_' + r.skill;
     if (Date.now() - Number(props.getProperty(key) || 0) < WATCHDOG_MAIL_EVERY_HOURS * 3600000) return;
-    notify_(r.skill + ' has not run for ' + r.hours_since + 'h (SLA ' + r.sla_hours + 'h)',
+    notify_('\u26A0\uFE0F ' + r.skill + ' has not run for ' + r.hours_since + 'h (SLA ' + r.sla_hours + 'h)',
       'The scheduled Claude task for ' + r.skill + ' did not fire.\n'
       + 'Open Claude, check the scheduled task, or just say "run ' + r.skill + '".');
     props.setProperty(key, String(Date.now()));
@@ -367,6 +380,43 @@ function dailyDriveCheck_(settings) {
 }
 
 // ------------------------------------------------------------------------------------
+// Outbox: the only way the Claude jobs send mail. Always to this account, never elsewhere.
+// ------------------------------------------------------------------------------------
+
+function deliverOutbox_(stats) {
+  let rows;
+  try {
+    rows = sb_('GET', '/rest/v1/v_outbox_pending?select=id,subject,body,attempts&limit=' + OUTBOX_BATCH);
+  } catch (e) {
+    if (String(e.message).indexOf('-> 404') >= 0) return;  // database older than schema 0.7.0
+    throw e;
+  }
+  rows.forEach(function (row) {
+    try {
+      notify_(row.subject, row.body);
+      sb_('PATCH', '/rest/v1/outbox?id=eq.' + row.id, { sent_at: new Date().toISOString() });
+      stats.mailed++;
+    } catch (e) {
+      sb_('PATCH', '/rest/v1/outbox?id=eq.' + row.id,
+        { attempts: (row.attempts || 0) + 1, last_error: String(e.message).slice(0, 500) });
+      throw e;
+    }
+  });
+}
+
+/** Fails install early, with the fix, if the read-only Gmail scope is not enough. */
+function checkGmailRead_() {
+  try {
+    GmailApp.search('has:attachment', 0, 1).forEach(function (t) {
+      t.getMessages()[0].getAttachments({ includeInlineImages: false });
+    });
+  } catch (e) {
+    throw new Error('Gmail read check failed (' + e.message + '). In appsscript.json replace '
+      + '"https://www.googleapis.com/auth/gmail.readonly" with "https://mail.google.com/", save, run install again.');
+  }
+}
+
+// ------------------------------------------------------------------------------------
 // Plumbing
 // ------------------------------------------------------------------------------------
 
@@ -377,8 +427,11 @@ function loadSettings_() {
   return s;
 }
 
+/** Mail to the account this script runs as. The recipient is never taken from data. */
 function notify_(subject, body) {
-  MailApp.sendEmail({ to: Session.getEffectiveUser().getEmail(), subject: '\u26A0\uFE0F ' + subject, body: body });
+  let s = String(subject).replace(/[\r\n]+/g, ' ').trim();
+  if (s.indexOf(SUBJECT_PREFIX) !== 0) s = SUBJECT_PREFIX + s;
+  MailApp.sendEmail({ to: Session.getEffectiveUser().getEmail(), subject: s.slice(0, 250), body: String(body) });
 }
 
 function config_() {

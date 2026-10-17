@@ -35,9 +35,9 @@ the Supabase dashboard also works; the history then shows `human`.
 
 | Key | Example | Written by | Read by |
 |---|---|---|---|
-| `schema_version` | `"0.6.0"` | migrations | setup (doctor, upgrades); every workflow compares it with `SKILL.md` |
+| `schema_version` | `"0.7.0"` | migrations | setup (doctor, upgrades); every workflow compares it with `SKILL.md` |
 | `owner_name` | `"Anna Beispiel"` | setup | reports |
-| `owner_email` | `"anna@example.com"` | setup | brief and review by email |
+| `owner_email` | `"anna@example.com"` | setup | must be the Google account the bridge runs in: the email intake recognises the system's own mail by it (`self_only` rules). Mail itself always goes to the bridge's account |
 | `timezone` | `"Europe/Berlin"` | setup | every skill, the bridge, the binder date |
 | `output_locale` | `"uk"` | setup | every skill: language of briefs, tasks, reports |
 | `input_locales` | `["de","en","uk"]` | setup | intake: which language hints to load |
@@ -56,6 +56,7 @@ the Supabase dashboard also works; the history then shows `human`.
 | `emergency_contacts` | `[{"name":"…","role":"sister","contact":"+49…"}]` | setup | `emergency_dossier()` |
 | `schedule_slots` | `{"email-intake":"01:05","drive-file-intake":"02:05","nightly-check":"03:05"}` | setup (defaults in 0013) | `v_schedule_drift`, nightly check |
 | `schedule_drift_hours` | `3` | 0013 default | `v_schedule_drift` |
+| `redact_identifiers` | `true` | 0016 default | triggers on `document_texts.body` and the `content_excerpt` of documents and emails: IBANs, card numbers and passport/ID machine-readable lines are masked before they are stored. `false` stores text as read |
 | `area_aliases` | `{"Home":"Household"}` | setup, reconfigure | Drive intake: an area name used elsewhere (a notes app) mapped to a `drive_folder_areas.area_name`. Nothing is renamed. |
 
 The folder-to-area map is a table of its own, `drive_folder_areas`, because it has many
