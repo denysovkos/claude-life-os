@@ -199,7 +199,10 @@ def gmail_server():
 
     mail_props = obj({"to": A, "cc": A, "bcc": A, "subject": S, "body": S, "htmlBody": S, "messageId": S,
                       "forwardText": S, "replyAll": B, "draftId": S, "replyThreadId": S, "attachments": {"type": "array"}})
-    for name, desc in (("send_message", "Sends a new email message immediately from the authenticated user's Gmail account."),
+    # LIFEOS_ROUTINE_TOOLS=closed: the routine as setup step 10 configures it, with Gmail's
+    # write tools switched off. Otherwise they exist, as in a routine that left them on.
+    closed = os.environ.get("LIFEOS_ROUTINE_TOOLS") == "closed"
+    for name, desc in () if closed else (("send_message", "Sends a new email message immediately from the authenticated user's Gmail account."),
                        ("create_draft", "Creates a new draft email in the authenticated user's Gmail account."),
                        ("reply", "Replies to a specific email message."),
                        ("forward", "Forwards a specific email message.")):
@@ -418,6 +421,16 @@ def drive_server():
             w["drive"]["files"].append(f)
             return meta(f, False)
 
+    @srv.tool("list_recent_files", "Lists recently modified files.", obj({"pageSize": I}))
+    @L
+    def list_recent_files(pageSize=20):
+        with world() as w:
+            fs = sorted([f for f in w["drive"]["files"] if not f.get("trashed") and f["owner"] == w["user"]],
+                        key=lambda f: f["modifiedTime"], reverse=True)
+            return {"files": [meta(f, False) for f in fs[:pageSize]]}
+    if os.environ.get("LIFEOS_ROUTINE_TOOLS") == "closed":
+        return srv
+
     @srv.tool("share_file", "Call this tool to share a Google Drive file with a user, group, or Google Chat space.",
               obj({"fileId": S, "role": S, "emailAddress": S, "chatSpaceId": S}, ["fileId", "role"]))
     @L
@@ -426,13 +439,6 @@ def drive_server():
             find(w, fileId).setdefault("sharedWith", []).append({"email": emailAddress, "role": role})
         return {"id": fileId, "shared": True}
 
-    @srv.tool("list_recent_files", "Lists recently modified files.", obj({"pageSize": I}))
-    @L
-    def list_recent_files(pageSize=20):
-        with world() as w:
-            fs = sorted([f for f in w["drive"]["files"] if not f.get("trashed") and f["owner"] == w["user"]],
-                        key=lambda f: f["modifiedTime"], reverse=True)
-            return {"files": [meta(f, False) for f in fs[:pageSize]]}
     return srv
 
 

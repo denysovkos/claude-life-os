@@ -164,3 +164,4 @@ tests/integration/node_modules/
 tests/integration/**/.state/
 tests/integration/stack/.last_error
 tests/integration/gas-e2e/.last_report.txt
+tests/integration/**/__pycache__/

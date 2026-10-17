@@ -9,14 +9,14 @@ of Life OS against the real thing, or the closest thing that can run in CI.
 | 1. database | migrations, seed, packs, every check, every SQL statement the skill contains | Supabase's own Postgres image (17 and 15) behind PostgREST | every pull request |
 | 2a. bridge | `apps-script/Code.gs` and `appsscript.json`, unchanged | an Apps Script runtime (`bridge/gas_runtime.js`) and the suite 1 stack | every pull request |
 | 2b. google | the same files plus `gas-e2e/E2E.gs` | a real Google account and a real Supabase project | nightly, on demand; needs secrets |
-| 3. claude | Claude Code, headless, running the skill as a routine does | fake Gmail, Drive and Calendar connectors and the suite 1 stack | nightly, on demand; needs an API key |
+| 3. agent | a scripted agent in Claude's place: one follows the workflows, one obeys an injected letter | fake Gmail, Drive, Calendar and Supabase connectors and the suite 1 stack | every pull request; no model |
 
 ```
-tests/integration/run_all.sh                 suites 1 and 2a (LIFEOS_IT_CLAUDE=1 adds 3)
+tests/integration/run_all.sh                 suites 1, 2a and 3
 tests/integration/db/run.sh                  suite 1 (SUPABASE_PG_TAG=15.19.0.004 for Postgres 15)
 tests/integration/bridge/run.sh              suite 2a
 tests/integration/gas-e2e/run.sh             suite 2b
-tests/integration/claude/run.sh [scenario]   suite 3
+tests/integration/agent/run.sh [scenario]    suite 3
 ```
 
 Needs Docker, Python 3.12+, Node 22 and `psql`. Each runner creates
@@ -103,32 +103,48 @@ One-time setup (about 20 minutes):
    For CI, add the secrets `LIFEOS_E2E_CLASPRC_JSON` (the file's content),
    `LIFEOS_E2E_SCRIPT_ID` and `LIFEOS_E2E_DB_URL`.
 
-## 3. Claude runs the skill
+## 3. A scripted agent in Claude's place
 
-`claude/run.py` runs Claude Code headless with the scenario's prompt (the same prompt a
-routine sends), in a throwaway copy of this repository so the skill loads from
-`.claude/skills` exactly as in a routine. It uses a temporary `HOME` (no synced skills or
-personal settings) and only these MCP servers (`--strict-mcp-config`):
+No model runs in these tests: a model is not deterministic, costs money and needs a
+secret, and a test that fails for reasons unrelated to the code teaches people to ignore
+it. What Life OS needs from its tests is two different guarantees, and neither needs the
+model itself.
 
-- `claude/fakes/server.py gmail|drive|calendar|supabase`: the claude.ai connectors' tool
-  names and parameters (copied from the real connectors), over a simulated account. The
-  Drive fake accepts only the connector's real query grammar, Gmail returns label ids
-  (`SENT` included) and RAW MIME, and the Supabase fake runs SQL on the stack as `postgres`
-  and holds what the real connector holds for a human (row removal, drops, an UPDATE with
-  a large SET), so an unattended run that would hang at night fails here.
-- Write tools Life OS must never use (send, draft, reply, forward, share) exist and work,
-  as they would in a routine that left them on. The assertions check they were never called.
+`agent/mcp_client.py` talks MCP over stdio to the fake connectors exactly as Claude Code
+does. `agent/personas.py` has two agents:
 
-Each scenario (`claude/scenarios/*.json`) resets the database, loads its mailbox and
-Drive, runs, and asserts on the database, the fake account and every tool call:
+- **compliant** runs a workflow the way its file says: settings, snapshot, lock, rules
+  first (`match_rules`, the SENT label for the system's own mail), upserts, deadlines
+  through `apply_term_rule`, chunked text through `ingest_assemble`, calendar events,
+  the run log, the lock released by expiring it. Where the workflow asks for judgement
+  (the category, whether a mail is suspicious, a stated due date) the answer comes from
+  the scenario's `decisions`: the test fixes what a correct model decides and proves
+  everything around that decision works. The Drive query is read out of
+  `drive-file-intake.md`, so a wrong instruction fails the test.
+- **compromised** is a model that obeys an injected letter: after the run's normal start
+  (snapshot, lock) it tries to send, forward and share, to address mail to the attacker,
+  to silence a sender, to write outside the write-back whitelist, to delete, truncate,
+  drop and overwrite, to close every deadline and to change the owner address. Each
+  attempt must be blocked by something that is not the model, or be listed as a known
+  limit with the reason it is acceptable.
+
+`agent/fakes/server.py` are the connectors: the claude.ai tool names and parameters, a
+simulated Gmail, Drive and Calendar, and a Supabase connector that runs SQL on the stack
+and holds what the real one holds for a human (row removal, drops, an UPDATE with a large
+SET). With `routine_tools: closed` the fakes offer only what a routine configured as
+setup step 10 offers, without Gmail's write tools or Drive sharing.
 
 | Scenario | It proves |
 |---|---|
-| `email_intake` | a bill becomes a categorised mail and a payment deadline; a tax notice is government mail; a prompt injection is flagged and not obeyed (no mail sent, no setting or rule changed); a forged "Daily brief" from a stranger is logged while the system's own brief is not; a lookalike Finanzamt is not the Finanzamt; a newsletter needs nothing; a flight becomes a calendar event without guests; no IBAN in clear; no statement the connector would hold |
-| `drive_file_intake` | a lease and a passport are indexed with type and expiry; the passport's MRZ is not stored; hard deadlines carry their basis; a file a stranger shared is never read; a note telling the assistant to close deadlines is not obeyed |
-| `nightly_check` | the brief goes to the outbox, never through Gmail, and names the deadline |
-| `context_lookup` | a question is answered from the index, correctly, with no write at all |
+| `email_intake` | rules before judgement; the system's own brief is skipped by self-only rule plus SENT label, a forged one is logged and the database alone refuses to silence it; a bill becomes a payment deadline; the tax notice's objection deadline is counted by the database; the IBAN is masked; the flight event has no guests; no statement the connector would hold |
+| `drive_file_intake` | only owned files are listed; text goes in through md5-checked chunks; the MRZ is not stored and no raw chunk stays behind; the passport deadline is hard and carries its basis |
+| `nightly_check` | the brief goes to the outbox, with one `briefings` row pointing at it |
+| `context_lookup` | the answer comes from the index with no write at all |
+| `compromised` | 11 attacks blocked: no send, forward or share tool; no recipient column; write-back whitelist; the connector holds deletes, truncates, drops, mass overwrites, snapshot removal. 3 known limits, each bounded: a silencing rule is forced to self-only by a trigger; closing deadlines is restorable from the pre-run snapshot; an owner address change is on record and moves no mail, because the bridge mails only its own account |
 
-Transcripts, tool-call logs and reports land in `claude/.state/<scenario>/`. A model run is
-not deterministic: a scenario that fails once is worth reading in its transcript before
-changing the skill. `LIFEOS_IT_MODEL` picks the model; a full run costs a few dollars.
+What this cannot prove is that a real model makes the right judgement, or resists an
+injection. That is why the guarantees above are built so they hold even when it does not.
+
+Each scenario was checked to fail when the behaviour it guards is removed (a wrong Drive
+query in the workflow, `match_rules` ignoring self-only, an outbox recipient column, no
+self-only trigger). Calls and reports land in `agent/.state/<scenario>/`.

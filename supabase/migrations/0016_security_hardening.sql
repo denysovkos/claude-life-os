@@ -69,6 +69,24 @@ select 'email', 1, 'subject', 'contains', '[Life OS]', 'none', true, 'Everything
 where not exists (select 1 from public.classification_rules
                   where scope = 'email' and match_field = 'subject' and match_value = '[Life OS]');
 
+-- A rule that silences mail can only ever match the owner's own mail, whoever writes it:
+-- a run talked into "never log mail from police.test" gets a rule that matches only mail
+-- the owner sent from their own address, which hides nothing. A trigger rather than a
+-- constraint, so re-running an older migration that inserts a system rule still works.
+create or replace function public.silence_only_self()
+returns trigger language plpgsql set search_path to 'public' as $function$
+begin
+  if new.set_category = 'none' then new.self_only := true; end if;
+  return new;
+end $function$;
+
+create or replace trigger classification_rules_silence_self_only
+  before insert or update on public.classification_rules
+  for each row execute function public.silence_only_self();
+
+update public.classification_rules set self_only = true
+where set_category = 'none' and not self_only returning id;
+
 -- 3. Domain matching ----------------------------------------------------------------------
 
 create or replace function public.sender_domain_matches(p_email text, p_domain text)
@@ -235,7 +253,7 @@ begin
   return n;
 end $function$;
 
-revoke execute on function public.sender_domain_matches(text, text), public.iban_valid(text),
+revoke execute on function public.silence_only_self(), public.sender_domain_matches(text, text), public.iban_valid(text),
   public.luhn_valid(text), public.redact_identifiers(text), public.redact_on_write(),
   public.redact_stored_texts(integer), public.match_rules(text, text, text, text, text, text)
   from anon, authenticated, public;
@@ -247,8 +265,9 @@ where key = 'schema_version' and value in ('"0.1.0"', '"0.2.0"', '"0.3.0"', '"0.
 
 -- Verification:
 --   select value from life_settings where key = 'schema_version';                         -- "0.7.0"
---   select count(*) from classification_rules where set_category = 'none'
---     and match_field = 'subject' and not self_only;                                     -- 0
+--   select count(*) from classification_rules where set_category = 'none' and not self_only;  -- 0
+--   insert into classification_rules (scope, match_field, match_value, set_category)
+--   values ('email', 'sender_domain', 'police.test', 'none') returning self_only;       -- true
 --   select sender_domain_matches('a@fake-finanzamt.de', 'finanzamt.de');                 -- false
 --   select sender_domain_matches('a@post.finanzamt.de', 'finanzamt.de');                 -- true
 --   select redact_identifiers('IBAN DE89 3704 0044 0532 0130 00');                        -- IBAN DE89 …3000

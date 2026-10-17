@@ -136,9 +136,11 @@ begin
 
   -- 6. untrusted mail cannot hide mail, pass as an authority, or pick a recipient ---------
   if to_regclass('public.outbox') is not null then
-    select count(*) into n from classification_rules
-    where active and scope = 'email' and set_category = 'none' and match_field <> 'sender_email' and not self_only;
-    if n > 0 then raise exception '% active rule(s) silence mail for any sender (set self_only)', n; end if;
+    select count(*) into n from classification_rules where set_category = 'none' and not self_only;
+    if n > 0 then raise exception '% rule(s) silence mail for any sender (set self_only)', n; end if;
+    insert into classification_rules (scope, priority, match_field, match_value, set_category)
+    values ('email', 0, 'sender_domain', 'rc-police.test', 'none') returning self_only into ok;
+    if not ok then raise exception 'a new silencing rule is not forced to self_only'; end if;
     perform set_config('app.actor', 'test', true);
     insert into life_settings (key, value) values ('owner_email', '"owner@example.invalid"')
     on conflict (key) do update set value = excluded.value;

@@ -2,7 +2,7 @@
 
 The values are what a person in the given region would end up with: the region pack's
 rules and version, English output, the pack's input languages, a fixed owner and the
-Drive folder ids the fake Drive (tests/integration/claude/fakes) and the bridge harness
+Drive folder ids the fake Drive (tests/integration/agent/fakes) and the bridge harness
 use. Usage: python3 configure.py <region>   |   psql
 """
 import json

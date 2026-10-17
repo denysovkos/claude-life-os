@@ -60,11 +60,14 @@ kept in the outbox, not lost.
   Supabase's own Postgres 17 and 15 images behind PostgREST, including every SQL statement
   the skill and docs contain and a probe of the HTTP API; the bridge, unchanged, in an
   Apps Script runtime that enforces the manifest's scopes and allowlist; the bridge in a
-  real Google account (nightly, with secrets); and Claude running the skill headless
-  against fake Gmail, Drive and Calendar connectors and the Supabase connector's
-  confirmation holds (nightly, with an API key). They caught two defects before release:
+  real Google account (nightly, with secrets); and a scripted agent in Claude's place,
+  talking MCP to fake Gmail, Drive, Calendar and Supabase connectors: one persona runs the
+  workflows, a compromised one tries what an injected letter asks and must be stopped by
+  something that is not the model. No model is called. They caught three defects before release:
   Supabase grants `service_role` everything on new tables, so the outbox revoke is now
-  explicit, and the Drive query the intake was told to use was not the connector's syntax.
+  explicit; the Drive query the intake was told to use was not the connector's syntax; and
+  a run talked into it could add a rule that silences any sender, so a trigger now forces
+  every silencing rule to self-only.
 
 ### Workflow versions
 setup v1.5, email-intake v3.3, drive-file-intake v3.3, nightly-check v1.2,
