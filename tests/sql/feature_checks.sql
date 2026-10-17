@@ -75,10 +75,10 @@ begin
   end if;
 
   -- 7. masked addresses ---------------------------------------------------------------------
-  if not ('lieferstelle: wass********llee 12' ~ address_pattern_regex('wassersportallee')) then
+  if not ('lieferstelle: must*****llee 12' ~ address_pattern_regex('musterallee')) then
     raise exception 'masked address not matched';
   end if;
-  if 'wasserverbrauch im abrechnungszeitraum' ~ address_pattern_regex('wassersportallee') then
+  if 'mustervertrag im abrechnungszeitraum' ~ address_pattern_regex('musterallee') then
     raise exception 'address pattern matches an unrelated word';
   end if;
 

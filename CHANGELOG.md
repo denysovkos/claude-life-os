@@ -1,5 +1,66 @@
 # Changelog
 
+## 4.4.0 (workflow release v3.3), 2026-10-17
+
+Security release. Schema 0.7.0, bridge-3.2. Upgrading is additive: no deadline moves, no
+row is removed, and a 4.3 skill keeps working against the new database. After uploading
+the zip, run `life os doctor`: it applies 0016, then asks you to paste the new `Code.gs`
+and `appsscript.json` into the Apps Script and run `install` (Google asks for a new,
+shorter permission list). Until the bridge is updated, a brief without a task app is
+kept in the outbox, not lost.
+
+### Fixed
+- **Any sender could hide a letter.** The rules that keep the system's own mail out of
+  the index matched on the subject alone, so a mail with "Daily brief" in its subject was
+  silently dropped, whoever sent it. Silencing rules are now `self_only`: they match only
+  mail from `owner_email`, and the email intake also requires Gmail's `SENT` label, which
+  a forged From cannot add. (0016, email-intake)
+- **Lookalike domains matched authority rules.** `sender_domain` matched any address
+  ending in the domain, so `x@fake-elster.de` was filed as the tax office. It now matches
+  the domain or its subdomains only. (0016)
+- The instruction not to follow text inside a letter existed only in `docs/security.md`,
+  which no workflow reads. It is now a shared rule in `SKILL.md`, with what a night run
+  may never change. (SKILL.md)
+- A test fixture used a real street name; it is now a placeholder.
+
+### Changed
+- **Claude never sends mail.** The brief, the monthly review and failure notices are
+  rows in the new `outbox` table, which has no recipient column; the Apps Script bridge
+  delivers them to the Google account it runs in. Gmail's send, draft and forward tools
+  can (and should) be switched off for the night routines. (0016, bridge-3.2, all
+  workflows, docs/scheduling.md)
+- **The bridge can only read Gmail.** `appsscript.json` now declares its scopes
+  (Gmail read-only, Drive, Docs, mail to self, triggers) and limits outgoing requests to
+  `*.supabase.co`. `install` checks the read-only scope is enough and says what to change
+  if it is not. All its own mail is prefixed `[Life OS]`. (bridge-3.2)
+- The Drive intake indexes only files the person owns (`'me' in owners`), so a file
+  someone shares with them is never read at night. Documents already indexed stay.
+- Calendar events are created without attendees; nothing is shared from Drive.
+- Hard deadlines carry their basis (`basis: stated "…"` or `basis: <rule> from <date>`)
+  in notes and task, so the one input a model chose is quick to check.
+- Unattended runs never change settings, never add silencing rules or authority aliases;
+  the address-audit ignore list changes only when the person confirms.
+- CI runs with a read-only token.
+
+### Added
+- **Identifier redaction** (`redact_identifiers`, on by default): checksum-valid IBANs and
+  card numbers keep only their last four characters, and passport and ID-card
+  machine-readable lines are replaced, before document text and mail excerpts are
+  stored. Files in Drive keep everything. `redact_stored_texts()` masks text stored
+  earlier; the doctor offers it. Tax and social security numbers are not covered yet.
+- Mail that tries to instruct the assistant is tagged `suspicious` and named in the
+  daily brief; senders claiming an authority from an unknown domain are tagged
+  `unverified_sender`.
+- Doctor checks: silencing rules that are not `self_only`, mail stuck in the outbox,
+  unredacted text, and whether the routines' connectors still offer send or share tools.
+  `release_checks.sql` asserts the same on every upgrade.
+- `docs/security.md`: an "Untrusted input" section listing what a letter could try and
+  why it cannot, and advice to keep Life OS in its own Supabase organization.
+
+### Workflow versions
+setup v1.5, email-intake v3.3, drive-file-intake v3.3, nightly-check v1.2,
+context-lookup v2.3, life-review v2.3.
+
 ## 4.3.0 (workflow release v3.2), 2026-10-15
 
 No migration; schema stays 0.6.0. Upgrading is uploading the new zip: existing deadlines

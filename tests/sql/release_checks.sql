@@ -17,6 +17,10 @@
 --   4. skill_writebacks refuses a write-back to a row that does not exist and applies one
 --      that does, as the skill (no human correction logged)
 --   5. rederive_deadlines() would not move any open deadline later, or into the past
+--   6. from schema 0.7.0: no sender can silence mail with a subject, a lookalike domain
+--      does not match a sender_domain rule, the outbox has no recipient column, and
+--      identifiers are redacted on write when redact_identifiers is on, and upload chunks
+--      are emptied once assembled
 
 begin;
 
@@ -129,6 +133,48 @@ begin
   select count(*) into n from rederive_deadlines(false)
   where action = 'moved_later' or (action in ('moved','moved_later') and new_due < current_date);
   if n > 0 then raise exception 'rederive_deadlines would move % open deadline(s) later or into the past', n; end if;
+
+  -- 6. untrusted mail cannot hide mail, pass as an authority, or pick a recipient ---------
+  if to_regclass('public.outbox') is not null then
+    select count(*) into n from classification_rules
+    where active and scope = 'email' and set_category = 'none' and match_field <> 'sender_email' and not self_only;
+    if n > 0 then raise exception '% active rule(s) silence mail for any sender (set self_only)', n; end if;
+    perform set_config('app.actor', 'test', true);
+    insert into life_settings (key, value) values ('owner_email', '"owner@example.invalid"')
+    on conflict (key) do update set value = excluded.value;
+    select count(*) into n from match_rules('email', 'attacker@example.invalid', null, 'Re: [Life OS] Daily brief')
+    where set_category = 'none';
+    if n > 0 then raise exception 'a stranger can hide a mail by its subject'; end if;
+    select count(*) into n from match_rules('email', 'owner@example.invalid', null, '[Life OS] Daily brief')
+    where set_category = 'none';
+    if n = 0 then raise exception 'the system no longer recognises its own mail'; end if;
+    if sender_domain_matches('a@fake-elster.de', 'elster.de') or not sender_domain_matches('a@mail.elster.de', 'elster.de') then
+      raise exception 'sender_domain matches a lookalike, or misses a subdomain';
+    end if;
+    select count(*) into n from information_schema.columns
+    where table_schema = 'public' and table_name = 'outbox' and column_name ~ '(^to$|^cc$|^bcc$|recipient|address|email)';
+    if n > 0 then raise exception 'outbox has a recipient column: mail could leave the account'; end if;
+    if coalesce(setting_text('redact_identifiers', 'true'), 'true') = 'true' then
+      insert into documents (drive_file_id, name, drive_url, status, last_intake_at)
+      values ('rc-redact-' || md5(random()::text), 'rc.pdf', 'https://example.invalid/rc', 'current', clock_timestamp())
+      returning id into doc;
+      insert into document_texts (document_id, body, extraction_status)
+      values (doc, 'IBAN DE89 3704 0044 0532 0130 00' || E'\n' || 'P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<', 'done');
+      select count(*) into n from document_texts
+      where document_id = doc and body = 'IBAN DE89 …3000' || E'\n' || '[MRZ redacted]';
+      if n <> 1 then raise exception 'identifiers were stored unredacted'; end if;
+    end if;
+    insert into documents (drive_file_id, name, drive_url, status, last_intake_at)
+    values ('rc-chunks-' || md5(random()::text), 'rc2.pdf', 'https://example.invalid/rc2', 'current', clock_timestamp())
+    returning id into doc;
+    insert into text_ingest_chunks (document_id, seq, chunk, expected_md5)
+    values (doc, 1, c1, md5(c1)), (doc, 2, c2, md5(c2));
+    perform ingest_assemble(doc, 'local_text', 1, 2, md5(c1 || c2));
+    select count(*) into n from text_ingest_chunks where document_id = doc and chunk <> '';
+    if n > 0 then raise exception 'raw upload chunks stay behind after assembly'; end if;
+    select count(*) into n from document_texts where document_id = doc and body = c1 || c2;
+    if n <> 1 then raise exception 'assembly after clearing chunks lost the body'; end if;
+  end if;
 
   raise notice 'release checks: all passed';
 end

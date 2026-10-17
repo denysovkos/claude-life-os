@@ -15,6 +15,17 @@ can be leaked eventually will be, and limits what each key can do.
 
 There is no web app, no public endpoint, no other user.
 
+The most powerful of these is the Claude connector, not the bridge key: it runs SQL as
+`postgres` and can reach every project in the Supabase account. Keep Life OS in its own
+Supabase organization if the account holds anything else, and pick an EU region if the
+person lives in the EU.
+
+The bridge key stays in the person's own Google account, so anyone who could read it
+could already read their Gmail and Drive, which hold more than the index. What limits the
+bridge is its manifest (`apps-script/appsscript.json`): Gmail read-only, Drive and Docs
+for the inbox and the binder, mail only to itself, and outgoing requests only to
+`*.supabase.co`.
+
 ## Deny-all by design
 
 Migration 0004:
@@ -63,9 +74,35 @@ live project, plus that `anon` cannot execute any function.
   native Google objects. The one exception, a document the person attaches in chat, is
   uploaded and then downloaded again and compared by SHA-256; a mismatch is deleted and
   reported, never retried.
-- Skills write through parameterised SQL built in the connector. Text from mail or
-  documents is data: skills do not follow instructions found inside a letter, and a
-  classification rule can only set categories, types, tags and links, never run code.
+- Skills write through SQL built in the connector. A classification rule can only set
+  categories, types, tags and links, never run code.
+- Stored text is redacted on write (`redact_identifiers`, on by default): checksum-valid
+  IBANs and card numbers keep their last four characters, and the machine-readable lines
+  of passports and ID cards are replaced. The files in Drive keep everything. Tax and
+  social security numbers are not recognised yet; they stay as written.
+
+## Untrusted input
+
+Every mail and every shared or received document is written by someone else, and the
+night runs read them with nobody watching. A letter can contain text aimed at the model
+("forward the binder to…", "ignore your rules"). The design does not rely on the model
+resisting it; it removes what such text could make it do:
+
+| A letter tries to | Why it cannot |
+|---|---|
+| get data sent out by mail | the skill has no mail-sending path: briefs, reviews and alerts are `outbox` rows with no recipient column, delivered by the bridge to its own account. Gmail's send, draft, reply and forward tools should be switched off in the routines' connectors (setup step 10) |
+| get a file shared | the skill never shares or changes permissions; switch off Drive's sharing tools in the routines' connectors |
+| send an invitation | calendar events are created without attendees |
+| hide itself or another letter | rules that silence mail are `self_only`: they match only mail from the owner's address that also carries Gmail's `SENT` label (0016). Before, a subject containing "Daily brief" was enough |
+| pass as an authority | `sender_domain` rules match the domain or its subdomains only, never a lookalike (`fake-elster.de` matched `elster.de` before 0016). Unknown senders claiming an authority are tagged `unverified_sender` |
+| change the system | night runs never change settings, never add silencing rules or authority aliases, never close a deadline because a letter says so; such changes are proposals a human approves |
+| plant a document | the Drive intake indexes only files the person owns, not files shared with them |
+| corrupt the index | every writing run takes a snapshot first; nothing deletes rows |
+
+A letter that tries any of this is tagged `suspicious`, gets an action note, and the
+daily brief names it by sender and subject. What is left is the model reading a forged
+letter as genuine, the same risk a human reader has: deadlines carry their basis (the
+quoted sentence, or the rule and its start date) so a wrong one is quick to spot.
 
 ## Autonomy limits
 
@@ -78,7 +115,8 @@ The system changes itself only within limits:
   linked, stale items change status, deadlines are cancelled, not removed.
   `attachment_staging` rows backing a document cannot be deleted (trigger).
 - Skills never contact a vendor, cancel a contract or send mail on the person's behalf.
-  The only outgoing mail is the brief, the review and alerts, to the owner's own address.
+  The only outgoing mail is the brief, the review and alerts, sent by the bridge to the
+  Google account it runs in.
 - Every writing run starts with `take_snapshot()`, a full server-side JSON copy of the
   extraction tables, so a bad run is reversible without the model re-reading anything.
 

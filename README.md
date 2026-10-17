@@ -61,7 +61,8 @@ the Drive folders, and checks every step before the next one.
 **5. Install the Google Apps Script bridge** when Claude asks. It is one file that runs
 in your Google account every 15 minutes, even when Claude does not:
 
-- script.google.com → **New project** → paste the code Claude shows you → save;
+- script.google.com → **New project** → paste the code Claude shows you, and the
+  permissions file `appsscript.json` it shows next → save;
 - **Project Settings** → **Script Properties** → add `SUPABASE_URL` and
   `SUPABASE_SECRET_KEY` (Claude says where to find them; the key goes only there, never
   into a chat);
@@ -197,7 +198,15 @@ Your data stays in your own accounts: your Gmail, your Drive, your Supabase proj
 There is no server in between and nobody else has access. The database is locked so its
 public interface returns nothing at all; only Claude (through your own connector) and
 your own Apps Script can read it. Files never pass through the AI: Google moves them
-directly from Gmail to Drive. Details in [docs/security.md](docs/security.md).
+directly from Gmail to Drive. Account and passport numbers are masked before text is
+stored.
+
+Mail and documents are written by strangers, so the system treats them as data, never
+as instructions, and is built so that a letter cannot make it send, share or hide
+anything: Claude has no way to send mail at all (the bridge mails only you), and the
+Apps Script can only read Gmail. When you schedule the night runs, switch off the
+Gmail send and Drive sharing tools for them ([docs/scheduling.md](docs/scheduling.md)).
+Details in [docs/security.md](docs/security.md).
 
 ## How it works
 
@@ -274,7 +283,8 @@ change is a new, additive migration.
 
 ## Status
 
-Early, and in daily use. The database, the bridge and the intakes have run every night
+Early, and in daily use: a personal project shared as is, not a finished product. Check
+every deadline that matters against the letter itself. The database, the bridge and the intakes have run every night
 since the original private version and were then generalised; 4.2 fixed what a month of
 unattended night runs exposed (see [CHANGELOG.md](CHANGELOG.md)). The setup skill and the
 beta packs are newer. Expect rough edges and please report them.

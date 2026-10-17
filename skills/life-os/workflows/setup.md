@@ -1,6 +1,6 @@
 # Life OS setup
 
-Workflow `setup` v1.4 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
+Workflow `setup` v1.5 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Three modes. Pick from what the person said; if unclear, ask.
@@ -36,11 +36,11 @@ Code, routines), `assets/` does not exist and the same files are at the reposito
 `supabase/migrations`, `supabase/seed`, `packs`, `apps-script`, `docs`.
 
 ```
-assets/migrations/0001_tables.sql … 0015_audits_health_invariants.sql
+assets/migrations/0001_tables.sql … 0016_security_hardening.sql
 assets/seed/document_types.sql
 assets/packs/lang/<locale>/{dossier,folders,keywords,formats}.json
 assets/packs/region/<code>/{rules.json,classification_rules.sql}
-assets/apps-script/Code.gs
+assets/apps-script/{Code.gs,appsscript.json}
 assets/docs/troubleshooting.md
 ```
 
@@ -76,7 +76,8 @@ Ask these in one message, with the defaults filled in so they can just say "yes"
 
 1. Your name, as it should appear in reports.
 2. The Gmail address this runs on. It must be the same Google account as Drive and the
-   Apps Script (the bridge sends alerts to it).
+   Apps Script: the bridge sends every brief and alert to the account it runs in, and the
+   email intake recognises the system's own mail by this address.
 3. Time zone. Default: the one Google Calendar reports (`list_calendars`, primary).
 4. The language you want briefs, tasks and reports in (`output_locale`). Every pack in
    `assets/packs/lang/` is complete: `en`, `de`, `uk`, `pl`, `fr`, `es`, `it`, `nl`, `ru`,
@@ -89,7 +90,8 @@ Ask these in one message, with the defaults filled in so they can just say "yes"
    works, but deadlines are counted with cautious placeholders and the workflows ask about
    local rules instead of knowing them. Offer the pack's `default_timezone` and
    `default_input_locales` as defaults for questions 3 and 5.
-7. Task app: Todoist or none. Without one, the daily brief and review arrive by email.
+7. Task app: Todoist or none. Without one, the daily brief and review arrive by email,
+   sent by the bridge to their own address.
 8. Notes app for the monthly report: Craft or none (then a Google Doc).
 9. Optional now, easy later: current address and old addresses still in use by some
    senders; people for the emergency binder (name, role, phone or email).
@@ -109,7 +111,10 @@ inside with `list_tables` (schema `public`):
 - empty: use it.
 
 Otherwise create one: `list_organizations`, then `create_project` named `life-os` in the
-region closest to the person (for example `eu-central-1` for central Europe). The free
+region closest to the person (for example `eu-central-1` for central Europe; inside the
+EU keeps the data under EU law). If their Supabase account already holds other projects,
+suggest a separate organization for Life OS: the Supabase connector can reach every
+project in the account, and keeping this one apart keeps its data out of unrelated work. The free
 plan is enough. If the tool asks to confirm a cost, confirm the free plan's $0 only;
 anything else goes to the person first. Wait until `get_project` reports
 `ACTIVE_HEALTHY` (a minute or two; tell them it is working).
@@ -127,7 +132,7 @@ Apply in this order with `apply_migration`, each named after its file without `.
 0005_settings_and_localization, 0006_pack_settings, 0007_region_rules_in_sql,
 0008_nightly_check_watchdog, 0009_business_days, 0010_hotfixes_and_safe_recount,
 0011_mcp_safe_writes, 0012_notice_periods, 0013_watchdog_and_snapshot,
-0014_successors_binder_folders, 0015_audits_health_invariants
+0014_successors_binder_folders, 0015_audits_health_invariants, 0016_security_hardening
 ```
 
 Then run `assets/seed/document_types.sql` with `execute_sql` (or as migration
@@ -138,9 +143,9 @@ region pack was chosen. Stop at the first error, show it, and look for it in
 Verify:
 
 ```sql
-select value from life_settings where key = 'schema_version';            -- "0.6.0"
-select count(*) from pg_tables where schemaname = 'public';              -- 37
-select count(*) from pg_views  where schemaname = 'public';              -- 39
+select value from life_settings where key = 'schema_version';            -- "0.7.0"
+select count(*) from pg_tables where schemaname = 'public';              -- 38
+select count(*) from pg_views  where schemaname = 'public';              -- 40
 select count(*) from document_types;                                     -- 43
 select jobname, schedule, active from cron.job;                          -- nightly-derivations
 ```
@@ -199,7 +204,7 @@ on conflict (key) do update set value = excluded.value, updated_at = now();
   for every pack written. Doctor compares it with the packs in `assets/` to offer updates.
 - `former_address_patterns`: short, distinctive fragments (a street name and house
   number), never a whole address, so they match however a sender formats it. Patterns of
-  eight letters or more also match masked forms (`Wass********llee`).
+  eight letters or more also match masked forms (`Must*****llee`).
 - `schedule_slots`: the local start time of each night job, as created in step 10. The
   watchdog reports a job that starts hours away from its slot (`v_schedule_drift`).
 - `area_aliases`: when the person names areas differently elsewhere (a notes app), map
@@ -260,8 +265,10 @@ of moving anything. The intake indexes them where they are.
 
 This is the part that runs inside the person's Google account every 15 minutes, without
 Claude: it copies important attachments from Gmail into the Drive inbox, re-copies any
-that go missing, emails them if a Claude job stops running, and rewrites the emergency
-binder daily. It reads everything else from the database, so the code needs no editing.
+that go missing, emails them if a Claude job stops running, delivers the brief and the
+review to their own inbox, and rewrites the emergency binder daily. It reads everything
+else from the database, so the code needs no editing. It can only read Gmail, never
+change, send from or delete it, and it only talks to Supabase.
 
 Get the project URL with `get_project_url`. Then walk them through it, one message:
 
@@ -269,6 +276,10 @@ Get the project URL with `get_project_url`. Then walk them through it, one messa
    **New project**. Click "Untitled project" at the top and name it `Life OS bridge`.
 2. Delete everything in the editor and paste the code below. Click the save icon.
    (Show `assets/apps-script/Code.gs` in one code block, unchanged.)
+   Then the permissions file: gear icon **Project Settings** → tick **Show
+   "appsscript.json" manifest file in editor**, back in the editor click `appsscript.json`,
+   replace its content with the second block (`assets/apps-script/appsscript.json`,
+   unchanged), save. It limits the script to reading Gmail and to talking to Supabase.
 3. Click the gear icon **Project Settings** on the left. Scroll to **Script Properties**,
    click **Add script property** twice:
    - `SUPABASE_URL` = `<the project URL>`
@@ -298,7 +309,7 @@ from bridge_runs order by started_at desc limit 1;
 ```
 
 A row from the last few minutes with `finished_at` set, `errors = []` and
-`script_version = 'bridge-3.1'` means the bridge works. Say so plainly.
+`script_version = 'bridge-3.2'` means the bridge works. Say so plainly.
 
 No row at all: `install` did not reach the database. Ask what the log said. Common:
 
@@ -309,6 +320,8 @@ No row at all: `install` did not reach the database. Ask what the log said. Comm
 | `-> 401` | key revoked or from another project | create a new secret key in this project |
 | `life_settings.drive_folders.inbox is empty` | step 6 did not finish | run step 6, then `install` again |
 | `No item with the given ID could be found` | inbox folder id wrong or not owned by this account | check the Google account; re-run step 6 |
+| `Gmail read check failed` | this Google account needs the full Gmail scope for reading | do what the message says in `appsscript.json`, run `install` again |
+| `URL not allowed` / `not on the allowlist` | the project URL is not a `*.supabase.co` address | check `SUPABASE_URL`; a custom domain needs its own line in `urlFetchWhitelist` |
 
 A row with errors: read them; `fatal:` lines block everything, others are per message.
 
@@ -353,7 +366,11 @@ sentences and walk them through one:
   holds no personal data), the **Default** environment, trigger **Schedule** → daily
   (monthly: pick a preset, then `/schedule update` in the Claude Code CLI to set
   `5 4 1 * *`), connectors: keep Gmail, Google Drive, Supabase, Google Calendar and, if
-  used, Todoist and Craft, remove the rest. Four routines. A routine loads the skill from
+  used, Todoist and Craft, remove the rest. Four routines. A routine acts without asking,
+  so close what the skill never needs: in each connector's tool settings
+  (claude.ai/customize/connectors) switch off Gmail's send, draft, reply and forward
+  tools, and Drive's sharing and permission tools. Mail and documents are written by
+  strangers; a tool that is off cannot be talked into anything. A routine loads the skill from
   the clone (`.claude/skills/life-os` in the repository), so a fork must be kept in sync
   with new releases; a skill uploaded to the Claude account works as well. From the CLI,
   `/schedule` creates the same thing conversationally. Full walkthrough: `assets/docs/scheduling.md`.
@@ -378,13 +395,13 @@ the installed versions:
 
 ```sql
 insert into skill_revisions (skill_name, version, change_type, summary)
-values ('life-os', 'v4.3', 'baseline', 'installed'),
-       ('setup', 'v1.4', 'baseline', 'installed with life-os v4.3'),
-       ('email-intake', 'v3.2', 'baseline', 'installed with life-os v4.3'),
-       ('drive-file-intake', 'v3.2', 'baseline', 'installed with life-os v4.3'),
-       ('nightly-check', 'v1.1', 'baseline', 'installed with life-os v4.3'),
-       ('context-lookup', 'v2.2', 'baseline', 'installed with life-os v4.3'),
-       ('life-review', 'v2.2', 'baseline', 'installed with life-os v4.3');
+values ('life-os', 'v4.4', 'baseline', 'installed'),
+       ('setup', 'v1.5', 'baseline', 'installed with life-os v4.4'),
+       ('email-intake', 'v3.3', 'baseline', 'installed with life-os v4.4'),
+       ('drive-file-intake', 'v3.3', 'baseline', 'installed with life-os v4.4'),
+       ('nightly-check', 'v1.2', 'baseline', 'installed with life-os v4.4'),
+       ('context-lookup', 'v2.3', 'baseline', 'installed with life-os v4.4'),
+       ('life-review', 'v2.3', 'baseline', 'installed with life-os v4.4');
 ```
 
 Finish with doctor mode, then a three-line summary: what runs when, where the emergency
@@ -431,7 +448,24 @@ apply a fix without the person saying yes.
    ```
    (Functions that belong to an extension, such as `pg_trgm`'s `similarity`, are excluded:
    they hold no data.) Plus `get_advisors` (security), ignoring `rls_enabled_no_policy`;
-   `extension_in_public` for `pg_trgm` is a warning, not a problem.
+   `extension_in_public` for `pg_trgm` is a warning, not a problem. From schema 0.7.0:
+   ```sql
+   select id, match_field, match_value from classification_rules        -- empty
+   where active and scope = 'email' and set_category = 'none'
+     and match_field <> 'sender_email' and not self_only;
+   select count(*) from outbox where sent_at is null
+     and created_at < now() - interval '1 hour';                         -- 0
+   select count(*) from document_texts
+   where body is not null and body <> redact_identifiers(body);          -- 0
+   ```
+   A silencing rule that is not `self_only` lets any sender hide a mail: the fix is
+   `update classification_rules set self_only = true where id = :id returning id;`
+   (or deactivate it). Unsent outbox rows mean the bridge is not delivering: see the
+   bridge check. Unredacted text is from before 0.7.0: offer
+   `select redact_stored_texts();`, repeated until it returns 0 (it only masks IBANs,
+   card numbers and passport lines; the files in Drive keep everything). Then ask, once,
+   whether the night routines' connectors still offer Gmail's send, draft or forward
+   tools or Drive's sharing tools, and if so how to switch them off (install step 10).
 6. **Nightly database job**:
    ```sql
    select jobname, schedule, active from cron.job;
@@ -449,9 +483,12 @@ apply a fix without the person saying yes.
 8. **Night schedule**: `select * from v_intake_watchdog;` has a row per nightly job,
    `nightly-check` included; a job with `runs_7d = 0` was never scheduled.
 9. **Bridge**: `select started_at, errors, script_version from bridge_runs order by started_at desc limit 5;`
-   Errors in the last runs, or a `script_version` other than `bridge-3.1`. An older
-   bridge keeps working; the fix is to paste the new `assets/apps-script/Code.gs` over the
-   old code (Script Properties and the trigger stay). Before that, make sure the
+   Errors in the last runs, or a `script_version` other than `bridge-3.2`. An older
+   bridge keeps working but does not deliver the outbox, so without a task app no brief
+   arrives; the fix is to paste the new `assets/apps-script/Code.gs` over the old code
+   and the new `appsscript.json` over the manifest, as in install step 7.2 (Script
+   Properties and the trigger stay), then run `install` and allow the new, shorter
+   permission list. Before that, make sure the
    emergency binder is not recreated: in **Project Settings → Script Properties**, the
    property `dossier_doc_id` must hold the id of the existing binder Google Doc in the
    emergency folder (add it if it is missing). Then run `install` once.
@@ -500,6 +537,9 @@ To undo a change, write the `old_value` back.
   Moving country does not change `timezone`, `output_locale` or folders; ask about each.
 - **Task app**: switching to Todoist runs install step 9. Switching to none: set
   `task_provider = 'none'`; existing tasks stay in Todoist.
+- **Owner address**: `owner_email` must stay the Google account the bridge runs in, or
+  the intake stops recognising the system's own mail. Change it only when the person
+  moves the whole system to another account.
 - **Addresses and emergency contacts**: update the setting, then
   `select emergency_dossier();` to show the result.
 - **Bridge categories**: `bridge_categories` lists which email categories get their

@@ -1,6 +1,6 @@
 -- 0015: sharper audits, honest health numbers, the new invariants, schema 0.6.0.
 --
--- * v_address_audit matches masked addresses ("Wass********llee" for "wassersportallee"),
+-- * v_address_audit matches masked addresses ("Must*****llee" for "musterallee"),
 --   which is how German utilities print a delivery point.
 -- * v_purchase_rights counts the withdrawal period from the delivery mail when there is
 --   one (§ 356 Abs. 2 BGB: from receipt of the goods), and says which start it used.
@@ -189,6 +189,6 @@ where key = 'schema_version' and value in ('"0.1.0"', '"0.2.0"', '"0.3.0"', '"0.
 
 -- Verification:
 --   select value from life_settings where key = 'schema_version';                         -- "0.6.0"
---   select 'wass********llee' ~ address_pattern_regex('wassersportallee');                 -- true
+--   select 'must*****llee' ~ address_pattern_regex('musterallee');                 -- true
 --   select invariant, failing from v_system_invariants where failing > 0;
 --   select text_coverage_pct <= 100 from v_system_health;                                  -- true

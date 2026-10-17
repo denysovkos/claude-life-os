@@ -9,7 +9,9 @@ your own Google account every 15 minutes, whether Claude is running or not. It:
    from Gmail into your Drive inbox folder,
 2. copies them again if they vanish from Drive before they are indexed,
 3. emails you if one of the Claude jobs has not run for too long,
-4. rewrites the "Emergency binder" Google Doc once a day.
+4. rewrites the "Emergency binder" Google Doc once a day,
+5. delivers the daily brief, the monthly review and failure notices to your own inbox
+   (the Claude jobs write them to the database; they never send mail themselves).
 
 You do not edit the code. Everything it needs to know (which folder, which time zone,
 which kinds of mail) it reads from your database. The only two things you give it are
@@ -36,7 +38,15 @@ is the same procedure, for reference. It takes about five minutes.
    one block with a copy button; on GitHub, open the file and use **Copy raw file**.
 5. Click the **Save** icon (the floppy disk) or press Ctrl+S / Cmd+S.
 
-The file `appsscript.json` does not need to be touched; the defaults are right.
+Then the permissions file, which limits what the script may do:
+
+6. Click the gear icon **Project Settings** and tick **Show "appsscript.json" manifest
+   file in editor**.
+7. Back in the editor, click `appsscript.json` in the file list, select all, and paste the
+   content of `apps-script/appsscript.json`. Save.
+
+Without it Google grants the script full access to your mail. With it the script can
+only read Gmail, and can only connect to Supabase.
 
 ## 2. Add the two script properties
 
@@ -86,11 +96,12 @@ database.
 
 | Google asks to | Because the script |
 |---|---|
-| Read, compose, send and permanently delete all your email from Gmail | reads the attachments of mail the intake marked as important. The Apps Script service for Gmail only exists in this one broad form; the script never deletes or sends mail through Gmail |
+| View your email messages and settings | reads the attachments of mail the intake marked as important. Read-only: the script cannot change, send or delete mail through Gmail |
 | See, edit, create and delete all of your Google Drive files | creates the attachment copies in your inbox folder and checks they still exist |
 | See, edit, create and delete all your Google Docs documents | writes the Emergency binder document |
-| Send email as you | sends you, and only you, the alerts (`MailApp`) |
-| Connect to an external service | talks to your Supabase database |
+| Send email as you | sends you, and only you, the alerts, the brief and the review (`MailApp`, always to your own address) |
+| See your primary Google Account email address | finds that address, so mail goes nowhere else |
+| Connect to an external service | talks to your Supabase database, and only to `*.supabase.co` (`urlFetchWhitelist`) |
 | Allow this application to run when you are not present | runs every 15 minutes on a timer |
 
 The code is one file you can read end to end. Nothing is sent anywhere except your own
@@ -106,7 +117,9 @@ Supabase project.
 ## Updating the code later
 
 When a new version of `Code.gs` is released: open the project, replace the whole content
-of `Code.gs` with the new one, save, and run `install` once more. Script properties and
+of `Code.gs` with the new one, do the same for `appsscript.json` (steps 6 and 7 above),
+save, and run `install` once more. Coming from bridge-3.1, Google asks for permissions
+again: the new list is shorter. Script properties and
 permissions stay. If the new version needs a new permission, Google asks again as in
 step 3.
 
@@ -120,6 +133,8 @@ step 3.
 | `life_settings.drive_folders.inbox is empty` | the Drive folders step of setup did not finish; run setup again |
 | `No item with the given ID could be found` | the script runs under another Google account than the folders, or the inbox folder was deleted |
 | `You do not have permission to call …` / `Required permissions: …` | a box was unticked in step 3.7: run `install` again and tick **Select all** |
+| `Gmail read check failed` | this account needs the full Gmail scope to read attachments: in `appsscript.json` replace `https://www.googleapis.com/auth/gmail.readonly` with `https://mail.google.com/`, save, run `install` |
+| `not on the allowlist` / `URL not allowed` | `SUPABASE_URL` is not a `https://<project>.supabase.co` address; a custom domain needs its own `https://<domain>/rest/v1/` line in `urlFetchWhitelist` |
 
 More in [troubleshooting.md](troubleshooting.md).
 
