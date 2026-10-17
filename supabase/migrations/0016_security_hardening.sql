@@ -36,7 +36,9 @@ create table if not exists public.outbox (
   constraint outbox_body_check check (length(body) <= 100000)
 );
 alter table public.outbox enable row level security;
-revoke all on public.outbox from anon, authenticated;
+-- Supabase grants service_role everything on new tables by default; the bridge may only
+-- read the outbox and mark a row sent, so a leaked bridge key cannot write or reword mail.
+revoke all on public.outbox from anon, authenticated, service_role;
 grant select on public.outbox to service_role;
 grant update (sent_at, attempts, last_error) on public.outbox to service_role;
 comment on table public.outbox is 'Mail to the owner, and only the owner. There is deliberately no recipient column: the Apps Script bridge sends each row to the Google account it runs as and marks it sent. Workflows insert here instead of using a Gmail send tool.';
@@ -46,7 +48,7 @@ select id, kind, subject, body, attempts, created_at
 from outbox
 where sent_at is null and attempts < 5
 order by created_at;
-revoke all on public.v_outbox_pending from anon, authenticated;
+revoke all on public.v_outbox_pending from anon, authenticated, service_role;
 grant select on public.v_outbox_pending to service_role;
 
 alter table public.briefings add column if not exists outbox_id uuid;

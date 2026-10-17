@@ -94,8 +94,9 @@ its absence from the scan is itself an error.
 ## Step 2: list candidates
 
 Drive `search_files` with `(modifiedTime > :watermark or createdTime > :watermark) and
-'me' in owners and trashed = false`, excluding folders. Do not restrict to one folder
-unless the person asked. `'me' in owners` is not optional: anyone can share a file with
+owner = 'me' and mimeType != 'application/vnd.google-apps.folder'` (the connector's own
+query syntax; it lists no trashed files). Do not restrict to one folder unless the
+person asked. `owner = 'me'` is not optional: anyone can share a file with
 the person, and a shared file is someone else's text, not their paperwork. A file shared
 with them that they want indexed is one they copy into their own Drive. Skip what is
 plainly not a document of the person's (code, media libraries), and record every skip as

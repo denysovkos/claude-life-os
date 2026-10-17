@@ -1,0 +1,4 @@
+# Integration tests (tests/integration). Install into a venv:
+#   python3 -m venv tests/integration/.venv
+#   tests/integration/.venv/bin/pip install -r tests/integration/requirements.txt
+psycopg[binary]==3.2.10

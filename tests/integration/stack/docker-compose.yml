@@ -1,0 +1,35 @@
+# The database side of a Supabase project, for integration tests: Supabase's own Postgres
+# image (the roles, extensions and non-superuser `postgres` of a hosted project) and
+# PostgREST configured the way Supabase's API is (anon, authenticated, service_role).
+#
+#   tests/integration/stack/up.sh        start, install every migration, seed, pack
+#   tests/integration/stack/down.sh      stop and remove
+#
+# SUPABASE_PG_TAG picks the image: 17.x is what new projects get, 15.x older ones.
+name: lifeos-it
+services:
+  db:
+    image: supabase/postgres:${SUPABASE_PG_TAG:-17.11.0.004}
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports: ["${LIFEOS_IT_DB_PORT:-54322}:5432"]
+    volumes:
+      - ./zz_authenticator.sql:/docker-entrypoint-initdb.d/zz_authenticator.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -h localhost"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:authpass@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: lifeos-integration-tests-jwt-secret-0123456789
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_DB_CHANNEL_ENABLED: "true"
+    ports: ["${LIFEOS_IT_REST_PORT:-54321}:3000"]

@@ -1,0 +1,16 @@
+{
+  "name": "context-lookup",
+  "about": "A question in chat: the answer comes from the index and nothing is written.",
+  "prompt": "When does my passport expire?",
+  "world": {"user": "owner@lifeos.test", "gmail": {"messages": []}, "drive": {"files": []}, "calendar": {"events": []}},
+  "db_setup": [
+    "insert into documents (drive_file_id, name, drive_url, document_type_key, subject_person, expiry_date, status, last_intake_at) values ('f-passport', 'Passport.pdf', 'https://drive.test/f-passport', 'passport', 'Test Owner', date '2027-03-15', 'current', clock_timestamp())"
+  ],
+  "assert": {
+    "answer_matches": ["2027", "(15|March|März|03)"],
+    "read_only": true,
+    "forbidden_calls": {"Gmail": ["send_message", "create_draft", "reply", "forward"], "Google_Drive": ["share_file", "create_file"],
+                        "Google_Calendar": ["create_event"]},
+    "no_held_statements": true
+  }
+}

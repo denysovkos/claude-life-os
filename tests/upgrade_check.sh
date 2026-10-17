@@ -14,6 +14,8 @@
 #
 # Needs git with the BASE tag fetched and a Postgres reachable through the PG* variables
 # (CI: the service container). Creates and drops the database $UPG_DB (KEEP_DB=1 keeps it).
+# UPG_EXISTING_DB=1 uses $UPG_DB as it is and leaves it: for Supabase's image, where
+# pg_cron only installs into the database `postgres` (tests/integration/db/run.sh).
 #
 # Usage: tests/upgrade_check.sh [base-tag]      e.g. tests/upgrade_check.sh v4.1.5
 set -euo pipefail
@@ -26,7 +28,7 @@ DB="${UPG_DB:-lifeos_upgrade_check}"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
-psql -v ON_ERROR_STOP=1 -qd postgres -c "drop database if exists $DB" -c "create database $DB"
+[ -n "${UPG_EXISTING_DB:-}" ] || psql -v ON_ERROR_STOP=1 -qd postgres -c "drop database if exists $DB" -c "create database $DB"
 export PGDATABASE="$DB"
 psql -v ON_ERROR_STOP=1 -q <<'SQL'
 do $$ begin create role anon; exception when duplicate_object then null; end $$;
@@ -120,5 +122,5 @@ unwatched="$(psql -tAc "select count(*) from v_auto_renew_unwatched where name =
 psql -v ON_ERROR_STOP=1 -q -f tests/sql/release_checks.sql 2>&1 | grep -v '^$'
 psql -v ON_ERROR_STOP=1 -q -f tests/sql/feature_checks.sql 2>&1 | grep -v '^$'
 
-[ -n "${KEEP_DB:-}" ] || psql -qd postgres -c "drop database $DB"
+[ -n "${KEEP_DB:-}${UPG_EXISTING_DB:-}" ] || psql -qd postgres -c "drop database $DB"
 echo "upgrade $BASE -> $(cat VERSION): ok"

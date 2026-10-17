@@ -33,7 +33,7 @@ kept in the outbox, not lost.
   (Gmail read-only, Drive, Docs, mail to self, triggers) and limits outgoing requests to
   `*.supabase.co`. `install` checks the read-only scope is enough and says what to change
   if it is not. All its own mail is prefixed `[Life OS]`. (bridge-3.2)
-- The Drive intake indexes only files the person owns (`'me' in owners`), so a file
+- The Drive intake indexes only files the person owns (`owner = 'me'`), so a file
   someone shares with them is never read at night. Documents already indexed stay.
 - Calendar events are created without attendees; nothing is shared from Drive.
 - Hard deadlines carry their basis (`basis: stated "…"` or `basis: <rule> from <date>`)
@@ -56,6 +56,15 @@ kept in the outbox, not lost.
   `release_checks.sql` asserts the same on every upgrade.
 - `docs/security.md`: an "Untrusted input" section listing what a letter could try and
   why it cannot, and advice to keep Life OS in its own Supabase organization.
+- Integration tests (`tests/integration`, workflow `integration.yml`): the database on
+  Supabase's own Postgres 17 and 15 images behind PostgREST, including every SQL statement
+  the skill and docs contain and a probe of the HTTP API; the bridge, unchanged, in an
+  Apps Script runtime that enforces the manifest's scopes and allowlist; the bridge in a
+  real Google account (nightly, with secrets); and Claude running the skill headless
+  against fake Gmail, Drive and Calendar connectors and the Supabase connector's
+  confirmation holds (nightly, with an API key). They caught two defects before release:
+  Supabase grants `service_role` everything on new tables, so the outbox revoke is now
+  explicit, and the Drive query the intake was told to use was not the connector's syntax.
 
 ### Workflow versions
 setup v1.5, email-intake v3.3, drive-file-intake v3.3, nightly-check v1.2,
