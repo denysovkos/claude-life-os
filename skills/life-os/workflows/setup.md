@@ -1,6 +1,6 @@
 # Life OS setup
 
-Workflow `setup` v1.5 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
+Workflow `setup` v1.6 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Three modes. Pick from what the person said; if unclear, ask.
@@ -309,7 +309,7 @@ from bridge_runs order by started_at desc limit 1;
 ```
 
 A row from the last few minutes with `finished_at` set, `errors = []` and
-`script_version = 'bridge-3.2'` means the bridge works. Say so plainly.
+`script_version = 'bridge-3.3'` means the bridge works. Say so plainly.
 
 No row at all: `install` did not reach the database. Ask what the log said. Common:
 
@@ -395,14 +395,18 @@ the installed versions:
 
 ```sql
 insert into skill_revisions (skill_name, version, change_type, summary)
-values ('life-os', 'v4.4', 'baseline', 'installed'),
-       ('setup', 'v1.5', 'baseline', 'installed with life-os v4.4'),
-       ('email-intake', 'v3.3', 'baseline', 'installed with life-os v4.4'),
-       ('drive-file-intake', 'v3.3', 'baseline', 'installed with life-os v4.4'),
-       ('nightly-check', 'v1.2', 'baseline', 'installed with life-os v4.4'),
-       ('context-lookup', 'v2.3', 'baseline', 'installed with life-os v4.4'),
-       ('life-review', 'v2.3', 'baseline', 'installed with life-os v4.4');
+values ('life-os', 'v4.5.0', 'baseline', 'installed'),
+       ('setup', 'v1.6', 'baseline', 'installed with life-os v4.5.0'),
+       ('email-intake', 'v3.3', 'baseline', 'installed with life-os v4.5.0'),
+       ('drive-file-intake', 'v3.3', 'baseline', 'installed with life-os v4.5.0'),
+       ('nightly-check', 'v1.3', 'baseline', 'installed with life-os v4.5.0'),
+       ('context-lookup', 'v2.3', 'baseline', 'installed with life-os v4.5.0'),
+       ('life-review', 'v2.3', 'baseline', 'installed with life-os v4.5.0');
 ```
+
+The `life-os` row is also what the bridge compares with the newest release on GitHub:
+once a day it looks, and mails the person once per version that is newer. Each nightly
+check records the release it runs with, so the mails stop the night after an update.
 
 Finish with doctor mode, then a three-line summary: what runs when, where the emergency
 binder is, and "ask me anything about your documents in any chat".
@@ -483,9 +487,9 @@ apply a fix without the person saying yes.
 8. **Night schedule**: `select * from v_intake_watchdog;` has a row per nightly job,
    `nightly-check` included; a job with `runs_7d = 0` was never scheduled.
 9. **Bridge**: `select started_at, errors, script_version from bridge_runs order by started_at desc limit 5;`
-   Errors in the last runs, or a `script_version` other than `bridge-3.2`. An older
-   bridge keeps working but does not deliver the outbox, so without a task app no brief
-   arrives; the fix is to paste the new `assets/apps-script/Code.gs` over the old code
+   Errors in the last runs, or a `script_version` other than `bridge-3.3`. bridge-3.2
+   works but never says when a new Life OS version is out; anything older also does not
+   deliver the outbox, so without a task app no brief arrives. The fix is to paste the new `assets/apps-script/Code.gs` over the old code
    and the new `appsscript.json` over the manifest, as in install step 7.2 (Script
    Properties and the trigger stay), then run `install` and allow the new, shorter
    permission list. Before that, make sure the

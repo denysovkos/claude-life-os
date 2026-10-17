@@ -54,9 +54,16 @@ class Version(unittest.TestCase):
                          "CHANGELOG sections must be newest first")
 
     def test_skill_metadata_matches_version(self):
-        major, minor, _ = read(ROOT / "VERSION").strip().split(".")
-        self.assertEqual(skill_metadata()["version"], f"v{major}.{minor}",
-                         "SKILL.md metadata.version must be v<MAJOR>.<MINOR> of VERSION")
+        self.assertEqual(skill_metadata()["version"], "v" + read(ROOT / "VERSION").strip(),
+                         "SKILL.md metadata.version must be v<VERSION>, the release tag")
+
+    def test_nightly_check_records_this_release(self):
+        # the bridge compares this row with GitHub's newest release; a stale literal here
+        # would mail an update notice to everyone already on the new version
+        version = skill_metadata()["version"]
+        text = read(WORKFLOWS["nightly-check"])
+        self.assertIn(f"select 'life-os', '{version}', 'baseline'", text)
+        self.assertIn(f"skill_name = 'life-os' and version = '{version}'", text)
 
 
 class Schema(unittest.TestCase):
@@ -179,6 +186,16 @@ class Outbound(unittest.TestCase):
         self.assertIn("https://www.googleapis.com/auth/gmail.readonly", scopes)
         self.assertNotIn("https://mail.google.com/", scopes)
         self.assertTrue(manifest.get("urlFetchWhitelist"), "outgoing requests must be limited")
+
+    def test_manifest_allows_only_supabase_and_the_release_lookup(self):
+        import json
+        code = read(ROOT / "apps-script" / "Code.gs")
+        repo = re.search(r"const RELEASES_REPO = '([^']+)'", code).group(1)
+        manifest = json.loads(read(ROOT / "apps-script" / "appsscript.json"))
+        self.assertEqual(sorted(manifest["urlFetchWhitelist"]), sorted([
+            "https://*.supabase.co/rest/v1/",
+            f"https://api.github.com/repos/{repo}/releases/latest",
+        ]))
 
     def test_workflows_never_send_mail_themselves(self):
         for path in [SKILL / "SKILL.md", *WORKFLOWS.values()]:

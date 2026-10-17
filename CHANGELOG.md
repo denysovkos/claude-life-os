@@ -1,5 +1,34 @@
 # Changelog
 
+## 4.5.0 (workflow release v3.3), 2026-10-17
+
+Update notices. Schema 0.7.0 (unchanged, no migration), bridge-3.3. After uploading the
+zip, run `life os doctor`: it asks you to paste the new `Code.gs` and `appsscript.json`
+into the Apps Script and run `install` once. Without that, everything keeps working; you
+only do not hear about the next version.
+
+### Added
+- **You are told when a new version is out.** A skill uploaded to Claude cannot replace
+  itself, so the Apps Script bridge asks GitHub once a day for the newest release and
+  mails you once per version that is newer than yours, with the download link and the
+  three update steps. It compares with the release the nightly check last ran with, so
+  the mails stop the night after you update. GitHub being unreachable is not an error:
+  the next run asks again. Only the version number is read from GitHub's answer; release
+  notes never reach a mail or the database. (bridge-3.3, nightly-check)
+
+### Changed
+- `appsscript.json` allows one more outgoing address, the anonymous GitHub "latest
+  release" lookup for this repository, and nothing else. A fork points `RELEASES_REPO`
+  and that manifest line at itself.
+- `metadata.version` in `SKILL.md` is the full release (`v4.5.0`, was `v4.4`), so a patch
+  release counts as an update too.
+- The nightly check records the release it runs with in `skill_revisions` the first
+  night it runs it. (nightly-check)
+
+### Workflow versions
+setup v1.6, email-intake v3.3, drive-file-intake v3.3, nightly-check v1.3,
+context-lookup v2.3, life-review v2.3.
+
 ## 4.4.0 (workflow release v3.3), 2026-10-17
 
 Security release. Schema 0.7.0, bridge-3.2. Upgrading is additive: no deadline moves, no

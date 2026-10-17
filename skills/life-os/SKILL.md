@@ -15,7 +15,7 @@ description: >-
   searching Drive or Gmail by hand.
 compatibility: Requires Supabase, Google Drive and Gmail connectors. Google Calendar recommended. Todoist and Craft optional.
 metadata:
-  version: v4.4
+  version: v4.5.0
   product: claude-life-os
   schema_version: 0.7.0
 ---

@@ -101,11 +101,12 @@ database.
 | See, edit, create and delete all your Google Docs documents | writes the Emergency binder document |
 | Send email as you | sends you, and only you, the alerts, the brief and the review (`MailApp`, always to your own address) |
 | See your primary Google Account email address | finds that address, so mail goes nowhere else |
-| Connect to an external service | talks to your Supabase database, and only to `*.supabase.co` (`urlFetchWhitelist`) |
+| Connect to an external service | talks to your Supabase database (`*.supabase.co`), and once a day asks GitHub which Life OS version is the newest; nothing else is allowed (`urlFetchWhitelist`) |
 | Allow this application to run when you are not present | runs every 15 minutes on a timer |
 
 The code is one file you can read end to end. Nothing is sent anywhere except your own
-Supabase project.
+Supabase project. The GitHub request carries no data of yours: it is the same anonymous
+question anyone's browser asks on the releases page.
 
 ## 4. Check it runs
 
@@ -118,7 +119,8 @@ Supabase project.
 
 When a new version of `Code.gs` is released: open the project, replace the whole content
 of `Code.gs` with the new one, do the same for `appsscript.json` (steps 6 and 7 above),
-save, and run `install` once more. Coming from bridge-3.1, Google asks for permissions
+save, and run `install` once more. You do not have to watch for new versions: from
+bridge-3.3 the script mails you, once per version, when one is out. Coming from bridge-3.1, Google asks for permissions
 again: the new list is shorter. Script properties and
 permissions stay. If the new version needs a new permission, Google asks again as in
 step 3.

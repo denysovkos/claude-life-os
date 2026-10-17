@@ -12,6 +12,7 @@
     "https://www.googleapis.com/auth/userinfo.email"
   ],
   "urlFetchWhitelist": [
-    "https://*.supabase.co/rest/v1/"
+    "https://*.supabase.co/rest/v1/",
+    "https://api.github.com/repos/denysovkos/claude-life-os/releases/latest"
   ]
 }

@@ -1,6 +1,6 @@
 # Nightly check
 
-Workflow `nightly-check` v1.2 of the `life-os` skill: the last run of the night. The
+Workflow `nightly-check` v1.3 of the `life-os` skill: the last run of the night. The
 shared rules in `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 It runs after both intakes (typically 03:05, after email at 01:05 and Drive at 02:05), so
@@ -20,10 +20,20 @@ on conflict (skill_name) do update set locked_at = now(),
   expires_at = excluded.expires_at, holder = excluded.holder
 where run_locks.expires_at < now()
 returning skill_name;
+
+insert into skill_revisions (skill_name, version, change_type, summary)
+select 'life-os', 'v4.5.0', 'baseline', 'first nightly check with this release'
+where not exists (select 1 from skill_revisions where skill_name = 'life-os' and version = 'v4.5.0')
+returning version;
 ```
 
+The last statement records the release this skill is (`metadata.version` in
+`../SKILL.md`) the first night it runs. The Apps Script bridge compares the newest
+recorded release with the newest one on GitHub and mails the person once when an update
+is out; this row is how it learns the update was installed.
+
 No snapshot: nothing here edits indexed data. Every write in this workflow (the
-`briefings` row, the lock) is an INSERT or a short UPDATE with `returning`, as SKILL.md
+`briefings` row, the lock, the release row) is an INSERT or a short UPDATE with `returning`, as SKILL.md
 requires.
 
 ## Step 1: derivations

@@ -86,7 +86,8 @@ work too, if the computer stays on at night. Both, step by step, with the prompt
 That is all, about 30 minutes. Later, at any time, write **`life os doctor`**: it checks
 the whole system and tells you exactly what to fix.
 
-**Updating:** download the new `life-os.zip` and upload it again the same way (remove the
+**Updating:** you do not need to watch this page: the Apps Script bridge mails you once
+when a new version is out. Download the new `life-os.zip` and upload it again the same way (remove the
 old skill first if Claude does not replace it). Then write `life os doctor`. It shows you
 which database updates are missing and what they would change, applies them itself
 (no SQL editor needed), and runs the release checks afterwards. Updates never move a deadline you already

@@ -1,5 +1,5 @@
 /**
- * claude-life-os: the Google side of the system.  bridge-3.2
+ * claude-life-os: the Google side of the system.  bridge-3.3
  *
  * Runs inside your own Google account every 15 minutes, with or without Claude:
  *   1. Copies email attachments that matter (bills, contracts, letters from authorities)
@@ -13,6 +13,11 @@
  *   6. Delivers the outbox: the brief, the monthly review and failure notices that the
  *      Claude jobs wrote to the database. They go to this Google account and nowhere
  *      else; an outbox row has no recipient, so nothing in a letter can redirect them.
+ *   7. Once a day, asks GitHub for the newest Life OS release and mails you once per
+ *      version when it is newer than the one the nightly check last ran with.
+ *
+ * UPGRADING from bridge-3.2: also replace appsscript.json. It allows one more address,
+ * the GitHub page that names the newest release, and nothing else.
  *
  * UPGRADING from bridge-3.1: also replace appsscript.json (Project Settings > "Show
  * appsscript.json manifest file in editor"). It narrows Gmail access to read-only and
@@ -45,7 +50,7 @@
  * is read from the `life_settings` table in Supabase, so there is nothing to edit here.
  */
 
-const SCRIPT_VERSION = 'bridge-3.2';
+const SCRIPT_VERSION = 'bridge-3.3';
 const QUEUE_BATCH = 20;                        // messages per run, the next run takes the rest
 const HEAL_BATCH = 50;                         // staged files re-verified per run
 const WATCHDOG_MAIL_EVERY_HOURS = 12;          // at most one alert per job per 12 hours
@@ -53,6 +58,7 @@ const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 const DRIVE_CHECK_BATCH = 150;                 // indexed files checked per day, oldest check first
 const OUTBOX_BATCH = 10;                       // mails to the owner per run
 const SUBJECT_PREFIX = '[Life OS] ';           // the email intake skips the system's own mail by it
+const RELEASES_REPO = 'denysovkos/claude-life-os';  // a fork points this, and the manifest line, at itself
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -140,6 +146,9 @@ function run() {
 
     // 6. Mail to the owner that the Claude jobs queued.
     try { deliverOutbox_(stats); } catch (e) { stats.errors.push('outbox: ' + e.message); }
+
+    // 7. Once a day: is there a newer release?
+    try { dailyReleaseCheck_(settings); } catch (e) { stats.errors.push('release check: ' + e.message); }
   } catch (e) {
     stats.errors.push('fatal: ' + e.message);
   } finally {
@@ -402,6 +411,67 @@ function deliverOutbox_(stats) {
       throw e;
     }
   });
+}
+
+// ------------------------------------------------------------------------------------
+// Updates: a skill uploaded to Claude cannot replace itself, so the person is told instead.
+// ------------------------------------------------------------------------------------
+
+function dailyReleaseCheck_(settings) {
+  const tz = settings.timezone || 'UTC';
+  const props = PropertiesService.getScriptProperties();
+  const today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  if (props.getProperty('release_check_date') === today) return;
+
+  // The installed release is the newest one a nightly check recorded. None yet: setup is
+  // not finished, and there is nothing to compare with.
+  const installed = sb_('GET', '/rest/v1/skill_revisions?skill_name=eq.life-os&select=version')
+    .map(function (r) { return semver_(r.version); })
+    .filter(Boolean)
+    .sort(compareSemver_)
+    .pop();
+  if (!installed) { props.setProperty('release_check_date', today); return; }
+
+  // GitHub being unreachable or rate limited (Apps Script shares its addresses) is not an
+  // error worth a mail: the next run tries again. Only the tag is read from the answer,
+  // and only if it is a plain version number; release notes are never passed on.
+  let latest = null;
+  try {
+    const response = UrlFetchApp.fetch('https://api.github.com/repos/' + RELEASES_REPO + '/releases/latest',
+      { headers: { Accept: 'application/vnd.github+json' }, muteHttpExceptions: true });
+    if (response.getResponseCode() !== 200) return;
+    latest = semver_(JSON.parse(response.getContentText()).tag_name);
+  } catch (e) {
+    Logger.log('release check: ' + e.message);
+    return;
+  }
+  props.setProperty('release_check_date', today);
+  if (!latest || compareSemver_(latest, installed) <= 0) return;
+
+  const tag = 'v' + latest.join('.');
+  if (props.getProperty('release_notified') === tag) return;
+  const page = 'https://github.com/' + RELEASES_REPO + '/releases';
+  notify_('Life OS ' + tag + ' is available (you have v' + installed.join('.') + ')',
+    'A new version of Life OS was released. Nothing changes until you install it.\n\n'
+    + 'What changed: ' + page + '/tag/' + tag + '\n\n'
+    + 'To update:\n'
+    + '1. Download ' + page + '/download/' + tag + '/life-os.zip (do not unpack it).\n'
+    + '2. In Claude open Settings > Capabilities > Skills, remove the old Life OS skill, then\n'
+    + '   Upload skill and choose the new zip.\n'
+    + '3. In a new chat write: life os doctor. It shows the database changes before applying\n'
+    + '   them, and says if this Apps Script needs the new code too.\n\n'
+    + 'You get this mail once per version. It stops once the nightly check runs the new one.');
+  props.setProperty('release_notified', tag);
+}
+
+/** "v4.5.0", "4.5.0" or "v4.4" as [major, minor, patch]; anything else null. */
+function semver_(s) {
+  const m = /^v?(\d+)\.(\d+)(?:\.(\d+))?$/.exec(String(s == null ? '' : s).trim());
+  return m ? [Number(m[1]), Number(m[2]), Number(m[3] || 0)] : null;
+}
+
+function compareSemver_(a, b) {
+  return (a[0] - b[0]) || (a[1] - b[1]) || (a[2] - b[2]);
 }
 
 /** Fails install early, with the fix, if the read-only Gmail scope is not enough. */

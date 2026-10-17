@@ -24,7 +24,9 @@ The bridge key stays in the person's own Google account, so anyone who could rea
 could already read their Gmail and Drive, which hold more than the index. What limits the
 bridge is its manifest (`apps-script/appsscript.json`): Gmail read-only, Drive and Docs
 for the inbox and the binder, mail only to itself, and outgoing requests only to
-`*.supabase.co`.
+`*.supabase.co` plus one GitHub address: the anonymous "newest release" lookup. From that
+answer the bridge keeps only the version number, and only if it is one; release notes
+never reach a mail or the database.
 
 ## Deny-all by design
 

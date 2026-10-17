@@ -36,7 +36,7 @@ every open obligation.
               │ read            ▼                        │     emergency binder
               │         ┌────────────────┐   files       │
               │         │  Apps Script   │───────────────┤
-              │         │  bridge-3.2    │               │
+              │         │  bridge-3.3    │               │
               │         └──────┬─────────┘               │
               │                │ REST (secret key)       │ read, file, move
               ▼                ▼                         ▼
