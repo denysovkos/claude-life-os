@@ -63,6 +63,12 @@ Until the bridge is updated, letters are composed and shown in chat but not rend
   answers a term rule of its key.
 - Bridge suite: a letter becomes a PDF next to its document and reaches only the owner,
   falls back to the catch-all folder, and is retried three times, then reported.
+- **The integration workflow ran nothing since 17 October.** An edit that replaced the
+  Claude suite with the scripted agent cut `integration.yml` from `workflow_dispatch` to
+  the agent's steps, so the file had no `jobs:` and GitHub failed every push before any
+  test started (no pull request ran it at all). The database (Postgres 17 and 15),
+  bridge, agent and real-Google jobs are back, and `tests/test_release.py` checks every
+  workflow file still declares its jobs.
 
 ### Workflow versions
 setup v1.7, email-intake v3.5, drive-file-intake v3.4, nightly-check v1.4,

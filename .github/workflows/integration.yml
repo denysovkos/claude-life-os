@@ -9,6 +9,8 @@ name: integration
 #              tries what an injected letter asks, through fake connectors
 # database, bridge and agent run on every pull request; no model is ever called.
 # google runs nightly and on demand, and skips itself when its secrets are not configured.
+# tests/test_release.py checks this file still declares these jobs: from 17 to 20 October
+# a bad edit had removed them, and every push failed before a single test ran.
 
 on:
   pull_request:
@@ -17,8 +19,52 @@ on:
   schedule:
     - cron: "17 2 * * *"
   workflow_dispatch:
-    inputs:
-      agent:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: integration-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  database:
+    name: Database on supabase/postgres:${{ matrix.tag }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: ["17.11.0.004", "15.19.0.004"]
+    env:
+      SUPABASE_PG_TAG: ${{ matrix.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: tests/integration/db/run.sh
+      - if: always()
+        run: tests/integration/stack/down.sh
+
+  bridge:
+    name: Bridge in an Apps Script runtime
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: tests/integration/bridge/run.sh
+      - if: always()
+        run: tests/integration/stack/down.sh
+
+  agent:
     name: Scripted agent runs the skill
     runs-on: ubuntu-latest
     steps:
@@ -37,3 +83,27 @@ on:
           retention-days: 14
       - if: always()
         run: tests/integration/stack/down.sh
+
+  google:
+    name: Bridge in real Google
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      CLASPRC_JSON: ${{ secrets.LIFEOS_E2E_CLASPRC_JSON }}
+      LIFEOS_E2E_SCRIPT_ID: ${{ secrets.LIFEOS_E2E_SCRIPT_ID }}
+      LIFEOS_E2E_DB_URL: ${{ secrets.LIFEOS_E2E_DB_URL }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Secrets configured?
+        id: secrets
+        run: |
+          if [ -n "$CLASPRC_JSON" ] && [ -n "$LIFEOS_E2E_SCRIPT_ID" ] && [ -n "$LIFEOS_E2E_DB_URL" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Real-Google suite skipped: set LIFEOS_E2E_CLASPRC_JSON, LIFEOS_E2E_SCRIPT_ID and LIFEOS_E2E_DB_URL (tests/integration/README.md)."
+          fi
+      - if: steps.secrets.outputs.ok == 'true'
+        run: tests/integration/gas-e2e/run.sh
