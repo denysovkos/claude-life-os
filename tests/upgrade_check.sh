@@ -9,7 +9,8 @@
 #    deadline, an auto-renewing payment with no exit on record.
 # 3. Applies this checkout's migrations, seed and packs, twice.
 # 4. Asserts: no open deadline moved, the recount dry run moves nothing later or into the
-#    past, schema_version is current, and tests/sql/release_checks.sql and
+#    past, schema_version is current, the owner became the household's `self` member and
+#    linking the existing rows to it moves nothing, and tests/sql/release_checks.sql and
 #    tests/sql/feature_checks.sql pass on the upgraded data.
 #
 # Needs git with the BASE tag fetched and a Postgres reachable through the PG* variables
@@ -54,6 +55,7 @@ lit = "'" + json.dumps(rules, ensure_ascii=False).replace("'", "''") + "'"
 print("select set_config('app.actor','setup',true);")
 print("update life_settings set value = '\"de\"' where key = 'region';")
 print("update life_settings set value = '\"Europe/Berlin\"' where key = 'timezone';")
+print("update life_settings set value = '\"Person A\"' where key = 'owner_name';")
 print(f"update life_settings set value = {lit}::jsonb where key = 'region_rules';")
 PY
 run "$work/settings.sql"
@@ -118,6 +120,15 @@ expected="$(sed -n 's/^  schema_version: //p' skills/life-os/SKILL.md)"
 
 unwatched="$(psql -tAc "select count(*) from v_auto_renew_unwatched where name = 'Gym'")"
 [ "$unwatched" = "1" ] || { echo "FAIL: v_auto_renew_unwatched misses the gym"; exit 1; }
+
+if psql -tAc "select to_regclass('public.household_members') is not null" | grep -q t; then
+  owner="$(psql -tAc "select count(*) from household_members where relation = 'self' and name = 'Person A'")"
+  [ "$owner" = "1" ] || { echo "FAIL: the upgrade did not make owner_name the household's self member"; exit 1; }
+  linked="$(psql -tAc "select count(*) from link_household_members(true) where member = 'Person A'")"
+  [ "$linked" -ge 2 ] || { echo "FAIL: linking found $linked rows for the owner, expected the permit and its deadline"; exit 1; }
+  psql -tAc "select id, due_on from deadlines where status = 'open' order by id" > "$work/linked.txt"
+  if ! diff -u "$work/before.txt" "$work/linked.txt"; then echo "FAIL: linking household members moved open deadlines"; exit 1; fi
+fi
 
 psql -v ON_ERROR_STOP=1 -q -f tests/sql/release_checks.sql 2>&1 | grep -v '^$'
 psql -v ON_ERROR_STOP=1 -q -f tests/sql/feature_checks.sql 2>&1 | grep -v '^$'

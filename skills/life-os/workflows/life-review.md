@@ -1,9 +1,9 @@
 # Life review
 
-Workflow `life-review` v2.3 of the `life-os` skill: the monthly review. The shared rules in
+Workflow `life-review` v2.4 of the `life-os` skill: the monthly review. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
-Write `v2.3` into `life_review_runs.skill_version`.
+Write `v2.4` into `life_review_runs.skill_version`.
 
 ## How the work is split, and why this skill exists
 
@@ -140,6 +140,26 @@ pack, say that a local rule applies and ask.
    the missing annual certificates by name. `region_rules.annual_dates` holds the filing
    deadline; when it is within 90 days and the bundle is still blocked, that is the
    first line of the report.
+
+8a. **Household.** From schema 0.8.0:
+   ```sql
+   select * from v_household_overview where active;
+   select * from v_unassigned_people;
+   select count(*) from link_household_members(false);
+   ```
+   - In the report, one line per member other than the owner: open deadlines and the next
+     one, the next identity paper to expire, the monthly cost of their contracts. A
+     child's passport or ID that expires within six months is a line of its own: for
+     minors it usually takes both parents and an appointment, so it needs lead time.
+   - An active member with `identity_documents = 0` is a question for the person ("no
+     passport or ID for Max in the index: is it somewhere else?"), once, not every month.
+   - Each `v_unassigned_people` row is a name that matches no member. Combine it with
+     this month's intake `decisions` where `field = 'subject_person'` (spellings the
+     intake mapped to a member by judgement), and put one decision to the person: add
+     them as a member, add the spelling as an alias of member X, or leave them (a joint
+     paper, someone outside the household). Never add a member or alias in this run.
+   - A non-zero link count means rows that name a member are not linked yet; that is a
+     doctor fix (`link_household_members(true)`), mention it in the decisions.
 
 9. **Legal dates.** `select * from v_system_invariants where invariant = 'legal_decision_without_date';`
    For each official decision without `issued_on`, read the date from the text and set

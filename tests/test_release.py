@@ -53,6 +53,12 @@ class Version(unittest.TestCase):
         self.assertEqual(headings, sorted(headings, key=version_tuple, reverse=True),
                          "CHANGELOG sections must be newest first")
 
+    def test_skill_description_fits(self):
+        # Claude refuses a skill whose description is longer than 1024 characters
+        front = read(SKILL / "SKILL.md").split("---")[1]
+        block = re.search(r"description: >-\n((?:  .*\n)+)", front).group(1)
+        self.assertLessEqual(len(" ".join(l.strip() for l in block.splitlines())), 1024)
+
     def test_skill_metadata_matches_version(self):
         major, minor, _ = read(ROOT / "VERSION").strip().split(".")
         self.assertEqual(skill_metadata()["version"], f"v{major}.{minor}",

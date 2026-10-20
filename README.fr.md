@@ -124,6 +124,11 @@ règles.
 - **Un dossier d'urgence** : un Google Doc réécrit chaque jour avec vos affaires en
   cours, échéances, contrats, assurances, l'emplacement des originaux et les personnes à
   appeler.
+- **Pour tout le foyer.** Dites-lui de quels proches il gère aussi les papiers
+  (conjoint, enfants, un parent), et chaque passeport, contrat et échéance est suivi au
+  nom de cette personne : le récapitulatif dit à qui est le passeport qui expire, le
+  dossier d'urgence indique qui vit avec vous, et « qu'est-ce qui expire bientôt pour
+  Max » a une réponse.
 
 ## Les tâches dans votre gestionnaire de tâches
 

@@ -1,6 +1,6 @@
 # Context lookup (read-only, scope first)
 
-Workflow `context-lookup` v2.3 of the `life-os` skill: read-only answers in any chat. The shared rules in
+Workflow `context-lookup` v2.4 of the `life-os` skill: read-only answers in any chat. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Other chats regularly need one fact out of the person's documents or mail (is the
@@ -54,6 +54,37 @@ select name, kind, status from matters where status in ('active','waiting');
 | travel | tickets, hotels, bookings | — | `category = 'travel'` | — |
 | personal | purchases, deliveries, private mail | — | `category in ('purchases','orders_delivery','personal_social')` | — |
 | reference | templates, comparison sheets | `kind = 'reference_file'` | — | — |
+
+### Whose
+
+A question can name a person as well as a scope: "Max's passport", "when does my wife's
+permit expire", "what do the kids have expiring", "my insurance" (the owner's). Resolve
+the person first, then filter the scope by them:
+
+```sql
+select id, name, relation, birth_date, aliases from household_members where active;
+```
+
+"My wife", "my son", "the kids" map to `relation` (`partner`, `child`); a name maps to
+`name` or one of `aliases`; "I", "my" to `relation = 'self'`. Two children and "my son":
+ask which, unless the question is about both. Then add the member to the scope's
+filter, keeping rows that name them in text but are not linked yet:
+
+```sql
+select d.name, d.drive_url, t.label, d.expiry_date, d.status, d.physical_location
+from documents d join document_types t on t.key = d.document_type_key
+where t.domain = 'identity' and d.duplicate_of is null
+  and (d.member_id = household_member_for(:member_name)
+       or (d.member_id is null and d.subject_person ilike '%' || :member_name || '%'))
+order by d.expiry_date nulls last;
+```
+
+The same holds for `deadlines`, `recurring_payments`, `matters` (`member_id`) and
+`emails` (`member_id`, set only for mail about someone other than the owner). Name the
+person in the answer. "Everyone" or "the whole family" is one query per member, or
+`select * from v_household_overview;` for the summary (documents, the next identity
+paper to expire, open deadlines, monthly cost of their contracts). A name that is not a
+member: answer from `subject_person` text and say they are not set up as a member.
 
 A question that straddles two scopes ("when does the lease end and how much do I pay
 for it", property + bills) gets both queried explicitly and both named in the answer. A
@@ -120,6 +151,7 @@ use it instead of reasoning from scratch.
 - **What renews by itself without a known exit**: `select * from v_auto_renew_unwatched;`
 - **Emergency overview**: `select emergency_dossier();` The same text the bridge writes
   daily into the "Emergency binder" Google Doc in the emergency folder.
+- **Who is in the household, and what each of them has**: `select * from v_household_overview;`
 
 ## Never
 

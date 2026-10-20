@@ -121,6 +121,10 @@ schreiben: Es spielt Datenbank-Updates und neue Regeln selbst ein.
 - **Ein Notfallordner**: ein Google Doc, täglich neu geschrieben, mit offenen
   Angelegenheiten, Fristen, Verträgen, Versicherungen, dem Ort der Originale und
   Kontakten.
+- **Für den ganzen Haushalt.** Sagen Sie, wessen Unterlagen außer Ihren es betreut
+  (Partner, Kinder, ein Elternteil), und jeder Ausweis, jeder Vertrag und jede Frist
+  gehört dieser Person: Das Briefing sagt, wessen Pass abläuft, der Notfallordner nennt,
+  wer bei Ihnen lebt, und „was läuft bei Max bald ab“ hat eine Antwort.
 
 ## Aufgaben in Ihrer Aufgaben-App
 

@@ -22,5 +22,12 @@
   "overdue_since": "ÜBERFÄLLIG seit",
   "close_or_reschedule": "Vorgang abschließen oder neues Datum setzen",
   "subject_unknown": "Person nicht erfasst",
-  "file_missing": "Datei fehlt in Drive seit"
+  "file_missing": "Datei fehlt in Drive seit",
+  "household": "Personen im Haushalt",
+  "rel_self": "Inhaber(in) dieses Notfallordners",
+  "rel_partner": "Partner(in)",
+  "rel_child": "Kind",
+  "rel_parent": "Elternteil",
+  "rel_other": "Haushaltsmitglied",
+  "born": "geboren"
 }

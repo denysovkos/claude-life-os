@@ -35,6 +35,11 @@ Migration 0004:
 - revokes default privileges, so tables and functions added later are closed too,
 - grants `service_role` what the bridge needs.
 
+Tables added later close themselves the same way, and some are closed to the bridge as
+well: the bridge may only read `outbox` and mark a row sent (0016), and it cannot read
+`household_members` at all (0017); it sees the household only in the binder text that
+`emergency_dossier()` returns.
+
 Supabase's advisor reports `rls_enabled_no_policy` for every table. That is the intended
 state, not a finding to fix: a policy would be the only way to open a table to the
 public API. Views are `security_invoker`, so they cannot become a side door past RLS
@@ -95,7 +100,7 @@ resisting it; it removes what such text could make it do:
 | send an invitation | calendar events are created without attendees |
 | hide itself or another letter | rules that silence mail are `self_only`: they match only mail from the owner's address that also carries Gmail's `SENT` label (0016). Before, a subject containing "Daily brief" was enough |
 | pass as an authority | `sender_domain` rules match the domain or its subdomains only, never a lookalike (`fake-elster.de` matched `elster.de` before 0016). Unknown senders claiming an authority are tagged `unverified_sender` |
-| change the system | night runs never change settings, never add silencing rules or authority aliases, never close a deadline because a letter says so; such changes are proposals a human approves |
+| change the system | night runs never change settings or the household, never add silencing rules or authority aliases, never close a deadline because a letter says so; such changes are proposals a human approves |
 | plant a document | the Drive intake indexes only files the person owns, not files shared with them |
 | corrupt the index | every writing run takes a snapshot first; nothing deletes rows |
 

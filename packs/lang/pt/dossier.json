@@ -22,5 +22,12 @@
   "overdue_since": "EM ATRASO desde",
   "close_or_reschedule": "encerre o assunto ou defina uma nova data",
   "subject_unknown": "pessoa não registada",
-  "file_missing": "ficheiro em falta no Drive desde"
+  "file_missing": "ficheiro em falta no Drive desde",
+  "household": "Pessoas do agregado familiar",
+  "rel_self": "titular deste dossiê",
+  "rel_partner": "companheiro/a",
+  "rel_child": "filho/a",
+  "rel_parent": "pai ou mãe",
+  "rel_other": "membro do agregado familiar",
+  "born": "nascido/a em"
 }

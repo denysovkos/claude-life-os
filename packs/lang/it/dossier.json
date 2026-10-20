@@ -22,5 +22,12 @@
   "overdue_since": "SCADUTO dal",
   "close_or_reschedule": "chiudi la pratica o fissa una nuova data",
   "subject_unknown": "persona non indicata",
-  "file_missing": "file assente in Drive dal"
+  "file_missing": "file assente in Drive dal",
+  "household": "Persone del nucleo familiare",
+  "rel_self": "titolare di questo fascicolo",
+  "rel_partner": "partner",
+  "rel_child": "figlio/a",
+  "rel_parent": "genitore",
+  "rel_other": "membro del nucleo familiare",
+  "born": "nato/a il"
 }

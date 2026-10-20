@@ -120,6 +120,10 @@ controleert het hele systeem en zegt precies wat je moet oplossen.
   wanneer kunt opzeggen, wat in je belastingaangifte hoort en wat vreemd lijkt.
 - **Een noodmap**: een Google Doc, dagelijks herschreven, met lopende zaken, termijnen,
   contracten, verzekeringen, waar de originelen liggen en wie je moet bellen.
+- **Voor het hele huishouden.** Vertel het van wie het verder de papieren bijhoudt
+  (partner, kinderen, een ouder), en elk paspoort, contract en elke termijn hoort bij
+  die persoon: de samenvatting zegt wiens paspoort verloopt, de noodmap noemt wie bij je
+  woont, en "wat verloopt er binnenkort bij Max" heeft een antwoord.
 
 ## Taken in je takenapp
 

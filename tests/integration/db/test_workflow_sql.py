@@ -40,6 +40,8 @@ PARAMS = {
     "name": "'Test Owner'", "email": "'owner@lifeos.test'", "tz": "'Europe/Berlin'",
     "out": "'en'", "region": "'de'", "tasks": "'none'", "notes_provider": "'none'",
     "address": "'Neue Strasse 1'", "system_id": "'proj-system'", "default_id": "'proj-default'",
+    "member_name": "'Max Test'", "relation": "'child'", "birth_date": "'2017-03-02'",
+    "aliases": "'{\"Maximilian Test\"}'", "alias": "'Maximilian Test'",
 }
 for folder in ("inbox", "emergency", "backups", "catch_all", "identity", "finance", "taxes",
                "housing", "insurance", "work", "legal", "health", "vehicle", "education"):

@@ -22,9 +22,12 @@ filter them.
 |---|---|---|---|---|
 | `📅 Daily brief 2026-10-03: Tax objection ends in 7 days` | nightly-check | every night at the end of the night runs, only if something matters today | today | system project |
 | `💌 bills_payments Stadtwerke Beispiel: pay 61.20 by 15 Oct` | email-intake | a mail needs you to act | the due date in the mail, if any | default project (or a per-category one) |
-| `⚠️ Passport expires 2026-12-01: Anna_passport.pdf` | drive-file-intake | a document expires within 30 days and has no task | 7 days before expiry | default project (or per area) |
+| `⚠️ Passport expires 2026-12-01: Max_passport.pdf (Max)` | drive-file-intake | a document expires within 30 days and has no task | 7 days before expiry | default project (or per area) |
 | `🧾 Review 2026-09: cancel the old parking contract?` | life-review | monthly | in 3 days | system project |
 | `⚠️ email-intake failed 2026-10-03` | email-intake, drive-file-intake, nightly-check | a run had errors | today | system project |
+
+A task about someone else in the household ends in their name in parentheses, `(Max)`;
+the owner's own tasks carry no name. The brief does the same for each item.
 
 Hard deadlines (objection windows, residence permits, cancellation dates) also appear
 in the brief on every rung of their ladder, typically 90, 60, 30, 14, 7, 3 and 1 days
@@ -43,13 +46,15 @@ the brief arrives by email).
 
 ### Mail that needs action
 
-Title `💌 <category> <sender>: <what to do>`. The description holds the Gmail link and
+Title `💌 <category> <sender>: <what to do>`, plus ` (<name>)` when the mail is about a
+household member other than you. The description holds the Gmail link and
 the database row id. Todoist's own deadline field is a premium feature, so a hard date
 goes into the title and the due date.
 
 ### Expiring documents
 
-Title `⚠️ <document type> expires <date>: <file name>`, due a week before. Billing-period
+Title `⚠️ <document type> expires <date>: <file name>`, plus ` (<name>)` for another
+member's document, due a week before. Billing-period
 ends of auto-renewing subscriptions are deliberately not tasks: that is not an expiry.
 
 ### The monthly review

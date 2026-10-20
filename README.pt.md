@@ -117,6 +117,10 @@ próprio as atualizações da base de dados e as novas regras.
   quando, o que vai para a declaração de impostos e o que parece estranho.
 - **Uma pasta de emergência**: um Google Doc reescrito todos os dias com os assuntos em
   aberto, prazos, contratos, seguros, onde estão os originais e a quem ligar.
+- **Para todo o agregado familiar.** Diz-lhe de quem mais trata os papéis
+  (companheiro/a, filhos, um dos pais) e cada passaporte, contrato e prazo fica em nome
+  dessa pessoa: o resumo diz de quem é o passaporte que expira, a pasta de emergência
+  indica quem vive contigo e «o que expira em breve ao Max» tem resposta.
 
 ## Tarefas no teu gestor de tarefas
 

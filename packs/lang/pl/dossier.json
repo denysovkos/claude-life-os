@@ -22,5 +22,12 @@
   "overdue_since": "PO TERMINIE od",
   "close_or_reschedule": "zamknij sprawę lub ustal nową datę",
   "subject_unknown": "osoba nieokreślona",
-  "file_missing": "brak pliku w Drive od"
+  "file_missing": "brak pliku w Drive od",
+  "household": "Osoby w gospodarstwie domowym",
+  "rel_self": "właściciel tej teczki",
+  "rel_partner": "partner(ka)",
+  "rel_child": "dziecko",
+  "rel_parent": "rodzic",
+  "rel_other": "członek gospodarstwa domowego",
+  "born": "ur."
 }

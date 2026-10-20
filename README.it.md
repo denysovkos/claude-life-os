@@ -120,6 +120,10 @@ da solo gli aggiornamenti del database e le nuove regole.
   entro quando, cosa va nella dichiarazione dei redditi e cosa sembra strano.
 - **Una cartella di emergenza**: un Google Doc riscritto ogni giorno con le pratiche
   aperte, scadenze, contratti, assicurazioni, dove sono gli originali e chi chiamare.
+- **Per tutto il nucleo familiare.** Digli di chi altro gestisce le carte (partner,
+  figli, un genitore) e ogni passaporto, contratto e scadenza è seguito a nome di quella
+  persona: il riepilogo dice di chi è il passaporto in scadenza, la cartella di
+  emergenza elenca chi vive con te e «cosa scade presto a Max» ha una risposta.
 
 ## Attività nel tuo task manager
 

@@ -187,7 +187,7 @@ update emails set calendar_event_id = {lit(ev['id'])} where id = {lit(row['id'])
         self.step("email-intake: run log")
         self.sql(f"""insert into email_processing_runs (skill_version, started_at, emails_scanned, emails_added,
   emails_updated, actions_flagged, category_counts, errors, skipped, decisions, notes)
-values ('v3.3', {lit(started)}::timestamptz, {sum(len(t.get('messages', [])) for t in threads)}, {logged}, 0, 0,
+values ('v3.4', {lit(started)}::timestamptz, {sum(len(t.get('messages', [])) for t in threads)}, {logged}, 0, 0,
   {lit(counts)}, '[]'::jsonb, {lit(skipped)}, {lit(decisions)}, {lit(f'scripted run: {logged} logged')})
 returning id;""")
         self.end("email-intake")
@@ -251,7 +251,7 @@ returning id;""")
             self.sql(f"select * from {v};")
         self.sql(f"""insert into processing_runs (skill_version, started_at, files_scanned, files_added, files_updated,
   expiring_flagged, errors, skipped, decisions, notes)
-values ('v3.3', {lit(started)}::timestamptz, {len(files)}, {added}, 0, 0, '[]'::jsonb, {lit(skipped)}, '[]'::jsonb,
+values ('v3.4', {lit(started)}::timestamptz, {len(files)}, {added}, 0, 0, '[]'::jsonb, {lit(skipped)}, '[]'::jsonb,
   {lit(f'scripted run: {added} added')}) returning id;""")
         self.end("drive-file-intake")
         return f"added {added}, skipped {len(skipped)}"
