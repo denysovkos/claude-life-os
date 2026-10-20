@@ -255,7 +255,7 @@ function makeServices(world) {
     const n = this._n;
     return {
       setBold: (a, b, c) => {
-        if (arguments.length === 1 || b === undefined) { n.bold = !!a; return this; }
+        if (b === undefined) { n.bold = !!a; return this; }
         if (a < 0 || b >= n.text.length) throw new Error('Index out of range');
         n.boldRange = [a, b, !!c]; return this;
       },
