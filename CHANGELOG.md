@@ -1,5 +1,62 @@
 # Changelog
 
+## 4.5.0 (workflow release v3.4), 2026-10-20
+
+Household release. Schema 0.8.0, bridge-3.2 (unchanged). Upgrading is additive: no
+deadline moves, no row is removed, and a 4.4 skill keeps working against the new
+database (it writes `subject_person` as before and the database links the member). After
+uploading the zip, run `life os doctor`: it applies 0017, offers the language pack
+update (seven new binder labels), and asks once whose papers besides yours the system
+should handle.
+
+### Added
+- **Household members.** The partner's, the children's and a parent's papers are tracked
+  as theirs. `household_members` holds the owner (`self`), partner, children, parents and
+  others, with the other spellings their papers use (`aliases`) and an optional birth
+  date. Members are only added or changed by the person, in setup or reconfigure
+  ("add my son Max, born 2017-03-02"); a night run never does, and a letter naming
+  someone never makes them a member. The upgrade creates the owner from `owner_name`.
+  (0017, setup)
+- `member_id` on documents, deadlines, contracts (`recurring_payments`), mail, matters
+  and bundles. A trigger links it from the name already stored (`subject_person`,
+  `owner_person`) when that name or an alias belongs to exactly one member; a joint
+  paper or an unknown name stays unlinked rather than guessed. Deadlines take the member
+  of their document or mail, contracts that of their document. An explicitly set member
+  wins and the name follows it. (0017)
+- `link_household_members(apply)`: rows written before a member or alias existed, as a
+  dry run, then linked on the person's yes. `v_unassigned_people`: names in the index
+  that match no member, for the doctor and the monthly review to ask about.
+  `v_household_overview`: per member, current documents, identity papers and the next
+  to expire, open and hard deadlines, monthly cost of their contracts. (0017)
+- The daily brief names whose deadline or letter it is ("Passport renewal — in 14 days
+  (Max)"); the owner's own items carry no name. Tasks for another member's document or
+  mail end in ` (<name>)`. (0017, nightly-check, both intakes)
+- The emergency binder lists the people in the household with relation and birth date,
+  names whose hard deadline and whose insurance each line is, and groups identity papers
+  by member. Language packs en, de, uk 1.2.0 and pl, fr, es, it, nl, ru, pt 1.1.0 carry
+  the new labels; until a pack is updated those labels are English. (0017, packs)
+- Answers by person: "Max's passport", "what does my wife have expiring", "the kids";
+  "the whole family" uses the overview. (context-lookup)
+- The monthly review reports each member's open deadlines, next identity expiry and
+  contract costs, puts a child's passport expiring within six months on a line of its
+  own, and asks about unknown names and spellings once. (life-review)
+- Doctor check 12: an owner row exists, nothing is left to link, and unknown names are
+  asked about. `release_checks.sql` asserts the household table is closed to every API
+  role, the bridge's included, and that the member triggers exist;
+  `feature_checks.sql` exercises aliases, inheritance, joint and ambiguous names,
+  linking, the brief, the binder and snapshots.
+
+### Changed
+- A successor document counts for the same member however the name is spelled
+  ("Maximilian Beispiel" renews "Max"'s passport). (0017, `v_expired_without_successor`)
+- Snapshots include `household_members`. (0017)
+- `tests/test_release.py` checks that the skill description stays within Claude's
+  1024-character limit.
+
+### Workflow versions
+setup v1.6, email-intake v3.4, drive-file-intake v3.4, nightly-check v1.3,
+context-lookup v2.4, life-review v2.4.
+
 ## 4.4.0 (workflow release v3.3), 2026-10-17
 
 Security release. Schema 0.7.0, bridge-3.2. Upgrading is additive: no deadline moves, no

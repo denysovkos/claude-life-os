@@ -117,6 +117,10 @@ mismo las actualizaciones de la base de datos y las reglas nuevas.
   hasta cuándo, qué va en tu declaración de la renta y qué parece raro.
 - **Una carpeta de emergencia**: un Google Doc reescrito cada día con tus asuntos
   abiertos, plazos, contratos, seguros, dónde están los originales y a quién llamar.
+- **Para todo el hogar.** Dile de quién más lleva los papeles (tu pareja, tus hijos, un
+  progenitor) y cada pasaporte, contrato y plazo queda a nombre de esa persona: el
+  resumen dice de quién es el pasaporte que caduca, la carpeta de emergencia indica
+  quién vive contigo y «¿qué le caduca pronto a Max?» tiene respuesta.
 
 ## Tareas en tu gestor de tareas
 

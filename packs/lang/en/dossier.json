@@ -22,5 +22,12 @@
   "overdue_since": "OVERDUE since",
   "close_or_reschedule": "close the matter or set a new date",
   "subject_unknown": "person not recorded",
-  "file_missing": "file missing in Drive since"
+  "file_missing": "file missing in Drive since",
+  "household": "People in the household",
+  "rel_self": "owner of this binder",
+  "rel_partner": "partner",
+  "rel_child": "child",
+  "rel_parent": "parent",
+  "rel_other": "household member",
+  "born": "born"
 }

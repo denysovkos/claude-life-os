@@ -78,7 +78,7 @@ know about.
 
 ### Database (`supabase/migrations`)
 
-35 tables, 35 views, about 35 functions, row level security on every table with no
+39 tables, 42 views, about 55 functions, row level security on every table with no
 policies.
 
 The core objects:
@@ -95,6 +95,11 @@ The core objects:
   `v_notice_calendar`).
 - `entities` + `entity_aliases`: people, companies, authorities. Strings resolve to one
   entity deterministically.
+- `household_members`: whose paperwork it is (the owner, partner, children, parents),
+  with the other spellings their papers use. Documents, deadlines, contracts, mail,
+  matters and bundles carry a `member_id`, linked by trigger from the stored name;
+  deadlines and contracts take their source's member. Only the person changes the
+  household, never a night run.
 - `matters`, `matter_links`: a thread of real life (a permit, a purchase, a dispute) that
   documents, emails and deadlines attach to.
 - `bundles`, `bundle_requirements`: the papers one event needs, pointing at document

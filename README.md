@@ -129,6 +129,10 @@ emergency binder.
   deadlines, contracts, insurance, where your original documents are, and who to call.
   Overdue items say so, and a file that disappeared from Drive is marked instead of
   linked.
+- **For the whole household.** Tell it whose papers besides yours it handles (a partner,
+  children, a parent), and every passport, contract and deadline is tracked as that
+  person's: the brief says whose passport expires, the emergency binder lists who lives
+  with you, and "what does Max have expiring" has an answer.
 
 ## Tasks in your task manager
 

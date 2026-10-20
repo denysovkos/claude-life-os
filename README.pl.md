@@ -116,6 +116,10 @@ aktualizacje bazy i nowe przepisy.
   wypowiedzieć, co trafi do zeznania podatkowego i co wygląda podejrzanie.
 - **Teczka awaryjna**: dokument Google, odświeżany codziennie, z otwartymi sprawami,
   terminami, umowami, ubezpieczeniami, miejscem przechowywania oryginałów i kontaktami.
+- **Dla całego gospodarstwa domowego.** Powiedz, czyje jeszcze dokumenty ma prowadzić
+  (partnera, dzieci, rodzica), a każdy paszport, umowa i termin są przypisane tej
+  osobie: brief mówi, czyj paszport wygasa, teczka awaryjna wymienia, kto z tobą
+  mieszka, a na pytanie „co wkrótce wygasa Maksowi” jest odpowiedź.
 
 ## Zadania w menedżerze zadań
 

@@ -21,6 +21,8 @@
 --      does not match a sender_domain rule, the outbox has no recipient column, and
 --      identifiers are redacted on write when redact_identifiers is on, and upload chunks
 --      are emptied once assembled
+--   7. from schema 0.8.0: the household table is closed to every API role, including the
+--      bridge's, and every table that names a person resolves it through the member trigger
 
 begin;
 
@@ -176,6 +178,18 @@ begin
     if n > 0 then raise exception 'raw upload chunks stay behind after assembly'; end if;
     select count(*) into n from document_texts where document_id = doc and body = c1 || c2;
     if n <> 1 then raise exception 'assembly after clearing chunks lost the body'; end if;
+  end if;
+
+  -- 7. the household --------------------------------------------------------------------------
+  if to_regclass('public.household_members') is not null then
+    select count(*) into n from information_schema.role_table_grants
+    where table_schema = 'public' and table_name = 'household_members'
+      and grantee in ('anon', 'authenticated', 'service_role');
+    if n > 0 then raise exception 'household_members is readable through the API (% grants)', n; end if;
+    select count(*) into n from pg_trigger
+    where not tgisinternal and tgname in ('documents_resolve_member', 'deadlines_resolve_member',
+      'recurring_payments_resolve_member', 'matters_resolve_member', 'bundles_resolve_member');
+    if n <> 5 then raise exception 'member triggers missing: % of 5', n; end if;
   end if;
 
   raise notice 'release checks: all passed';

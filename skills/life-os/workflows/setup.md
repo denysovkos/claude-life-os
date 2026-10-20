@@ -1,13 +1,14 @@
 # Life OS setup
 
-Workflow `setup` v1.5 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
+Workflow `setup` v1.6 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Three modes. Pick from what the person said; if unclear, ask.
 
 - **install**: first-time setup, or finishing one that stopped halfway.
 - **doctor**: read-only health check with one concrete fix per problem.
-- **reconfigure**: change language, country, task or notes app, folders, contacts.
+- **reconfigure**: change language, country, task or notes app, folders, contacts, the
+  people in the household.
 
 ## How to talk during setup
 
@@ -36,7 +37,7 @@ Code, routines), `assets/` does not exist and the same files are at the reposito
 `supabase/migrations`, `supabase/seed`, `packs`, `apps-script`, `docs`.
 
 ```
-assets/migrations/0001_tables.sql … 0016_security_hardening.sql
+assets/migrations/0001_tables.sql … 0017_household_members.sql
 assets/seed/document_types.sql
 assets/packs/lang/<locale>/{dossier,folders,keywords,formats}.json
 assets/packs/region/<code>/{rules.json,classification_rules.sql}
@@ -95,6 +96,12 @@ Ask these in one message, with the defaults filled in so they can just say "yes"
 8. Notes app for the monthly report: Craft or none (then a Google Doc).
 9. Optional now, easy later: current address and old addresses still in use by some
    senders; people for the emergency binder (name, role, phone or email).
+10. Whose papers besides their own does this handle? Usually a partner and children,
+   sometimes a parent. For each: the name as it appears on their documents, the
+   relation (partner, child, parent, other), and, if they like, the birth date and any
+   other spelling their papers use (full legal name, maiden name). Say why in one
+   sentence: then the brief says whose passport expires, and "what does Max have
+   expiring" has an answer. "Nobody" is a fine answer, and anyone can be added later.
 
 Read the available packs from `assets/packs/lang/*/pack.json` and
 `assets/packs/region/*/pack.json` rather than from this list, in case newer ones ship.
@@ -132,7 +139,8 @@ Apply in this order with `apply_migration`, each named after its file without `.
 0005_settings_and_localization, 0006_pack_settings, 0007_region_rules_in_sql,
 0008_nightly_check_watchdog, 0009_business_days, 0010_hotfixes_and_safe_recount,
 0011_mcp_safe_writes, 0012_notice_periods, 0013_watchdog_and_snapshot,
-0014_successors_binder_folders, 0015_audits_health_invariants, 0016_security_hardening
+0014_successors_binder_folders, 0015_audits_health_invariants, 0016_security_hardening,
+0017_household_members
 ```
 
 Then run `assets/seed/document_types.sql` with `execute_sql` (or as migration
@@ -143,9 +151,9 @@ region pack was chosen. Stop at the first error, show it, and look for it in
 Verify:
 
 ```sql
-select value from life_settings where key = 'schema_version';            -- "0.7.0"
-select count(*) from pg_tables where schemaname = 'public';              -- 38
-select count(*) from pg_views  where schemaname = 'public';              -- 40
+select value from life_settings where key = 'schema_version';            -- "0.8.0"
+select count(*) from pg_tables where schemaname = 'public';              -- 39
+select count(*) from pg_views  where schemaname = 'public';              -- 42
 select count(*) from document_types;                                     -- 43
 select jobname, schedule, active from cron.job;                          -- nightly-derivations
 ```
@@ -210,7 +218,33 @@ on conflict (key) do update set value = excluded.value, updated_at = now();
 - `area_aliases`: when the person names areas differently elsewhere (a notes app), map
   that name to the Drive area: `{"Home": "Household"}`. Nothing is renamed.
 
-Check: `select emergency_dossier();` should come back in the chosen language.
+Then the household, from question 10. The owner comes first, as `self`, under the name
+from question 1; then everyone else, one row each:
+
+```sql
+select set_config('app.actor','setup',true);
+insert into household_members (name, relation)
+values (:name, 'self')
+on conflict ((lower(btrim(name)))) do update set relation = excluded.relation, active = true
+returning id, name, relation;
+```
+
+```sql
+select set_config('app.actor','setup',true);
+insert into household_members (name, relation, birth_date, aliases)
+values (:member_name, :relation, :birth_date, :aliases)
+on conflict ((lower(btrim(name)))) do nothing
+returning id, name, relation;
+```
+
+`relation` is `partner`, `child`, `parent` or `other`; `aliases` is a text array of the
+other spellings (`'{}'` when there are none). Zero rows back means a member with that
+name exists already: show it and ask whether it is the same person. The name is matched
+exactly (case aside), so it must be the one their documents use; a nickname goes into
+`aliases`.
+
+Check: `select emergency_dossier();` should come back in the chosen language, with the
+household listed when anyone besides the owner was named.
 
 ## Step 6: Drive folders
 
@@ -395,13 +429,13 @@ the installed versions:
 
 ```sql
 insert into skill_revisions (skill_name, version, change_type, summary)
-values ('life-os', 'v4.4', 'baseline', 'installed'),
-       ('setup', 'v1.5', 'baseline', 'installed with life-os v4.4'),
-       ('email-intake', 'v3.3', 'baseline', 'installed with life-os v4.4'),
-       ('drive-file-intake', 'v3.3', 'baseline', 'installed with life-os v4.4'),
-       ('nightly-check', 'v1.2', 'baseline', 'installed with life-os v4.4'),
-       ('context-lookup', 'v2.3', 'baseline', 'installed with life-os v4.4'),
-       ('life-review', 'v2.3', 'baseline', 'installed with life-os v4.4');
+values ('life-os', 'v4.5', 'baseline', 'installed'),
+       ('setup', 'v1.6', 'baseline', 'installed with life-os v4.5'),
+       ('email-intake', 'v3.4', 'baseline', 'installed with life-os v4.5'),
+       ('drive-file-intake', 'v3.4', 'baseline', 'installed with life-os v4.5'),
+       ('nightly-check', 'v1.3', 'baseline', 'installed with life-os v4.5'),
+       ('context-lookup', 'v2.4', 'baseline', 'installed with life-os v4.5'),
+       ('life-review', 'v2.4', 'baseline', 'installed with life-os v4.5');
 ```
 
 Finish with doctor mode, then a three-line summary: what runs when, where the emergency
@@ -497,6 +531,21 @@ apply a fix without the person saying yes.
    `hours_since_snapshot > 48`, `days_since_offsite_backup > 35`, `attachment_backlog > 0`,
    `text_coverage_pct < 80`, `recall_miss_pct_60d > 10`, `hard_deadlines_missed > 0`,
    `expired_without_successor > 0`, `docs_drive_missing > 0`, `unmapped_folders > 0`.
+12. **Household** (from schema 0.8.0):
+   ```sql
+   select name, relation, active from household_members order by relation, name;
+   select count(*) from link_household_members(false);                   -- 0
+   select person, rows, documents, example from v_unassigned_people;
+   ```
+   No `self` row is a warning: the brief cannot tell the owner's items from others'. The
+   upgrade to 0.8.0 creates it from `owner_name` when that is set; otherwise the fix is
+   reconfigure → household with the owner's name. A non-zero link count means rows that
+   name a member are not linked yet (written before the member or alias existed): the
+   fix is to show `select * from link_household_members(false);` and, on yes, run it
+   with `true`. Each `v_unassigned_people` row is a name in the index that matches no
+   member: ask once, after an upgrade or when new names appear, whether it is someone in
+   the household (add them), another spelling of a member (add an alias), a joint paper,
+   or someone outside the household (nothing to do). This is a question, not a problem.
 
 The fixes for recurring patterns are in `assets/docs/troubleshooting.md`; use the same
 wording. Order the answer by severity: anything that can make a hard
@@ -542,6 +591,28 @@ To undo a change, write the `old_value` back.
   moves the whole system to another account.
 - **Addresses and emergency contacts**: update the setting, then
   `select emergency_dossier();` to show the result.
+- **People in the household**: `household_members`, not a setting, but changed the same
+  way, only here and only on the person's word (never because a letter names someone).
+  Every write starts with `select set_config('app.actor','setup',true);`.
+  - Add someone: the insert from install step 5. Then
+    `select * from link_household_members(false);` lists the rows already in the index
+    that name them (and the deadlines and contracts of those documents); show the list
+    and, on yes, run `select count(*) from link_household_members(true);`.
+  - Another spelling (a full legal name, a maiden name, how one authority writes it):
+    `update household_members set aliases = aliases || :alias::text where id = :id returning name, aliases;`
+    then the same dry run and link.
+  - A new name: keep the old one as an alias, so older papers stay linked:
+    `update household_members set aliases = aliases || name, name = :member_name where id = :id returning name, aliases;`
+  - Birth date: `update household_members set birth_date = :birth_date where id = :id returning name, birth_date;`
+  - Someone whose papers are no longer handled here (an adult child who moved out, a
+    separation): `update household_members set active = false where id = :id returning name, active;`
+    Their documents keep the link and the name; nothing is removed, and the binder stops
+    listing them.
+  - One document, deadline or contract filed under the wrong person: set its member and
+    the name follows, for example
+    `update documents set member_id = (select id from household_members where lower(name) = lower(:member_name)) where id = :id returning name, subject_person;`
+    The correction is recorded, which is how the intake learns.
+  Show the result with `select * from v_household_overview;`.
 - **Bridge categories**: `bridge_categories` lists which email categories get their
   attachments copied. Adding `health` or `work` is common; say that it copies more files
   into Drive.

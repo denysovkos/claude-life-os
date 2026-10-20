@@ -22,5 +22,12 @@
   "overdue_since": "VERLOPEN sinds",
   "close_or_reschedule": "sluit de zaak af of kies een nieuwe datum",
   "subject_unknown": "persoon niet vastgelegd",
-  "file_missing": "bestand ontbreekt in Drive sinds"
+  "file_missing": "bestand ontbreekt in Drive sinds",
+  "household": "Personen in het huishouden",
+  "rel_self": "eigenaar van deze map",
+  "rel_partner": "partner",
+  "rel_child": "kind",
+  "rel_parent": "ouder",
+  "rel_other": "lid van het huishouden",
+  "born": "geboren"
 }

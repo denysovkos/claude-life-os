@@ -22,5 +22,12 @@
   "overdue_since": "VENCIDO desde",
   "close_or_reschedule": "cierra el asunto o fija una nueva fecha",
   "subject_unknown": "persona no registrada",
-  "file_missing": "archivo ausente en Drive desde"
+  "file_missing": "archivo ausente en Drive desde",
+  "household": "Personas del hogar",
+  "rel_self": "titular de este dossier",
+  "rel_partner": "pareja",
+  "rel_child": "hijo/a",
+  "rel_parent": "progenitor",
+  "rel_other": "miembro del hogar",
+  "born": "nacido/a el"
 }

@@ -35,7 +35,7 @@ the Supabase dashboard also works; the history then shows `human`.
 
 | Key | Example | Written by | Read by |
 |---|---|---|---|
-| `schema_version` | `"0.7.0"` | migrations | setup (doctor, upgrades); every workflow compares it with `SKILL.md` |
+| `schema_version` | `"0.8.0"` | migrations | setup (doctor, upgrades); every workflow compares it with `SKILL.md` |
 | `owner_name` | `"Anna Beispiel"` | setup | reports |
 | `owner_email` | `"anna@example.com"` | setup | must be the Google account the bridge runs in: the email intake recognises the system's own mail by it (`self_only` rules). Mail itself always goes to the bridge's account |
 | `timezone` | `"Europe/Berlin"` | setup | every skill, the bridge, the binder date |
@@ -61,6 +61,31 @@ the Supabase dashboard also works; the history then shows `human`.
 
 The folder-to-area map is a table of its own, `drive_folder_areas`, because it has many
 rows; it is written by setup and read by the Drive intake.
+
+## The household
+
+Whose papers the system handles is not a setting either: it is the table
+`household_members`, one row per person: the owner (`self`), a partner, children,
+parents, others. Each row has the name their documents use, `aliases` for other
+spellings (a full legal name, a maiden name), an optional birth date, and `active`.
+Setup asks for them; later say "add my daughter Sophie, born 2019-05-12", "Max's papers
+also say Maximilian Beispiel", or "my son moved out", and reconfigure writes it.
+Nobody is ever removed: a member who is no longer handled here is set inactive, and
+their documents keep their name. A night run never adds or changes a member, and a
+letter that names someone does not make them one.
+
+Documents, deadlines, contracts, matters and bundles are linked to a member by a
+trigger, from the name the intake stored (`subject_person`), when that name or one of
+the aliases belongs to exactly one member. Mail is linked by the email intake when it is
+about someone other than the owner. When a member or an alias is added, the rows that
+already name them are linked after you see the list:
+
+```sql
+select * from link_household_members(false);  -- dry run: what would be linked
+select * from link_household_members(true);   -- link
+select * from v_unassigned_people;            -- names that match nobody yet
+select * from v_household_overview;           -- per member: papers, deadlines, costs
+```
 
 ## When a setting changes what was already computed
 

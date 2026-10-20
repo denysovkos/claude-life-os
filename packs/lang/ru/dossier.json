@@ -22,5 +22,12 @@
   "overdue_since": "ПРОСРОЧЕНО с",
   "close_or_reschedule": "закройте дело или назначьте новую дату",
   "subject_unknown": "лицо не указано",
-  "file_missing": "файл отсутствует в Drive с"
+  "file_missing": "файл отсутствует в Drive с",
+  "household": "Члены домохозяйства",
+  "rel_self": "владелец этой справки",
+  "rel_partner": "партнёр",
+  "rel_child": "ребёнок",
+  "rel_parent": "родитель",
+  "rel_other": "член домохозяйства",
+  "born": "род."
 }

@@ -1,6 +1,6 @@
 # Nightly check
 
-Workflow `nightly-check` v1.2 of the `life-os` skill: the last run of the night. The
+Workflow `nightly-check` v1.3 of the `life-os` skill: the last run of the night. The
 shared rules in `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 It runs after both intakes (typically 03:05, after email at 01:05 and Drive at 02:05), so
@@ -76,7 +76,11 @@ select (build_briefing()->>'item_count')::int as item_count, briefing_text() as 
 
 Add the findings from step 2 that the brief does not already mention under its
 `SYSTEM` heading, then translate the whole text into `output_locale`, keeping dates,
-amounts and names exactly as they are.
+amounts and names exactly as they are. A name in parentheses after an item is the
+household member it belongs to (`build_briefing()` puts it in `person`; the owner's own
+items carry none): keep it, so the person reading sees at once that it is the child's
+passport and not theirs. When the most important fact for the title is a member's, the
+title names them too.
 
 - **Nothing to say** (zero items and no findings): write a `briefings` row with
   `suppressed = true` and deliver nothing. No "all clear" messages: a brief that talks

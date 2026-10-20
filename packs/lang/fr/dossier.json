@@ -22,5 +22,12 @@
   "overdue_since": "EN RETARD depuis le",
   "close_or_reschedule": "clôturer l'affaire ou fixer une nouvelle date",
   "subject_unknown": "personne non renseignée",
-  "file_missing": "fichier absent de Drive depuis le"
+  "file_missing": "fichier absent de Drive depuis le",
+  "household": "Personnes du foyer",
+  "rel_self": "titulaire de ce dossier",
+  "rel_partner": "partenaire",
+  "rel_child": "enfant",
+  "rel_parent": "parent",
+  "rel_other": "membre du foyer",
+  "born": "né(e) le"
 }

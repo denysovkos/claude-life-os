@@ -1,4 +1,4 @@
--- Feature checks for schema 0.6.x: each new database behaviour, exercised end to end on
+-- Feature checks for schema 0.6.x and later: each new database behaviour, exercised end to end on
 -- throwaway rows. Runs in one transaction that is rolled back, so it is safe on a live
 -- installation as well as in CI:
 --
@@ -11,7 +11,7 @@ begin;
 
 do $checks$
 declare
-  n bigint; s text; doc uuid; perm uuid; dl uuid; rp uuid; ok boolean; j jsonb;
+  n bigint; s text; doc uuid; perm uuid; dl uuid; rp uuid; ok boolean; j jsonb; mem uuid; mem2 uuid; m uuid;
   tag text := 'fc-' || substr(md5(random()::text), 1, 8);   -- unique names for this run
 begin
   perform set_config('app.actor', 'test', true);
@@ -137,6 +137,101 @@ begin
   if n <> 3 then raise exception 'v_schedule_drift should have 3 jobs, has %', n; end if;
   select count(*) into n from v_system_health where coalesce(text_coverage_pct, 0) > 100;
   if n > 0 then raise exception 'text coverage above 100%%'; end if;
+
+  -- 12. household members (schema 0.8.0) -------------------------------------------------
+  if to_regclass('public.household_members') is not null then
+    insert into household_members (name, relation, birth_date, aliases)
+    values (tag || ' Max', 'child', current_date - 3300, array[tag || ' Maximilian Beispiel'])
+    returning id into mem;
+    insert into household_members (name, relation) values (tag || ' Anna', 'partner') returning id into mem2;
+
+    -- a name written as an alias, in another case and with spaces, resolves and keeps its spelling
+    insert into documents (drive_file_id, name, drive_url, document_type_key, subject_person, expiry_date, status)
+    values (tag || '-kidpass', tag || ' kid passport', 'https://example.invalid/k', 'passport',
+            ' ' || upper(tag) || ' MAXIMILIAN BEISPIEL ', current_date + 20, 'current')
+    returning id into doc;
+    select member_id, subject_person into m, s from documents where id = doc;
+    if m is distinct from mem then raise exception 'an alias did not resolve to its member'; end if;
+    if s <> ' ' || upper(tag) || ' MAXIMILIAN BEISPIEL ' then raise exception 'resolving rewrote the stored name: %', s; end if;
+
+    -- a deadline from that document inherits the member and gets the name; the brief says whose
+    insert into deadlines (title, deadline_type, due_on, status, source_kind, source_id)
+    values (tag || ' passport renewal', 'document_expiry', current_date + 14, 'open', 'document', doc)
+    returning id into dl;
+    select member_id, subject_person into m, s from deadlines where id = dl;
+    if m is distinct from mem or s is distinct from tag || ' Max' then
+      raise exception 'a deadline did not inherit its document''s member: % %', m, s;
+    end if;
+    if position('(' || tag || ' Max)' in briefing_text()) = 0 then raise exception 'the brief does not say whose deadline it is'; end if;
+
+    -- a contract inherits from its document; the overview adds it up
+    insert into recurring_payments (name, category, amount, period, auto_renews, status, document_id, notice_period_months)
+    values (tag || ' kid insurance', 'insurance', 12, 'monthly', true, 'active', doc, 1) returning id into rp;
+    select count(*) into n from recurring_payments where id = rp and member_id = mem;
+    if n <> 1 then raise exception 'a payment did not inherit its document''s member'; end if;
+    select count(*) into n from v_household_overview
+    where id = mem and identity_documents = 1 and next_identity_expiry = current_date + 20
+      and open_deadlines = 1 and next_due_on = current_date + 14 and monthly_costs = 12 and age = 9;
+    if n <> 1 then raise exception 'v_household_overview is wrong for the child'; end if;
+
+    -- an explicit member wins and the name follows it; a joint name resolves to nobody
+    update documents set member_id = mem2 where id = doc;
+    select subject_person into s from documents where id = doc;
+    if s <> tag || ' Anna' then raise exception 'the name did not follow an explicit member: %', s; end if;
+    update documents set subject_person = tag || ' Max, ' || tag || ' Anna' where id = doc;
+    select count(*) into n from documents where id = doc and member_id is null;
+    if n <> 1 then raise exception 'a joint name was guessed onto one member'; end if;
+    update documents set subject_person = tag || ' Max' where id = doc;
+
+    -- a name shared by two members is never guessed
+    update household_members set aliases = array[tag || ' Beispiel'] where id = mem2;
+    update household_members set aliases = aliases || (tag || ' Beispiel') where id = mem;
+    if household_member_for(tag || ' Beispiel') is not null then raise exception 'an ambiguous alias was resolved'; end if;
+
+    -- a name nobody owns is listed, and links once it becomes an alias
+    insert into documents (drive_file_id, name, drive_url, document_type_key, subject_person, status)
+    values (tag || '-cert', tag || ' certificate', 'https://example.invalid/c', 'civil_status_certificate',
+            tag || ' Sophie', 'current') returning id into perm;
+    insert into deadlines (title, deadline_type, due_on, status, source_kind, source_id)
+    values (tag || ' certificate copy', 'other', current_date + 40, 'open', 'document', perm);
+    select count(*) into n from v_unassigned_people where person = tag || ' Sophie' and documents = 1;
+    if n <> 1 then raise exception 'an unknown name is not listed in v_unassigned_people'; end if;
+    update household_members set aliases = aliases || (tag || ' Sophie') where id = mem;
+    select count(*) into n from v_unassigned_people where person = tag || ' Sophie';
+    if n <> 0 then raise exception 'a name that now matches a member is still reported as unassigned'; end if;
+    select count(*) into n from link_household_members(false) where row_id = perm or label = tag || ' certificate copy';
+    if n <> 2 then raise exception 'link dry run lists % rows, expected the document and its deadline', n; end if;
+    select count(*) into n from documents where id = perm and member_id is null;
+    if n <> 1 then raise exception 'the link dry run changed a row'; end if;
+    perform link_household_members(true);
+    select count(*) into n from deadlines where source_id = perm and member_id = mem;
+    if n <> 1 then raise exception 'link_household_members did not link the deadline of a linked document'; end if;
+    select count(*) into n from v_unassigned_people where person = tag || ' Sophie';
+    if n <> 0 then raise exception 'a linked name is still unassigned'; end if;
+
+    -- the same member holds the successor, whatever the spelling
+    insert into documents (drive_file_id, name, drive_url, document_type_key, subject_person, expiry_date, status)
+    values (tag || '-oldpass', tag || ' old passport', 'https://example.invalid/o', 'passport',
+            tag || ' Maximilian Beispiel', current_date - 5, 'expired') returning id into perm;
+    select count(*) into n from v_expired_without_successor where id = perm;
+    if n <> 0 then raise exception 'a successor under another spelling of the same member was not seen'; end if;
+
+    -- the owner's own items carry no name; the binder lists the household
+    select id into m from household_members where relation = 'self';
+    if m is null then
+      insert into household_members (name, relation) values (tag || ' Owner', 'self') returning id into m;
+    end if;
+    if household_person_label(m, 'anyone') is not null then raise exception 'the owner is named in their own brief'; end if;
+    s := emergency_dossier();
+    if position('## ' || dossier_label('household') in s) = 0
+       or position(tag || ' Max (' || dossier_label('rel_child') || '), ' || dossier_label('born') in s) = 0 then
+      raise exception 'the binder does not list the household';
+    end if;
+
+    perform take_snapshot('feature checks household');
+    select payload ? 'household_members' into ok from backup_snapshots order by taken_at desc limit 1;
+    if not ok then raise exception 'snapshots do not cover household_members'; end if;
+  end if;
 
   raise notice 'feature checks: all passed';
 end
