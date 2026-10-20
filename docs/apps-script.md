@@ -11,7 +11,10 @@ your own Google account every 15 minutes, whether Claude is running or not. It:
 3. emails you if one of the Claude jobs has not run for too long,
 4. rewrites the "Emergency binder" Google Doc once a day,
 5. delivers the daily brief, the monthly review and failure notices to your own inbox
-   (the Claude jobs write them to the database; they never send mail themselves).
+   (the Claude jobs write them to the database; they never send mail themselves),
+6. turns a cancellation or objection letter you approved in Claude into a PDF, saves it
+   next to the contract or decision in Drive, and mails it to you with the PDF attached.
+   You send it; the bridge never sends a letter anywhere else.
 
 You do not edit the code. Everything it needs to know (which folder, which time zone,
 which kinds of mail) it reads from your database. The only two things you give it are
@@ -118,8 +121,9 @@ Supabase project.
 
 When a new version of `Code.gs` is released: open the project, replace the whole content
 of `Code.gs` with the new one, do the same for `appsscript.json` (steps 6 and 7 above),
-save, and run `install` once more. Coming from bridge-3.1, Google asks for permissions
-again: the new list is shorter. Script properties and
+save, and run `install` once more. Coming from bridge-3.2, only `Code.gs` changes
+(bridge-3.3 renders letters with the permissions it already has). Coming from
+bridge-3.1, Google asks for permissions again: the new list is shorter. Script properties and
 permissions stay. If the new version needs a new permission, Google asks again as in
 step 3.
 

@@ -187,7 +187,7 @@ update emails set calendar_event_id = {lit(ev['id'])} where id = {lit(row['id'])
         self.step("email-intake: run log")
         self.sql(f"""insert into email_processing_runs (skill_version, started_at, emails_scanned, emails_added,
   emails_updated, actions_flagged, category_counts, errors, skipped, decisions, notes)
-values ('v3.4', {lit(started)}::timestamptz, {sum(len(t.get('messages', [])) for t in threads)}, {logged}, 0, 0,
+values ('v3.5', {lit(started)}::timestamptz, {sum(len(t.get('messages', [])) for t in threads)}, {logged}, 0, 0,
   {lit(counts)}, '[]'::jsonb, {lit(skipped)}, {lit(decisions)}, {lit(f'scripted run: {logged} logged')})
 returning id;""")
         self.end("email-intake")

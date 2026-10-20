@@ -29,5 +29,11 @@
   "rel_child": "child",
   "rel_parent": "parent",
   "rel_other": "household member",
-  "born": "born"
+  "born": "born",
+  "letter_ready": "Letter ready",
+  "letter_to": "To",
+  "letter_send_by": "Must arrive by",
+  "letter_how": "How to send it",
+  "letter_after_sending": "Once it is sent, tell Claude in any chat \"I sent the letter\" and how (post, registered mail, fax, online). The deadline then closes, and a missing confirmation is reported.",
+  "letter_not_advice": "Filled in from your documents. Not legal advice: read every line, check the recipient, the number and the dates, and sign it yourself."
 }

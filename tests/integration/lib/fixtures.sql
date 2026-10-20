@@ -79,6 +79,21 @@ insert into outbox (id, kind, subject, body, source)
 values ('00000000-0000-0000-0000-000000000041', 'notice', 'Fixture notice', 'Body', 'fixtures')
 on conflict (id) do nothing;
 
+-- letters in each state a workflow statement acts on: a complete draft (approve), a ready
+-- one (mark sent), a sent one (mark confirmed)
+insert into recurring_payments (id, name, category, amount, period, notice_period_months, auto_renews, status, reference)
+values ('00000000-0000-0000-0000-0000000000c2', 'Gym', 'subscription', 30, 'monthly', 1, true, 'active', 'M-1')
+on conflict (id) do nothing;
+insert into letters (id, kind, status, recurring_payment_id, document_id, fields, header, subject, body, send_by, file_name)
+values
+  ('00000000-0000-0000-0000-000000000051', 'cancellation', 'draft', '00000000-0000-0000-0000-0000000000c1', null,
+   '{"recipient_name": "Mobilfunk Test"}', 'Test Owner', 'Kündigung Mobile contract', 'Text', current_date + 30, 'Kündigung Mobile contract'),
+  ('00000000-0000-0000-0000-000000000052', 'objection_tax', 'ready', null, '00000000-0000-0000-0000-0000000000a3',
+   '{"recipient_name": "Finanzamt Test"}', 'Test Owner', 'Einspruch', 'Text', current_date + 20, 'Einspruch'),
+  ('00000000-0000-0000-0000-000000000053', 'cancellation', 'sent', '00000000-0000-0000-0000-0000000000c2', null,
+   '{"recipient_name": "Fit Test"}', 'Test Owner', 'Kündigung Gym', 'Text', current_date - 10, 'Kündigung Gym')
+on conflict (id) do nothing;
+
 -- one uploaded chunk, as drive-file-intake step 5 leaves it before ingest_assemble()
 insert into text_ingest_chunks (document_id, seq, chunk, expected_md5)
 values ('00000000-0000-0000-0000-0000000000a2', 1, '...', md5('...'))

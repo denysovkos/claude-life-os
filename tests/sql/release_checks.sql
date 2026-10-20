@@ -23,6 +23,8 @@
 --      are emptied once assembled
 --   7. from schema 0.8.0: the household table is closed to every API role, including the
 --      bridge's, and every table that names a person resolves it through the member trigger
+--   8. from schema 0.9.0: letters have no way to be sent, and the bridge's key can only
+--      render them, not compose, approve or mark them
 
 begin;
 
@@ -190,6 +192,24 @@ begin
     where not tgisinternal and tgname in ('documents_resolve_member', 'deadlines_resolve_member',
       'recurring_payments_resolve_member', 'matters_resolve_member', 'bundles_resolve_member');
     if n <> 5 then raise exception 'member triggers missing: % of 5', n; end if;
+  end if;
+
+  -- 8. letters are handed over, never sent ---------------------------------------------------
+  if to_regclass('public.letters') is not null then
+    select count(*) into n from information_schema.role_table_grants
+    where table_schema = 'public' and table_name = 'letters' and grantee in ('anon', 'authenticated', 'service_role');
+    if n > 0 then raise exception 'letters is readable or writable through the API (% grants)', n; end if;
+    select count(*) into n from information_schema.columns
+    where table_schema = 'public' and table_name = 'letters' and column_name ~ '(^to$|^cc$|^bcc$|email$|fax|send_to)';
+    if n > 0 then raise exception 'letters has a column to send it with: a letter could leave the account'; end if;
+    if has_function_privilege('service_role', 'public.approve_letter(uuid)', 'execute')
+       or has_function_privilege('service_role', 'public.compose_letter(text, uuid, jsonb)', 'execute')
+       or has_function_privilege('service_role', 'public.mark_letter_sent(uuid, date, text)', 'execute') then
+      raise exception 'the bridge key can compose, approve or mark letters';
+    end if;
+    if not has_function_privilege('service_role', 'public.letter_rendered(uuid, text, text)', 'execute') then
+      raise exception 'the bridge cannot report a rendered letter';
+    end if;
   end if;
 
   raise notice 'release checks: all passed';

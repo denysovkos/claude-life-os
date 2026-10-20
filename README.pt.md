@@ -121,6 +121,12 @@ próprio as atualizações da base de dados e as novas regras.
   (companheiro/a, filhos, um dos pais) e cada passaporte, contrato e prazo fica em nome
   dessa pessoa: o resumo diz de quem é o passaporte que expira, a pasta de emergência
   indica quem vive contigo e «o que expira em breve ao Max» tem resposta.
+- **Cartas de denúncia e de reclamação.** Diz «cancela o ginásio» ou «reclama da
+  liquidação do imposto» e escreve a carta com o que já sabe: o destinatário e a morada,
+  o número de contrato ou de processo, a data de fim, até quando tem de chegar e, para a
+  Alemanha, a base legal. Lês e dizes que sim; o PDF aparece no Drive ao lado do
+  contrato e na tua caixa de correio, com como o enviar. Envias tu, nunca o sistema, e
+  uma confirmação em falta é assinalada.
 
 ## Tarefas no teu gestor de tarefas
 

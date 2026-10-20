@@ -38,7 +38,9 @@ Migration 0004:
 Tables added later close themselves the same way, and some are closed to the bridge as
 well: the bridge may only read `outbox` and mark a row sent (0016), and it cannot read
 `household_members` at all (0017); it sees the household only in the binder text that
-`emergency_dossier()` returns.
+`emergency_dossier()` returns. It cannot read `letters` either (0018): it gets the
+approved ones to render from `letters_to_render()` and reports the PDF through
+`letter_rendered()`, which accepts nothing but the file id and link.
 
 Supabase's advisor reports `rls_enabled_no_policy` for every table. That is the intended
 state, not a finding to fix: a policy would be the only way to open a table to the
@@ -98,6 +100,7 @@ resisting it; it removes what such text could make it do:
 | get data sent out by mail | the skill has no mail-sending path: briefs, reviews and alerts are `outbox` rows with no recipient column, delivered by the bridge to its own account. Gmail's send, draft, reply and forward tools should be switched off in the routines' connectors (setup step 10) |
 | get a file shared | the skill never shares or changes permissions; switch off Drive's sharing tools in the routines' connectors |
 | send an invitation | calendar events are created without attendees |
+| get a letter sent somewhere | the system never sends a letter: the bridge renders an approved letter into the owner's Drive and mails it to its own account, and there is no e-mail or fax column on a letter. The recipient's address comes from the contract's entity; one found only in a mail is shown to the person with its source, never filled in silently. A letter is composed and approved only in a chat, on the person's word; night runs never do either |
 | hide itself or another letter | rules that silence mail are `self_only`: they match only mail from the owner's address that also carries Gmail's `SENT` label (0016). Before, a subject containing "Daily brief" was enough |
 | pass as an authority | `sender_domain` rules match the domain or its subdomains only, never a lookalike (`fake-elster.de` matched `elster.de` before 0016). Unknown senders claiming an authority are tagged `unverified_sender` |
 | change the system | night runs never change settings or the household, never add silencing rules or authority aliases, never close a deadline because a letter says so; such changes are proposals a human approves |

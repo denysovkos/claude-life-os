@@ -42,6 +42,11 @@ PARAMS = {
     "address": "'Neue Strasse 1'", "system_id": "'proj-system'", "default_id": "'proj-default'",
     "member_name": "'Max Test'", "relation": "'child'", "birth_date": "'2017-03-02'",
     "aliases": "'{\"Maximilian Test\"}'", "alias": "'Maximilian Test'",
+    # letters: a contract, and the fixture letters in the state each call needs (fixtures.sql)
+    "source_id": "'00000000-0000-0000-0000-0000000000c1'", "fields": "'{\"reference\": \"K-1\"}'",
+    "letter_id": "'00000000-0000-0000-0000-000000000051'", "ready_letter_id": "'00000000-0000-0000-0000-000000000052'",
+    "sent_letter_id": "'00000000-0000-0000-0000-000000000053'", "completed_on": "current_date",
+    "gmail_message_id": "'fx-msg-bill'",
 }
 for folder in ("inbox", "emergency", "backups", "catch_all", "identity", "finance", "taxes",
                "housing", "insurance", "work", "legal", "health", "vehicle", "education"):

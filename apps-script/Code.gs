@@ -1,5 +1,5 @@
 /**
- * claude-life-os: the Google side of the system.  bridge-3.2
+ * claude-life-os: the Google side of the system.  bridge-3.3
  *
  * Runs inside your own Google account every 15 minutes, with or without Claude:
  *   1. Copies email attachments that matter (bills, contracts, letters from authorities)
@@ -13,6 +13,12 @@
  *   6. Delivers the outbox: the brief, the monthly review and failure notices that the
  *      Claude jobs wrote to the database. They go to this Google account and nowhere
  *      else; an outbox row has no recipient, so nothing in a letter can redirect them.
+ *   7. Renders the letters you approved in Claude (a cancellation, an objection) to PDF,
+ *      saves each next to the document it answers in Drive, and mails it to this account
+ *      for you to send. It never sends a letter anywhere else.
+ *
+ * UPGRADING from bridge-3.2: paste this file over the old code. appsscript.json, the
+ * Script Properties and the trigger stay as they are; no new permission is needed.
  *
  * UPGRADING from bridge-3.1: also replace appsscript.json (Project Settings > "Show
  * appsscript.json manifest file in editor"). It narrows Gmail access to read-only and
@@ -45,13 +51,14 @@
  * is read from the `life_settings` table in Supabase, so there is nothing to edit here.
  */
 
-const SCRIPT_VERSION = 'bridge-3.2';
+const SCRIPT_VERSION = 'bridge-3.3';
 const QUEUE_BATCH = 20;                        // messages per run, the next run takes the rest
 const HEAL_BATCH = 50;                         // staged files re-verified per run
 const WATCHDOG_MAIL_EVERY_HOURS = 12;          // at most one alert per job per 12 hours
 const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 const DRIVE_CHECK_BATCH = 150;                 // indexed files checked per day, oldest check first
 const OUTBOX_BATCH = 10;                       // mails to the owner per run
+const LETTER_BATCH = 5;                        // letters rendered per run
 const SUBJECT_PREFIX = '[Life OS] ';           // the email intake skips the system's own mail by it
 
 const ALLOWED_MIME_TYPES = [
@@ -140,6 +147,9 @@ function run() {
 
     // 6. Mail to the owner that the Claude jobs queued.
     try { deliverOutbox_(stats); } catch (e) { stats.errors.push('outbox: ' + e.message); }
+
+    // 7. Letters the person approved: PDF into Drive, and to the owner's inbox.
+    try { renderLetters_(settings, stats); } catch (e) { stats.errors.push('letters: ' + e.message); }
   } catch (e) {
     stats.errors.push('fatal: ' + e.message);
   } finally {
@@ -404,6 +414,69 @@ function deliverOutbox_(stats) {
   });
 }
 
+// ------------------------------------------------------------------------------------
+// Letters: the text is composed in Supabase (compose_letter()) and approved by the person
+// in Claude. Here it becomes a PDF in their Drive. Sending it is theirs to do.
+// ------------------------------------------------------------------------------------
+
+function renderLetters_(settings, stats) {
+  let rows;
+  try {
+    rows = sb_('POST', '/rest/v1/rpc/letters_to_render', { p_limit: LETTER_BATCH });
+  } catch (e) {
+    if (String(e.message).indexOf('-> 404') >= 0) return;  // database older than schema 0.9.0
+    throw e;
+  }
+  (rows || []).forEach(function (row) {
+    try {
+      renderLetter_(row, settings);
+      stats.letters = (stats.letters || 0) + 1;
+    } catch (e) {
+      stats.errors.push('letter ' + row.id + ': ' + e.message);
+      try { sb_('POST', '/rest/v1/rpc/letter_render_failed', { p_id: row.id, p_error: String(e.message) }); }
+      catch (e2) { stats.errors.push('letter ' + row.id + ' (recording the failure): ' + e2.message); }
+    }
+  });
+}
+
+function renderLetter_(row, settings) {
+  let folder = null;
+  if (row.folder_id) {
+    try { folder = DriveApp.getFolderById(row.folder_id); if (folder.isTrashed()) folder = null; }
+    catch (e) { folder = null; }                         // the document's folder is gone: use the catch-all
+  }
+  if (!folder) folder = DriveApp.getFolderById(settings.drive_folders.catch_all || settings.drive_folders.inbox);
+
+  const doc = DocumentApp.create(row.file_name);
+  const docFile = DriveApp.getFileById(doc.getId());
+  let pdf = null;
+  try {
+    const body = doc.getBody();
+    String(row.header || '').split('\n').forEach(function (line) { body.appendParagraph(line); });
+    body.appendParagraph('');
+    // bold by character range: a bold paragraph would pass its formatting on to the next
+    body.appendParagraph(row.subject).editAsText().setBold(0, String(row.subject).length - 1, true);
+    body.appendParagraph('');
+    String(row.body || '').split('\n').forEach(function (line) { body.appendParagraph(line); });
+    if (body.getNumChildren() > 1 && body.getChild(0).asText().getText() === '') {
+      body.getChild(0).removeFromParent();                // a new document starts with an empty line
+    }
+    doc.saveAndClose();
+    pdf = folder.createFile(docFile.getAs('application/pdf').setName(row.file_name + '.pdf'));
+  } finally {
+    docFile.setTrashed(true);                             // the PDF is the letter; no editable copy lingers
+  }
+
+  let note;
+  try {
+    note = sb_('POST', '/rest/v1/rpc/letter_rendered', { p_id: row.id, p_pdf_id: pdf.getId(), p_url: pdf.getUrl() });
+  } catch (e) {
+    pdf.setTrashed(true);                                 // never leave a PDF the database does not know about
+    throw e;
+  }
+  notify_(note.subject, note.body, [pdf.getBlob()]);
+}
+
 /** Fails install early, with the fix, if the read-only Gmail scope is not enough. */
 function checkGmailRead_() {
   try {
@@ -428,10 +501,11 @@ function loadSettings_() {
 }
 
 /** Mail to the account this script runs as. The recipient is never taken from data. */
-function notify_(subject, body) {
+function notify_(subject, body, attachments) {
   let s = String(subject).replace(/[\r\n]+/g, ' ').trim();
   if (s.indexOf(SUBJECT_PREFIX) !== 0) s = SUBJECT_PREFIX + s;
-  MailApp.sendEmail({ to: Session.getEffectiveUser().getEmail(), subject: s.slice(0, 250), body: String(body) });
+  MailApp.sendEmail({ to: Session.getEffectiveUser().getEmail(), subject: s.slice(0, 250), body: String(body),
+    attachments: attachments || [] });
 }
 
 function config_() {

@@ -125,6 +125,13 @@ schreiben: Es spielt Datenbank-Updates und neue Regeln selbst ein.
   (Partner, Kinder, ein Elternteil), und jeder Ausweis, jeder Vertrag und jede Frist
   gehört dieser Person: Das Briefing sagt, wessen Pass abläuft, der Notfallordner nennt,
   wer bei Ihnen lebt, und „was läuft bei Max bald ab“ hat eine Antwort.
+- **Kündigungen und Widersprüche.** Sagen Sie „kündige das Fitnessstudio“ oder
+  „Einspruch gegen den Steuerbescheid“, und es schreibt das Schreiben aus dem, was es
+  schon weiß: Empfänger und Anschrift, Vertrags- oder Aktenzeichen, Kündigungstermin,
+  bis wann es ankommen muss und die Rechtsgrundlage. Sie lesen es und sagen ja; das PDF
+  liegt in Drive neben dem Vertrag und in Ihrem Postfach, mit dem Hinweis, wie Sie es
+  verschicken. Verschicken tun Sie es, nie das System, und eine fehlende Bestätigung
+  wird gemeldet.
 
 ## Aufgaben in Ihrer Aufgaben-App
 

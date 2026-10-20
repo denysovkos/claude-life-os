@@ -10,6 +10,8 @@ import pathlib
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "tests"))
+from sql_letters_check import letter_templates  # noqa: E402  the same rule setup follows
 OWNER = {"name": "Test Owner", "email": "owner@lifeos.test"}
 FOLDERS = {"inbox": "fld-inbox", "emergency": "fld-emergency", "backups": "fld-backups",
            "catch_all": "fld-catch-all"}
@@ -52,6 +54,7 @@ def main(region):
         "former_address_patterns": json.dumps(["musterallee"]),
         "emergency_contacts": json.dumps([{"name": "Test Contact", "role": "sibling", "contact": "+49 30 000000"}]),
         "drive_folders": json.dumps(FOLDERS),
+        "letter_templates": json.dumps(letter_templates(region, "en"), ensure_ascii=False),
     }
     print("begin;")
     print("select set_config('app.actor','setup',true);")

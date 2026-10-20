@@ -124,6 +124,12 @@ controleert het hele systeem en zegt precies wat je moet oplossen.
   (partner, kinderen, een ouder), en elk paspoort, contract en elke termijn hoort bij
   die persoon: de samenvatting zegt wiens paspoort verloopt, de noodmap noemt wie bij je
   woont, en "wat verloopt er binnenkort bij Max" heeft een antwoord.
+- **Opzeg- en bezwaarbrieven.** Zeg "zeg de sportschool op" of "bezwaar tegen de
+  belastingaanslag", en het schrijft de brief met wat het al weet: de ontvanger en het
+  adres, het contract- of dossiernummer, de einddatum, wanneer hij binnen moet zijn en,
+  voor Duitsland, de wettelijke grondslag. Je leest hem en zegt ja; de PDF komt in Drive
+  naast het contract en in je inbox, met hoe je hem verstuurt. Jij verstuurt hem, het
+  systeem nooit, en een ontbrekende bevestiging wordt gemeld.
 
 ## Taken in je takenapp
 

@@ -124,6 +124,12 @@ da solo gli aggiornamenti del database e le nuove regole.
   figli, un genitore) e ogni passaporto, contratto e scadenza è seguito a nome di quella
   persona: il riepilogo dice di chi è il passaporto in scadenza, la cartella di
   emergenza elenca chi vive con te e «cosa scade presto a Max» ha una risposta.
+- **Lettere di disdetta e di ricorso.** Di' «disdici la palestra» o «ricorso contro
+  l'avviso fiscale» e scrive la lettera con ciò che sa già: il destinatario e il suo
+  indirizzo, il numero di contratto o di pratica, la data di cessazione, entro quando
+  deve arrivare e, per la Germania, la base giuridica. La leggi e dici sì; il PDF arriva
+  in Drive accanto al contratto e nella tua casella, con come spedirla. La spedisci tu,
+  mai il sistema, e una conferma mancante viene segnalata.
 
 ## Attività nel tuo task manager
 

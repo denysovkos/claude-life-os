@@ -29,5 +29,11 @@
   "rel_child": "dziecko",
   "rel_parent": "rodzic",
   "rel_other": "członek gospodarstwa domowego",
-  "born": "ur."
+  "born": "ur.",
+  "letter_ready": "Pismo gotowe",
+  "letter_to": "Do",
+  "letter_send_by": "Musi dotrzeć do",
+  "letter_how": "Jak je wysłać",
+  "letter_after_sending": "Po wysłaniu powiedz Claude w dowolnym czacie „Wysłałem pismo” i jak (poczta, list polecony, faks, online). Termin zostanie wtedy zamknięty, a brak potwierdzenia zostanie zgłoszony.",
+  "letter_not_advice": "Wypełnione na podstawie twoich dokumentów. To nie jest porada prawna: przeczytaj każdy wiersz, sprawdź adresata, numer i daty, i podpisz sam."
 }

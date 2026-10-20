@@ -29,5 +29,11 @@
   "rel_child": "enfant",
   "rel_parent": "parent",
   "rel_other": "membre du foyer",
-  "born": "né(e) le"
+  "born": "né(e) le",
+  "letter_ready": "Lettre prête",
+  "letter_to": "À",
+  "letter_send_by": "Doit arriver avant le",
+  "letter_how": "Comment l'envoyer",
+  "letter_after_sending": "Une fois envoyée, dites à Claude dans n'importe quelle conversation « J'ai envoyé la lettre » et comment (courrier, recommandé, fax, en ligne). L'échéance est alors close, et une confirmation manquante est signalée.",
+  "letter_not_advice": "Remplie à partir de vos documents. Ce n'est pas un conseil juridique : lisez chaque ligne, vérifiez le destinataire, le numéro et les dates, et signez vous-même."
 }

@@ -31,6 +31,7 @@ step "3. checks"
 psql -v ON_ERROR_STOP=1 -q -c "select * from v_system_invariants" -c "select * from v_system_health" \
      -c "select emergency_dossier()" -c "select briefing_text()" >/dev/null
 python3 tests/sql_rules_check.py >/dev/null
+python3 tests/sql_letters_check.py >/dev/null
 psql -v ON_ERROR_STOP=1 -q -f tests/sql/release_checks.sql 2>&1 | grep -q "release checks: all passed"
 psql -v ON_ERROR_STOP=1 -q -f tests/sql/feature_checks.sql 2>&1 | grep -q "feature checks: all passed"
 test "$(psql -tAc "select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity")" = "0"

@@ -103,7 +103,7 @@ test('install checks access, creates exactly one 15-minute trigger, and writes a
   assert.equal(w.triggers[0].fn, 'run');
   assert.equal(w.triggers[0].every, 15);
   const [hb] = rows(`select script_version, finished_at is not null as finished, errors from bridge_runs order by started_at desc limit 1`);
-  assert.deepEqual(hb, { script_version: 'bridge-3.2', finished: true, errors: [] });
+  assert.deepEqual(hb, { script_version: 'bridge-3.3', finished: true, errors: [] });
 });
 
 test('a URL outside the allowlist is refused by Apps Script itself', () => {
@@ -291,6 +291,75 @@ test('indexed documents whose Drive file is gone are marked once a day', () => {
   project(w).run();
   const r = rows(`select drive_file_id, drive_missing_since is not null as missing from documents where drive_file_id in ('${live}', '${gone}') order by drive_file_id`);
   assert.deepEqual(Object.fromEntries(r.map((x) => [x.drive_file_id, x.missing])), { [gone]: true, [live]: false });
+});
+
+// ---- letters ----------------------------------------------------------------------------------
+
+/** An approved letter, as approve_letter() leaves it, for a contract filed in `folder`. */
+function approvedLetter(folder) {
+  const id = uid();
+  const rp = sql(`insert into recurring_payments (name, category, amount, period, status)
+                  values ('Gym ${id}', 'subscription', 30, 'monthly', 'active') returning id`).split('\n')[0];
+  const letter = sql(`insert into letters (kind, status, recurring_payment_id, fields, header, subject, body, send_by,
+                         file_name, target_folder_id, approved_at)
+    values ('cancellation', 'approved', '${rp}', '{"recipient_name": "Fit Test GmbH"}',
+           'Test Owner' || chr(10) || 'Neue Strasse 1' || chr(10) || chr(10) || 'Fit Test GmbH' || chr(10) || 'Sportweg 2',
+           'Kündigung Gym ${id}, Kundennummer M-77', 'Sehr geehrte Damen und Herren,' || chr(10) || chr(10) || 'hiermit kündige ich.',
+           current_date + 20, 'Kündigung Gym ${id} 2026-10-20', ${folder ? `'${folder}'` : 'null'}, now())
+    returning id`).split('\n')[0];
+  return rows(`select id, subject, file_name from letters where id = '${letter}'`)[0];
+}
+
+test('an approved letter becomes a PDF next to its document, and only the owner gets it', () => {
+  const w = world();
+  w.addFolder('fld-housing-letters');
+  const l = approvedLetter('fld-housing-letters');
+  project(w).run();
+  const pdfs = w.filesIn('fld-housing-letters').filter((f) => f.mimeType === 'application/pdf' && !f.trashed);
+  assert.equal(pdfs.length, 1);
+  assert.equal(pdfs[0].name, l.file_name + '.pdf');
+  const text = pdfs[0].bytes.toString('utf8');
+  assert.match(text, /Kündigung Gym .*M-77/);
+  assert.match(text, /Sportweg 2/);
+  const docs = [...w.files.values()].filter((f) => f.doc && f.name === l.file_name);
+  assert.equal(docs.length, 1);
+  assert.ok(docs[0].trashed, 'the working Google Doc must not linger');
+  const subject = docs[0].doc.kids.find((k) => k.text === l.subject);
+  assert.deepEqual(subject.boldRange, [0, l.subject.length - 1, true], 'the subject is bold');
+  assert.ok(docs[0].doc.kids.every((k) => !k.bold), 'no paragraph is bold as a whole');
+  const [r] = rows(`select status, drive_pdf_id, drive_url is not null as has_url from letters where id = '${l.id}'`);
+  assert.deepEqual(r, { status: 'ready', drive_pdf_id: pdfs[0].id, has_url: true });
+  const mails = w.sent.filter((m) => m.subject.includes(l.subject));
+  assert.equal(mails.length, 1);
+  assert.equal(mails[0].to, OWNER);
+  assert.match(mails[0].subject, /^\[Life OS\] Letter ready: /);
+  assert.match(mails[0].body, /Must arrive by: \d{4}-\d{2}-\d{2}/);
+  assert.equal(mails[0].attachments.length, 1);
+  assert.equal(mails[0].attachments[0].getContentType(), 'application/pdf');
+  project(w).run();
+  assert.equal(w.sent.filter((m) => m.subject.includes(l.subject)).length, 1, 'a letter is rendered once');
+  assert.ok(!w.calls.some((c) => /DriveFile\.(addEditor|setSharing)|GmailApp\.sendEmail/.test(c)));
+});
+
+test('a letter whose document folder is gone lands in the catch-all folder', () => {
+  const w = world();
+  const l = approvedLetter('fld-deleted-' + uid());
+  project(w).run();
+  assert.equal(w.filesIn('fld-catch-all').filter((f) => f.name === l.file_name + '.pdf').length, 1);
+  assert.equal(rows(`select status from letters where id = '${l.id}'`)[0].status, 'ready');
+});
+
+test('a letter that cannot be rendered is retried three times, then left for the doctor', () => {
+  const w = world();
+  w.files.get('fld-catch-all').trashed = true;        // nowhere to put it: createFile throws
+  const l = approvedLetter(null);
+  const p = project(w);
+  for (let i = 0; i < 4; i++) p.run();
+  const [r] = rows(`select status, render_attempts, render_error is not null as has_error from letters where id = '${l.id}'`);
+  assert.deepEqual(r, { status: 'approved', render_attempts: 3, has_error: true });
+  assert.equal([...w.files.values()].filter((f) => f.mimeType === 'application/pdf' && f.name === l.file_name + '.pdf' && !f.trashed).length, 0);
+  assert.equal(rows(`select count(*)::int as n from v_letters_followup where id = '${l.id}' and issue = 'not_rendered'`)[0].n, 1);
+  sql(`update letters set status = 'withdrawn' where id = '${l.id}'`);
 });
 
 // ---- what the bridge must never do ------------------------------------------------------------

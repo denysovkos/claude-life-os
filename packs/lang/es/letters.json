@@ -1,0 +1,16 @@
+{
+  "locale": "es",
+  "date_format": "DD/MM/YYYY",
+  "child_signature": "en representación legal de {{holder_name}}",
+  "kinds": {
+    "cancellation": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "contract_name", "reference"],
+      "subject": "Baja del contrato {{contract_name}}, {{reference_label}} {{reference}}",
+      "body": "Estimados señores:\n\nPor la presente resuelvo el siguiente contrato {{effective_clause}}:\n\n{{contract_name}}\n{{reference_label}}: {{reference}}\nTitular del contrato: {{holder_name}}\n\nLes ruego que me confirmen por escrito la recepción de esta baja y la fecha de finalización del contrato. No acepto ninguna renovación del contrato.\n\nLa autorización de domiciliación que les di termina con el contrato.\n\nAtentamente,\n\n\n{{sender_name}}{{signature_note}}",
+      "effective_clause": "con efecto el {{effective_date}} o, en su defecto, en la primera fecha posible",
+      "effective_clause_unknown": "en la primera fecha posible",
+      "reference_label": "Número de contrato o de cliente",
+      "delivery": "Compruebe en el contrato qué forma exige. Envíelo para que llegue como tarde en la fecha indicada y de una manera que pueda probar: burofax o carta certificada con acuse de recibo, o el formulario de baja del proveedor con confirmación."
+    }
+  }
+}

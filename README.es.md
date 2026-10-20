@@ -121,6 +121,12 @@ mismo las actualizaciones de la base de datos y las reglas nuevas.
   progenitor) y cada pasaporte, contrato y plazo queda a nombre de esa persona: el
   resumen dice de quién es el pasaporte que caduca, la carpeta de emergencia indica
   quién vive contigo y «¿qué le caduca pronto a Max?» tiene respuesta.
+- **Cartas de baja y de recurso.** Di «da de baja el gimnasio» o «recurre la liquidación
+  de impuestos» y escribe la carta con lo que ya sabe: el destinatario y su dirección,
+  el número de contrato o de expediente, la fecha de baja, cuándo debe llegar y, para
+  Alemania, la base legal. La lees y dices que sí; el PDF aparece en Drive junto al
+  contrato y en tu correo, con cómo enviarlo. La envías tú, nunca el sistema, y avisa si
+  falta la confirmación.
 
 ## Tareas en tu gestor de tareas
 

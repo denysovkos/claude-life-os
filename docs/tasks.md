@@ -24,6 +24,7 @@ filter them.
 | `💌 bills_payments Stadtwerke Beispiel: pay 61.20 by 15 Oct` | email-intake | a mail needs you to act | the due date in the mail, if any | default project (or a per-category one) |
 | `⚠️ Passport expires 2026-12-01: Max_passport.pdf (Max)` | drive-file-intake | a document expires within 30 days and has no task | 7 days before expiry | default project (or per area) |
 | `🧾 Review 2026-09: cancel the old parking contract?` | life-review | monthly | in 3 days | system project |
+| `✉️ Send by 2026-11-30: Kündigung Mobilfunk, Kundennummer K-123` | letters | you approved a cancellation or objection letter | 3 days before it must arrive | default project |
 | `⚠️ email-intake failed 2026-10-03` | email-intake, drive-file-intake, nightly-check | a run had errors | today | system project |
 
 A task about someone else in the household ends in their name in parentheses, `(Max)`;
@@ -57,6 +58,16 @@ Title `⚠️ <document type> expires <date>: <file name>`, plus ` (<name>)` for
 member's document, due a week before. Billing-period
 ends of auto-renewing subscriptions are deliberately not tasks: that is not an expiry.
 
+### Letters to send
+
+When you approve a cancellation or objection letter in chat, the PDF lands in Drive and in
+your inbox within 15 minutes, and one task reminds you to send it in time: due three days
+before the letter must have arrived, with how to send it (registered mail, fax, the
+provider's cancellation button, ELSTER) in the description. Completing it tells the
+system the letter is out: the next nightly check marks it sent and closes the deadline it
+answers. Then the system waits for the confirmation; a cancellation still unconfirmed
+after three weeks shows up in the brief.
+
 ### The monthly review
 
 One task with the decisions only a human can make, as a numbered list with links:
@@ -73,6 +84,7 @@ One task per failing job, not one per night: a week-long outage leaves one task.
 |---|---|
 | complete a `⚠️ … expires` or deadline task | the next Drive intake marks the deadline `done`, with the completion time in its notes |
 | complete a `💌` task | the email row keeps its history; the linked deadline, if any, closes as above |
+| complete a `✉️ Send by` task | the next nightly check marks the letter sent and closes the cancellation or objection deadline |
 | ignore a direct-debit bill | nothing to do: the nightly database job closes passive payment deadlines three days after the due date |
 | leave an overdue task open | it stays overdue, and the brief escalates it by name after 7 days |
 | want quiet for a while | `snoozed_until` on the deadline silences it in the brief without closing it |

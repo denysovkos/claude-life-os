@@ -1,0 +1,16 @@
+{
+  "locale": "ru",
+  "date_format": "DD.MM.YYYY",
+  "child_signature": "как законный представитель {{holder_name}}",
+  "kinds": {
+    "cancellation": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "contract_name", "reference"],
+      "subject": "Расторжение договора {{contract_name}}, {{reference_label}} {{reference}}",
+      "body": "Уважаемые дамы и господа!\n\nНастоящим я расторгаю следующий договор {{effective_clause}}:\n\n{{contract_name}}\n{{reference_label}}: {{reference}}\nВладелец договора: {{holder_name}}\n\nПрошу письменно подтвердить получение этого уведомления и дату прекращения договора. Я не согласен на продление договора.\n\nВыданное вам поручение на списание средств прекращает действие вместе с договором.\n\nС уважением\n\n\n{{sender_name}}{{signature_note}}",
+      "effective_clause": "с {{effective_date}}, а если это невозможно, то с ближайшей возможной даты",
+      "effective_clause_unknown": "с ближайшей возможной даты",
+      "reference_label": "Номер договора или клиента",
+      "delivery": "Проверьте в договоре, какой формы требует расторжение. Отправьте так, чтобы письмо пришло не позднее указанной даты и это можно было доказать: заказным письмом с уведомлением о вручении, факсом с отчётом о передаче или через форму расторжения на сайте поставщика с подтверждением."
+    }
+  }
+}

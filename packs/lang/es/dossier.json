@@ -29,5 +29,11 @@
   "rel_child": "hijo/a",
   "rel_parent": "progenitor",
   "rel_other": "miembro del hogar",
-  "born": "nacido/a el"
+  "born": "nacido/a el",
+  "letter_ready": "Carta lista",
+  "letter_to": "Para",
+  "letter_send_by": "Debe llegar antes del",
+  "letter_how": "Cómo enviarla",
+  "letter_after_sending": "Cuando la envíes, dile a Claude en cualquier chat «He enviado la carta» y cómo (correo, certificado, burofax, en línea). Entonces se cierra el plazo y se avisa si falta la confirmación.",
+  "letter_not_advice": "Rellenada con tus documentos. No es asesoramiento jurídico: lee cada línea, comprueba el destinatario, el número y las fechas, y fírmala tú."
 }

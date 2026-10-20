@@ -1,0 +1,16 @@
+{
+  "locale": "en",
+  "date_format": "YYYY-MM-DD",
+  "child_signature": "on behalf of {{holder_name}} as their legal guardian",
+  "kinds": {
+    "cancellation": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "contract_name", "reference"],
+      "subject": "Cancellation of {{contract_name}}, {{reference_label}} {{reference}}",
+      "body": "Dear Sir or Madam,\n\nI hereby cancel the following contract {{effective_clause}}:\n\n{{contract_name}}\n{{reference_label}}: {{reference}}\nContract holder: {{holder_name}}\n\nPlease confirm in writing that you have received this cancellation and the date the contract ends. I do not agree to any renewal of the contract.\n\nAny direct debit authorisation I have given you ends when the contract ends.\n\nYours faithfully,\n\n\n{{sender_name}}{{signature_note}}",
+      "effective_clause": "with effect from {{effective_date}}, or otherwise at the earliest possible date",
+      "effective_clause_unknown": "at the earliest possible date",
+      "reference_label": "Contract or customer number",
+      "delivery": "Check the contract for the form it requires. Send it so that it arrives by the date above, in a way you can prove: registered mail with proof of delivery, a fax with a transmission report, or the provider's own cancellation form with a confirmation."
+    }
+  }
+}

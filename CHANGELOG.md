@@ -1,5 +1,73 @@
 # Changelog
 
+## 4.6.0 (workflow release v3.5), 2026-10-20
+
+Letters release. Schema 0.9.0, bridge-3.3. Upgrading is additive: no deadline moves, no
+row is removed, and a 4.5 skill keeps working against the new database. After uploading
+the zip, run `life os doctor`: it applies 0018, writes the letter templates
+(`letter_templates`) from the packs, offers the language and region pack updates, and asks
+you to paste the new `Code.gs` into the Apps Script (only that file: no new permission).
+Until the bridge is updated, letters are composed and shown in chat but not rendered.
+
+### Added
+- **Cancellation and objection letters.** Say "cancel the gym", "Kündigung für den
+  Handyvertrag", "Widerspruch gegen den Bescheid" or "Einspruch einlegen" in any chat,
+  and the new `letters` workflow writes the letter from the index: the holder (a
+  household member, or you), the recipient and their address, the contract, customer or
+  file number, the exit date, the date it must arrive, and the legal basis. What the
+  index does not know is shown as `[[field]]` and asked for; values read from a document
+  are proposals you confirm. You read the letter and say yes; within 15 minutes the PDF is
+  in Drive next to the contract or decision and in your inbox, with how to send it and by
+  when. You send it. Saying "I sent it", or completing its `✉️ Send by` task, closes the
+  deadline it answers; a cancellation unconfirmed after three weeks is reported, and the
+  email intake records a confirmation that comes from the recipient. (0018, letters v1.0,
+  bridge-3.3)
+- Germany (region pack de 1.3.0, `letters.json`): Kündigung with the right reference label
+  and basis per contract type (§ 56 Abs. 3 TKG, § 11 VVG, § 573c BGB), Widerspruch
+  (§ 70 VwGO for the form) and Einspruch (§ 347 AO), with delivery advice: Textform and
+  § 312k BGB, Schriftform for a tenancy (§ 568 BGB), ELSTER and Aussetzung der Vollziehung
+  (§ 361 AO) for tax. Every language pack has a generic cancellation (`letters.json`), so
+  every other country gets a cancellation in its own language and no objection until its
+  region pack has a reviewed one. A child's contract is signed by the owner as their
+  representative.
+- `compose_letter(kind, source, fields)`, `approve_letter()`, `mark_letter_sent()`,
+  `mark_letter_confirmed()`, `withdraw_letter()`, `v_letters`, `v_letters_followup`. The
+  person's values survive every recompose; composing a ready letter again replaces it; a
+  sent letter is final. (0018)
+- The brief marks each cancellation or objection deadline with its letter's state
+  (`[letter ready, not sent]`) and reports letters to send within a week, letters the
+  bridge did not render, and unconfirmed cancellations. The monthly review lists them and
+  ends every cancel decision with how to get the letter. (0018, nightly-check, life-review)
+- Doctor check 13: templates present and current, nothing stuck in rendering.
+- Six language-pack labels for the note that comes with the PDF; language packs en, de,
+  uk 1.3.0 and pl, fr, es, it, nl, ru, pt 1.2.0.
+
+### Security
+- Nothing sends a letter. The bridge renders an approved letter into the owner's Drive
+  and mails it to its own account; `letters` has no e-mail, fax or recipient-mail column,
+  and the bridge cannot read the table: it gets work from `letters_to_render()` and can
+  only report a file through `letter_rendered()`. The bridge's key cannot compose,
+  approve or mark a letter (Supabase grants new functions to `service_role` by default,
+  so 0018 revokes them explicitly). A letter is composed and approved only in a chat, on
+  the person's word; a night run may only mark one sent from its completed task. An
+  address found only in a mail is shown with its source, never filled in silently.
+  `release_checks.sql` asserts all of it.
+
+### Development
+- `tests/sql_letters_check.py`: the shipped templates rendered in Postgres (a German
+  Kündigung, Widerspruch and Einspruch, the generic cancellation of all 10 languages)
+  and a letter's whole life, 83 checks; in CI and the integration database suite. Its
+  `letter_templates()` is the rule setup follows, and the integration installs use it.
+- `tests/test_packs.py`: every placeholder in a template is a field `compose_letter()`
+  fills, every required field is printed, every letter is signed, an objection letter
+  answers a term rule of its key.
+- Bridge suite: a letter becomes a PDF next to its document and reaches only the owner,
+  falls back to the catch-all folder, and is retried three times, then reported.
+
+### Workflow versions
+setup v1.7, email-intake v3.5, drive-file-intake v3.4, nightly-check v1.4,
+context-lookup v2.5, life-review v2.5, letters v1.0.
+
 ## 4.5.0 (workflow release v3.4), 2026-10-20
 
 Household release. Schema 0.8.0, bridge-3.2 (unchanged). Upgrading is additive: no

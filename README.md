@@ -133,6 +133,12 @@ emergency binder.
   children, a parent), and every passport, contract and deadline is tracked as that
   person's: the brief says whose passport expires, the emergency binder lists who lives
   with you, and "what does Max have expiring" has an answer.
+- **Cancellation and objection letters.** Say "cancel the gym" or "object to the tax
+  assessment", and it writes the letter from what it already knows: the recipient and
+  their address, the contract or file number, the exit date, the date it must arrive
+  and, for Germany, the legal basis. You read it and say yes; the PDF lands in Drive
+  next to the contract and in your inbox, with how to send it. You send it, the system
+  never does, and a missing confirmation is reported.
 
 ## Tasks in your task manager
 

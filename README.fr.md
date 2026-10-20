@@ -129,6 +129,13 @@ règles.
   nom de cette personne : le récapitulatif dit à qui est le passeport qui expire, le
   dossier d'urgence indique qui vit avec vous, et « qu'est-ce qui expire bientôt pour
   Max » a une réponse.
+- **Lettres de résiliation et de recours.** Dites « résilie la salle de sport » ou «
+  conteste l'avis d'imposition », et il rédige la lettre à partir de ce qu'il sait déjà
+  : le destinataire et son adresse, le numéro de contrat ou de dossier, la date de fin,
+  la date à laquelle elle doit arriver et, pour l'Allemagne, la base légale. Vous la
+  lisez et dites oui ; le PDF arrive dans Drive à côté du contrat et dans votre boîte
+  mail, avec la manière de l'envoyer. C'est vous qui l'envoyez, jamais le système, et
+  une confirmation manquante est signalée.
 
 ## Les tâches dans votre gestionnaire de tâches
 

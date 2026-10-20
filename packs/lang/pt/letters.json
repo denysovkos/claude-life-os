@@ -1,0 +1,16 @@
+{
+  "locale": "pt",
+  "date_format": "DD/MM/YYYY",
+  "child_signature": "na qualidade de representante legal de {{holder_name}}",
+  "kinds": {
+    "cancellation": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "contract_name", "reference"],
+      "subject": "Denúncia do contrato {{contract_name}}, {{reference_label}} {{reference}}",
+      "body": "Exmos. Senhores,\n\nVenho por este meio denunciar o seguinte contrato {{effective_clause}}:\n\n{{contract_name}}\n{{reference_label}}: {{reference}}\nTitular do contrato: {{holder_name}}\n\nSolicito que me confirmem por escrito a receção desta denúncia e a data de cessação do contrato. Não aceito qualquer renovação do contrato.\n\nA autorização de débito direto que vos concedi termina com o contrato.\n\nCom os melhores cumprimentos,\n\n\n{{sender_name}}{{signature_note}}",
+      "effective_clause": "com efeitos a {{effective_date}} ou, se não for possível, na primeira data possível",
+      "effective_clause_unknown": "na primeira data possível",
+      "reference_label": "Número de contrato ou de cliente",
+      "delivery": "Verifique no contrato que forma é exigida. Envie de modo a chegar até à data indicada e de forma que possa provar: carta registada com aviso de receção, ou o formulário de denúncia do fornecedor com confirmação."
+    }
+  }
+}

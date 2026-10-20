@@ -1,6 +1,6 @@
 # Nightly check
 
-Workflow `nightly-check` v1.3 of the `life-os` skill: the last run of the night. The
+Workflow `nightly-check` v1.4 of the `life-os` skill: the last run of the night. The
 shared rules in `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 It runs after both intakes (typically 03:05, after email at 01:05 and Drive at 02:05), so
@@ -82,6 +82,16 @@ items carry none): keep it, so the person reading sees at once that it is the ch
 passport and not theirs. When the most important fact for the title is a member's, the
 title names them too.
 
+A bracket after a cancellation or objection deadline says where its letter stands
+(`[letter ready, not sent]`, `[letter: draft]`, `[letter sent]`). A notice or objection
+deadline on its ladder with no bracket has no letter yet: end its line with the hint,
+in `output_locale`, that saying "write the cancellation for <name>" (or "the objection")
+in any chat prepares one. `letters to send`, `letters not rendered` and `cancellations
+unconfirmed` under `SYSTEM` come from `v_letters_followup`; name each letter by its
+subject (`select issue, subject, send_by from v_letters_followup;`). A letter that must
+arrive within a week and is not sent is the most important fact of the day unless a hard
+deadline is already overdue.
+
 - **Nothing to say** (zero items and no findings): write a `briefings` row with
   `suppressed = true` and deliver nothing. No "all clear" messages: a brief that talks
   every day stops being read, and then it is ignored on the one day it matters.
@@ -102,6 +112,22 @@ it is missing for 36 hours.
 
 Deadlines speak only when today hits a rung of their own `lead_days` ladder;
 `deadlines.snoozed_until` silences one without closing it.
+
+## Step 3b: letters sent through their task
+
+With `task_provider = 'todoist'`, a letter's `✉️ Send by …` task (written by the letters
+workflow) is how the person says it went out:
+
+```sql
+select id, subject, todoist_task_id from letters
+where status in ('approved','ready') and todoist_task_id is not null and todoist_task_id not like 'pending:%';
+```
+
+Fetch each task. Completed: `select id, status from mark_letter_sent(:ready_letter_id, :completed_on::date, null);`
+with the day it was completed (the method is unknown; null). That closes the deadline it
+answers. An open task changes nothing. This is the one letter state a night run may
+change, because the person changed it by completing the task; nothing here composes,
+approves or withdraws a letter.
 
 ## Step 4: finish
 
