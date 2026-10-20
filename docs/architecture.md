@@ -78,7 +78,7 @@ know about.
 
 ### Database (`supabase/migrations`)
 
-39 tables, 42 views, about 55 functions, row level security on every table with no
+40 tables, 44 views, about 65 functions, row level security on every table with no
 policies.
 
 The core objects:
@@ -102,6 +102,11 @@ The core objects:
   household, never a night run.
 - `matters`, `matter_links`: a thread of real life (a permit, a purchase, a dispute) that
   documents, emails and deadlines attach to.
+- `letters`: cancellations and objections. `compose_letter()` fills the region's template
+  from the index (holder, recipient and address, contract or file number, exit date, the
+  date it must arrive, legal basis) and lists what it does not know; the person approves;
+  the bridge renders the PDF into Drive and mails it to its own account; the person
+  sends it, and the deadline closes. Nothing in the system sends a letter.
 - `bundles`, `bundle_requirements`: the papers one event needs, pointing at document
   types rather than files, so a bundle survives a renewal.
 - `classification_rules`: deterministic rules applied before any judgement.

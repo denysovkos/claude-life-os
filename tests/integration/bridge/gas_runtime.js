@@ -53,6 +53,7 @@ const SCOPES = {
   'DriveFile.isTrashed': [G + 'drive', G + 'drive.readonly'],
   'DriveFile.moveTo': [G + 'drive'],
   'DriveFile.getBlob': [G + 'drive', G + 'drive.readonly'],
+  'DriveFile.getAs': [G + 'drive', G + 'drive.readonly'],
   'DriveFile.addEditor': [G + 'drive'],
   'DriveFile.setSharing': [G + 'drive'],
   'DocumentApp.create': [G + 'documents'],
@@ -191,6 +192,14 @@ function makeServices(world) {
   File.prototype.setTrashed = function (t) { need('DriveFile.setTrashed'); this._f.trashed = !!t; return this; };
   File.prototype.isTrashed = function () { need('DriveFile.isTrashed'); return this._f.trashed; };
   File.prototype.getBlob = function () { need('DriveFile.getBlob'); return new Blob(this._f.bytes, this._f.mimeType, this._f.name); };
+  // Google exports a Doc as PDF only from its saved state: a document never saved exports empty
+  File.prototype.getAs = function (type) {
+    need('DriveFile.getAs');
+    if (type !== 'application/pdf') throw new Error('test: only PDF export is modelled');
+    const d = this._f.doc;
+    const text = d && d.saves ? d.savedText : '';
+    return new Blob(Buffer.from('%PDF-1.4\n' + text + '\n%%EOF\n'), 'application/pdf', this._f.name + '.pdf');
+  };
   File.prototype.moveTo = function (folder) {
     need('DriveFile.moveTo'); getEntry(folder.getId(), true);
     this._f.parents = new Set([folder.getId()]); return this;
@@ -240,6 +249,19 @@ function makeServices(world) {
   Element.prototype.setHeading = function (h) { this._n.heading = h; return this; };
   Element.prototype.setGlyphType = function (g) { this._n.glyph = g; return this; };
   Element.prototype.asText = function () { const n = this._n; return { getText: () => n.text }; };
+  Element.prototype.editAsText = function () {
+    // setBold(bold) formats the paragraph (Google carries it to the next one); setBold(start,
+    // end, bold) only those characters. Tests read `bold` (paragraph) and `boldRange`.
+    const n = this._n;
+    return {
+      setBold: (a, b, c) => {
+        if (b === undefined) { n.bold = !!a; return this; }
+        if (a < 0 || b >= n.text.length) throw new Error('Index out of range');
+        n.boldRange = [a, b, !!c]; return this;
+      },
+      getText: () => n.text,
+    };
+  };
   Element.prototype.getType = function () { return this._n.type; };
   Element.prototype.removeFromParent = function () {
     const kids = this._body._kids;
@@ -270,7 +292,9 @@ function makeServices(world) {
   function Doc(entry) { this._e = entry; }
   Doc.prototype.getId = function () { return this._e.id; };
   Doc.prototype.getBody = function () { return new Body(this._e.doc); };
-  Doc.prototype.saveAndClose = function () { this._e.doc.saves = (this._e.doc.saves || 0) + 1; };
+  Doc.prototype.saveAndClose = function () {
+    const d = this._e.doc; d.saves = (d.saves || 0) + 1; d.savedText = d.kids.map((k) => k.text).join('\n');
+  };
   const DocumentApp = {
     ParagraphHeading, GlyphType,
     create(name) {

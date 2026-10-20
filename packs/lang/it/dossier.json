@@ -29,5 +29,11 @@
   "rel_child": "figlio/a",
   "rel_parent": "genitore",
   "rel_other": "membro del nucleo familiare",
-  "born": "nato/a il"
+  "born": "nato/a il",
+  "letter_ready": "Lettera pronta",
+  "letter_to": "A",
+  "letter_send_by": "Deve arrivare entro il",
+  "letter_how": "Come inviarla",
+  "letter_after_sending": "Quando l'hai spedita, di' a Claude in qualsiasi chat «Ho spedito la lettera» e come (posta, raccomandata, PEC, fax, online). La scadenza viene chiusa e una conferma mancante viene segnalata.",
+  "letter_not_advice": "Compilata dai tuoi documenti. Non è una consulenza legale: leggi ogni riga, controlla destinatario, numero e date, e firmala tu."
 }

@@ -1,0 +1,16 @@
+{
+  "locale": "pl",
+  "date_format": "DD.MM.YYYY",
+  "child_signature": "jako przedstawiciel ustawowy {{holder_name}}",
+  "kinds": {
+    "cancellation": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "contract_name", "reference"],
+      "subject": "Wypowiedzenie umowy {{contract_name}}, {{reference_label}} {{reference}}",
+      "body": "Szanowni Państwo,\n\nniniejszym wypowiadam następującą umowę {{effective_clause}}:\n\n{{contract_name}}\n{{reference_label}}: {{reference}}\nWłaściciel umowy: {{holder_name}}\n\nProszę o pisemne potwierdzenie otrzymania wypowiedzenia oraz daty zakończenia umowy. Nie wyrażam zgody na przedłużenie umowy.\n\nUdzielona Państwu zgoda na obciążanie rachunku wygasa wraz z zakończeniem umowy.\n\nZ poważaniem\n\n\n{{sender_name}}{{signature_note}}",
+      "effective_clause": "ze skutkiem na dzień {{effective_date}}, a w przeciwnym razie na najbliższy możliwy termin",
+      "effective_clause_unknown": "na najbliższy możliwy termin",
+      "reference_label": "Numer umowy lub klienta",
+      "delivery": "Sprawdź w umowie, jakiej formy wymaga wypowiedzenie. Wyślij tak, aby dotarło najpóźniej w podanym dniu, w sposób, który da się udowodnić: listem poleconym za potwierdzeniem odbioru, faksem z raportem transmisji albo przez formularz dostawcy z potwierdzeniem."
+    }
+  }
+}

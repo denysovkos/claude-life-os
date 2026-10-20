@@ -29,5 +29,11 @@
   "rel_child": "Kind",
   "rel_parent": "Elternteil",
   "rel_other": "Haushaltsmitglied",
-  "born": "geboren"
+  "born": "geboren",
+  "letter_ready": "Schreiben fertig",
+  "letter_to": "An",
+  "letter_send_by": "Muss ankommen bis",
+  "letter_how": "So senden Sie es",
+  "letter_after_sending": "Wenn es verschickt ist, sagen Sie Claude in einem beliebigen Chat „Ich habe das Schreiben verschickt“ und wie (Post, Einschreiben, Fax, online). Dann wird die Frist geschlossen, und eine fehlende Bestätigung wird gemeldet.",
+  "letter_not_advice": "Aus Ihren Unterlagen ausgefüllt. Keine Rechtsberatung: Lesen Sie jede Zeile, prüfen Sie Empfänger, Nummer und Daten, und unterschreiben Sie selbst."
 }

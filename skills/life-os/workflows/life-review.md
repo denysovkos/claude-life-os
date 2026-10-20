@@ -1,9 +1,9 @@
 # Life review
 
-Workflow `life-review` v2.4 of the `life-os` skill: the monthly review. The shared rules in
+Workflow `life-review` v2.5 of the `life-os` skill: the monthly review. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
-Write `v2.4` into `life_review_runs.skill_version`.
+Write `v2.5` into `life_review_runs.skill_version`.
 
 ## How the work is split, and why this skill exists
 
@@ -118,6 +118,16 @@ pack, say that a local rule applies and ask.
    obligation that cannot be cancelled at all), cite its `basis` in `notes`, and write
    the result. Everything else goes to the person as one list, highest monthly amount
    first.
+
+5a. **Letters.** From schema 0.9.0, `select issue, kind, subject, send_by, render_error from v_letters_followup;`
+   A ready letter that must arrive within a week, one the bridge did not render, a
+   cancellation sent three weeks ago with no confirmation (look for the confirmation in
+   mail first: `ask_documents('<Kündigungsbestätigung, confirmation, the vendor>', 8)`;
+   found and from the recipient, record it with `mark_letter_confirmed()`), a draft still
+   missing a value: each is a decision line, by subject. For every contract the review
+   would suggest cancelling, and every exit in `v_notice_calendar` with `cancel_by` within
+   60 days that has no letter yet, the decision line ends with "say 'write the
+   cancellation for <name>' to get the letter". The review never composes one itself.
 
 6. **Things that should have ended.** Look for active obligations tied to a situation
    that is over: a former flat (deposit guarantees, utilities, parking), a phone number

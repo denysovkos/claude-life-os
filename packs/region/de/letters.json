@@ -1,0 +1,45 @@
+{
+  "region": "de",
+  "locale": "de",
+  "date_format": "DD.MM.YYYY",
+  "child_signature": "als gesetzliche Vertretung für {{holder_name}}",
+  "kinds": {
+    "cancellation": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "contract_name", "reference"],
+      "subject": "Kündigung {{contract_name}}, {{reference_label}} {{reference}}",
+      "body": "Sehr geehrte Damen und Herren,\n\nhiermit kündige ich den folgenden Vertrag {{effective_clause}}:\n\n{{contract_name}}\n{{reference_label}}: {{reference}}\nVertragsinhaber: {{holder_name}}\n\n{{basis_sentence}}Bitte bestätigen Sie mir den Eingang der Kündigung und das Vertragsende schriftlich. Einer Verlängerung des Vertrags widerspreche ich, ebenso der Nutzung meiner Daten für Rückgewinnungsangebote.\n\nEin Ihnen erteiltes SEPA-Lastschriftmandat widerrufe ich mit Wirkung zum Vertragsende.\n\nMit freundlichen Grüßen\n\n\n{{sender_name}}{{signature_note}}",
+      "effective_clause": "fristgerecht zum {{effective_date}}, hilfsweise zum nächstmöglichen Termin",
+      "effective_clause_unknown": "fristgerecht zum nächstmöglichen Termin",
+      "reference_label": {
+        "default": "Vertrags-/Kundennummer",
+        "insurance": "Versicherungsscheinnummer",
+        "telecom": "Kundennummer",
+        "housing": "Mietvertrag"
+      },
+      "basis": {
+        "telecom": "Die Kündigung erfolgt nach § 56 Abs. 3 TKG.",
+        "insurance": "Die Kündigung erfolgt nach § 11 VVG.",
+        "housing": "Die Kündigung erfolgt nach § 573c Abs. 1 BGB."
+      },
+      "delivery": {
+        "default": "Textform genügt meist: E-Mail, Kontaktformular oder der Kündigungsbutton auf der Website des Anbieters (§ 312k BGB). Nachweisbar ist ein Einschreiben mit Rückschein oder ein Fax mit Sendebericht. Abschicken, dass die Kündigung spätestens am Stichtag ankommt.",
+        "housing": "Schriftform mit eigenhändiger Unterschrift (§ 568 Abs. 1 BGB): ausdrucken, von allen Mietern unterschreiben, per Einschreiben mit Rückschein senden oder gegen Empfangsbestätigung übergeben. E-Mail und Fax genügen nicht. Die Kündigung muss spätestens am dritten Werktag des Monats beim Vermieter sein."
+      }
+    },
+    "objection_administrative": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "decision_date", "reference"],
+      "subject": "Widerspruch gegen den Bescheid vom {{decision_date}}, Az. {{reference}}",
+      "body": "Sehr geehrte Damen und Herren,\n\ngegen Ihren Bescheid vom {{decision_date}}, Aktenzeichen {{reference}}, lege ich hiermit fristgerecht Widerspruch ein.\n\n{{grounds}}\n\nBitte bestätigen Sie mir den Eingang dieses Widerspruchs.\n\nMit freundlichen Grüßen\n\n\n{{sender_name}}{{signature_note}}",
+      "grounds": "Die Begründung reiche ich gesondert nach. Ich bitte um Akteneinsicht.",
+      "delivery": "Schriftlich mit Unterschrift oder zur Niederschrift bei der Behörde, die den Bescheid erlassen hat (§ 70 Abs. 1 VwGO). Eine einfache E-Mail genügt in der Regel nicht, außer die Behörde nennt einen elektronischen Zugang (Portal, De-Mail). Per Einschreiben mit Rückschein oder Fax mit Sendebericht senden oder persönlich gegen Eingangsstempel abgeben. Der Widerspruch muss vor Ablauf der Frist bei der Behörde eingehen."
+    },
+    "objection_tax": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "decision_date", "reference"],
+      "subject": "Einspruch gegen den Bescheid vom {{decision_date}}, Steuernummer {{reference}}",
+      "body": "Sehr geehrte Damen und Herren,\n\ngegen den Bescheid vom {{decision_date}} ({{decision_title}}), Steuernummer {{reference}}, lege ich hiermit fristgerecht Einspruch ein (§ 347 AO).\n\n{{grounds}}\n\nBitte bestätigen Sie mir den Eingang des Einspruchs.\n\nMit freundlichen Grüßen\n\n\n{{sender_name}}{{signature_note}}",
+      "grounds": "Die Begründung reiche ich gesondert nach.",
+      "decision_title": "Steuerbescheid",
+      "delivery": "Schriftlich oder elektronisch (§ 357 Abs. 1 AO): am einfachsten über ELSTER (Formular „Einspruch“), sonst per Brief oder Fax an das Finanzamt, das den Bescheid erlassen hat. Er muss innerhalb der Einspruchsfrist eingehen. Ein Einspruch stoppt die Zahlung nicht: Wer vorerst nicht zahlen will, beantragt zusätzlich die Aussetzung der Vollziehung (§ 361 AO)."
+    }
+  }
+}

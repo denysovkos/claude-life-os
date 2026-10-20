@@ -1,0 +1,16 @@
+{
+  "locale": "nl",
+  "date_format": "DD-MM-YYYY",
+  "child_signature": "als wettelijk vertegenwoordiger van {{holder_name}}",
+  "kinds": {
+    "cancellation": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "contract_name", "reference"],
+      "subject": "Opzegging {{contract_name}}, {{reference_label}} {{reference}}",
+      "body": "Geachte heer, mevrouw,\n\nHierbij zeg ik de volgende overeenkomst op {{effective_clause}}:\n\n{{contract_name}}\n{{reference_label}}: {{reference}}\nContracthouder: {{holder_name}}\n\nGraag ontvang ik een schriftelijke bevestiging van deze opzegging en van de einddatum van de overeenkomst. Ik ga niet akkoord met een verlenging van de overeenkomst.\n\nDe machtiging voor automatische incasso die ik u heb gegeven, eindigt met de overeenkomst.\n\nMet vriendelijke groet,\n\n\n{{sender_name}}{{signature_note}}",
+      "effective_clause": "per {{effective_date}}, of anders per de eerst mogelijke datum",
+      "effective_clause_unknown": "per de eerst mogelijke datum",
+      "reference_label": "Contract- of klantnummer",
+      "delivery": "Kijk in de overeenkomst welke vorm vereist is. Verstuur de brief zo dat hij uiterlijk op de genoemde datum aankomt, op een manier die u kunt bewijzen: aangetekend met ontvangstbevestiging, of via het opzegformulier van de aanbieder met bevestiging."
+    }
+  }
+}

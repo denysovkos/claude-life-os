@@ -29,14 +29,62 @@ CATEGORIES = {
     "legal_notary", "work", "health", "travel", "personal_social",
 }
 
-# Must match dossier_label() in supabase/migrations/0017_household_members.sql.
+# Must match dossier_label() in supabase/migrations/0018_letters.sql.
 DOSSIER_KEYS = {
     "title", "generated", "intro", "matters", "hard_deadlines", "loans", "insurance",
     "subscriptions", "notice", "months", "notice_unknown", "until", "total", "per_month",
     "identity", "valid_until", "original", "property", "contacts", "none",
     "overdue_since", "close_or_reschedule", "subject_unknown", "file_missing",
     "household", "rel_self", "rel_partner", "rel_child", "rel_parent", "rel_other", "born",
+    "letter_ready", "letter_to", "letter_send_by", "letter_how", "letter_after_sending", "letter_not_advice",
 }
+
+# Letter kinds (letters_kind_check) and the fields compose_letter() fills (its `known` list,
+# in supabase/migrations/0018_letters.sql).
+LETTER_KINDS = {"cancellation", "objection_administrative", "objection_tax"}
+LETTER_DATE_FORMATS = {"YYYY-MM-DD", "DD.MM.YYYY", "DD/MM/YYYY", "DD-MM-YYYY", "MM/DD/YYYY"}
+
+
+def letter_fields():
+    sql = (ROOT / "supabase" / "migrations" / "0018_letters.sql").read_text(encoding="utf-8")
+    known = re.search(r"known constant text\[\] := array\[(.*?)\];", sql, re.S).group(1)
+    return set(re.findall(r"'([a-z_]+)'", known))
+
+
+def check_letters(case, letters, region=False):
+    fields = letter_fields()
+    case.assertIn(letters["date_format"], LETTER_DATE_FORMATS)
+    case.assertIn("{{holder_name}}", letters.get("child_signature", "{{holder_name}}"))
+    case.assertTrue(LANG.joinpath(letters["locale"]).is_dir(), "a letter language needs its language pack")
+    case.assertLessEqual(set(letters["kinds"]), LETTER_KINDS, "unknown letter kind")
+    if not region:
+        case.assertIn("cancellation", letters["kinds"], "every language has a generic cancellation")
+    for kind, t in letters["kinds"].items():
+        with case.subTest(kind=kind):
+            for key in ("required", "subject", "body", "delivery"):
+                case.assertIn(key, t)
+            case.assertLessEqual(set(t["required"]), fields)
+            texts = [t["subject"], t["body"], t.get("effective_clause", ""), t.get("effective_clause_unknown", ""),
+                     t.get("grounds", "")]
+            used = set(re.findall(r"\{\{([a-z_]+)\}\}", " ".join(texts)))
+            case.assertLessEqual(used, fields, "placeholder compose_letter does not fill")
+            case.assertIn("{{sender_name}}", t["body"], "the letter must be signed")
+            for r in t["required"]:
+                if r not in ("sender_address", "recipient_name", "recipient_address"):   # those go in the header
+                    case.assertIn("{{" + r + "}}", t["subject"] + t["body"], f"required {r} is never printed")
+            if "{{decision_title}}" in t["body"]:
+                case.assertTrue(t.get("decision_title"), "a default decision_title in the letter's language")
+            if kind == "cancellation":
+                case.assertIn("{{effective_clause}}", t["body"])
+                case.assertIn("{{effective_date}}", t["effective_clause"])
+                case.assertNotIn("{{", t["effective_clause_unknown"])
+            for extra in ("reference_label", "delivery", "basis"):
+                value = t.get(extra)
+                if isinstance(value, dict) and extra != "basis":
+                    case.assertIn("default", value, f"{extra} needs a default")
+                for v in (value.values() if isinstance(value, dict) else [value] if value else []):
+                    case.assertTrue(v.strip())
+                    case.assertNotIn("{{", v)
 
 FOLDER_KEYS = {
     "root", "inbox", "emergency", "backups", "catch_all", "identity", "finance", "taxes",
@@ -167,7 +215,7 @@ class LangPackTest(unittest.TestCase):
                 meta = load(pack / "pack.json")
                 self.assertEqual(meta["locale"], pack.name)
                 self.assertIn(meta["status"], {"stable", "skeleton"})
-                for name in ("dossier.json", "folders.json", "keywords.json"):
+                for name in ("dossier.json", "folders.json", "keywords.json", "letters.json"):
                     self.assertTrue((pack / name).exists(), name)
 
                 dossier = load(pack / "dossier.json")
@@ -187,6 +235,9 @@ class LangPackTest(unittest.TestCase):
                     self.assertTrue((pack / "examples.json").exists())
                 for value in list(dossier.values()) + list(folders.values()):
                     self.assertTrue(value.strip(), "empty label")
+                letters = load(pack / "letters.json")
+                self.assertEqual(letters["locale"], pack.name)
+                check_letters(self, letters)
 
     def test_folder_names_are_drive_safe(self):
         for pack in lang_packs():
@@ -259,6 +310,14 @@ class RegionPackTest(unittest.TestCase):
                 for a in rules.get("authorities", []):
                     self.assertIn(a["kind"], {"authority", "organization", "court"})
                     self.assertIn(a["category"], CATEGORIES)
+                if (pack / "letters.json").exists():
+                    letters = load(pack / "letters.json")
+                    self.assertEqual(letters["region"], pack.name)
+                    check_letters(self, letters, region=True)
+                    # an objection letter answers the deadline a term rule makes
+                    rule_keys = {r["key"] for r in rules["term_rules"]}
+                    for kind in set(letters["kinds"]) - {"cancellation"}:
+                        self.assertIn(kind, rule_keys, f"{kind} letter without a term rule of that key")
 
     def test_rule_examples(self):
         for pack in region_packs():

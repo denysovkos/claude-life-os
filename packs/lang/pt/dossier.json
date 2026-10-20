@@ -29,5 +29,11 @@
   "rel_child": "filho/a",
   "rel_parent": "pai ou mãe",
   "rel_other": "membro do agregado familiar",
-  "born": "nascido/a em"
+  "born": "nascido/a em",
+  "letter_ready": "Carta pronta",
+  "letter_to": "Para",
+  "letter_send_by": "Tem de chegar até",
+  "letter_how": "Como enviar",
+  "letter_after_sending": "Depois de a enviares, diz ao Claude em qualquer conversa «Enviei a carta» e como (correio, registada, fax, online). O prazo fica então fechado e uma confirmação em falta é assinalada.",
+  "letter_not_advice": "Preenchida a partir dos teus documentos. Não é aconselhamento jurídico: lê cada linha, verifica o destinatário, o número e as datas, e assina tu."
 }

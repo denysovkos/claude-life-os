@@ -1,9 +1,9 @@
 # Email intake
 
-Workflow `email-intake` v3.4 of the `life-os` skill: nightly mail intake. The shared rules in
+Workflow `email-intake` v3.5 of the `life-os` skill: nightly mail intake. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
-Write `v3.4` into `email_processing_runs.skill_version` on every run.
+Write `v3.5` into `email_processing_runs.skill_version` on every run.
 
 This job usually runs unattended, at night, with nobody reading the chat. Three rules
 follow from that and are not optional.
@@ -144,6 +144,18 @@ Then:
   for the owner, for the whole household, or about someone who is not a member keeps
   `member_id` null, and a name that matches nobody is never turned into a member (it
   stays in the summary). A deadline from the mail takes its member by itself.
+- **A reply to a letter the person sent.** From schema 0.9.0, read once per run
+  `select id, kind, subject, recipient, sent_on from v_letters where status = 'sent';`
+  When a mail confirms one of them (a Kündigungsbestätigung with the end date, an
+  Eingangsbestätigung for a Widerspruch or Einspruch) and its sender resolves through
+  `entity_aliases` to that letter's recipient (`letters.recipient_entity_id`), record it
+  after the upsert:
+  `select id, status from mark_letter_confirmed(:sent_letter_id, (select id from emails where gmail_message_id = :gmail_message_id));`
+  A confirmation from a sender that does not resolve to the recipient is not recorded:
+  give it an `action_note` ("looks like a confirmation of the <subject> letter, from an
+  unexpected sender") and let the person decide. A reply that refuses the cancellation or
+  names a different end date is `action_needed` with that date in the note; a mail never
+  composes, approves or withdraws a letter.
 - `action_needed = true` only if the person must actually do something. One-line
   `action_note`.
 - Torn between two categories? Log `{item, field, chose, alternative, confidence}` in
@@ -266,7 +278,7 @@ returning id;
 
 insert into email_processing_runs (skill_version, started_at, emails_scanned, emails_added,
   emails_updated, actions_flagged, category_counts, errors, skipped, decisions, notes)
-values ('v3.4', :started_at, ..., :category_counts::jsonb, :errors::jsonb,
+values ('v3.5', :started_at, ..., :category_counts::jsonb, :errors::jsonb,
         :skipped::jsonb, :decisions::jsonb, :notes)
 returning id;
 ```

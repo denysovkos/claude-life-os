@@ -62,6 +62,8 @@ jobs:
                -c "select emergency_dossier()" -c "select briefing_text()"
       - name: Region rules in SQL match the packs
         run: python3 tests/sql_rules_check.py
+      - name: Letters compose from the shipped templates
+        run: python3 tests/sql_letters_check.py
       - name: Release checks
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/release_checks.sql
       - name: Feature checks

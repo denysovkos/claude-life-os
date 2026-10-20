@@ -16,7 +16,7 @@
     }
   },
   "db_setup": [
-    "insert into email_processing_runs (skill_version, started_at, run_at, notes) values ('v3.4', now() - interval '2 hours', now() - interval '2 hours', 'tonight')",
+    "insert into email_processing_runs (skill_version, started_at, run_at, notes) values ('v3.5', now() - interval '2 hours', now() - interval '2 hours', 'tonight')",
     "insert into processing_runs (skill_version, started_at, run_at, notes) values ('v3.4', now() - interval '1 hour', now() - interval '1 hour', 'tonight')",
     "insert into documents (drive_file_id, name, drive_url, document_type_key, subject_person, expiry_date, status, last_intake_at) values ('f-passport', 'Passport.pdf', 'https://drive.test/f-passport', 'passport', 'Test Owner', current_date + 7, 'current', clock_timestamp())",
     "insert into deadlines (title, deadline_type, due_on, hard, lead_days, source_kind, source_id, status, notes, date_basis) select 'Passport expires', 'document_expiry', current_date + 7, true, '{30,14,7,1}', 'document', id, 'open', 'basis: stated', 'stated' from documents where drive_file_id = 'f-passport'"

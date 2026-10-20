@@ -1,0 +1,16 @@
+{
+  "locale": "uk",
+  "date_format": "DD.MM.YYYY",
+  "child_signature": "як законний представник {{holder_name}}",
+  "kinds": {
+    "cancellation": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "contract_name", "reference"],
+      "subject": "Розірвання договору {{contract_name}}, {{reference_label}} {{reference}}",
+      "body": "Шановні пані та панове!\n\nЦим я розриваю такий договір {{effective_clause}}:\n\n{{contract_name}}\n{{reference_label}}: {{reference}}\nВласник договору: {{holder_name}}\n\nПрошу письмово підтвердити отримання цього повідомлення і дату припинення договору. Я не погоджуюся на продовження договору.\n\nНадане вам доручення на списання коштів припиняє дію з припиненням договору.\n\nЗ повагою\n\n\n{{sender_name}}{{signature_note}}",
+      "effective_clause": "з {{effective_date}}, а якщо це неможливо, то з найближчої можливої дати",
+      "effective_clause_unknown": "з найближчої можливої дати",
+      "reference_label": "Номер договору або клієнта",
+      "delivery": "Перевірте в договорі, якої форми вимагає розірвання. Надішліть так, щоб лист надійшов не пізніше зазначеної дати, і так, щоб це можна було довести: рекомендованим листом із повідомленням про вручення, факсом зі звітом про передачу або через форму розірвання на сайті постачальника з підтвердженням."
+    }
+  }
+}

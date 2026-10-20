@@ -1,6 +1,6 @@
 # Life OS setup
 
-Workflow `setup` v1.6 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
+Workflow `setup` v1.7 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Three modes. Pick from what the person said; if unclear, ask.
@@ -37,7 +37,7 @@ Code, routines), `assets/` does not exist and the same files are at the reposito
 `supabase/migrations`, `supabase/seed`, `packs`, `apps-script`, `docs`.
 
 ```
-assets/migrations/0001_tables.sql … 0017_household_members.sql
+assets/migrations/0001_tables.sql … 0018_letters.sql
 assets/seed/document_types.sql
 assets/packs/lang/<locale>/{dossier,folders,keywords,formats}.json
 assets/packs/region/<code>/{rules.json,classification_rules.sql}
@@ -140,7 +140,7 @@ Apply in this order with `apply_migration`, each named after its file without `.
 0008_nightly_check_watchdog, 0009_business_days, 0010_hotfixes_and_safe_recount,
 0011_mcp_safe_writes, 0012_notice_periods, 0013_watchdog_and_snapshot,
 0014_successors_binder_folders, 0015_audits_health_invariants, 0016_security_hardening,
-0017_household_members
+0017_household_members, 0018_letters
 ```
 
 Then run `assets/seed/document_types.sql` with `execute_sql` (or as migration
@@ -151,9 +151,9 @@ region pack was chosen. Stop at the first error, show it, and look for it in
 Verify:
 
 ```sql
-select value from life_settings where key = 'schema_version';            -- "0.8.0"
-select count(*) from pg_tables where schemaname = 'public';              -- 39
-select count(*) from pg_views  where schemaname = 'public';              -- 42
+select value from life_settings where key = 'schema_version';            -- "0.9.0"
+select count(*) from pg_tables where schemaname = 'public';              -- 40
+select count(*) from pg_views  where schemaname = 'public';              -- 44
 select count(*) from document_types;                                     -- 43
 select jobname, schedule, active from cron.job;                          -- nightly-derivations
 ```
@@ -189,6 +189,7 @@ insert into life_settings (key, value) values
   ('dossier_labels',    $j${...}$j$::jsonb),
   ('lang_hints',        $j${...}$j$::jsonb),
   ('region_rules',      $j${...}$j$::jsonb),
+  ('letter_templates',  $j${...}$j$::jsonb),
   ('installed_packs',   $j${"lang": {...}, "region": {...}}$j$::jsonb),
   ('current_address',   to_jsonb(:address::text)),        -- or 'null'::jsonb
   ('former_address_patterns', $j$[...]$j$::jsonb),
@@ -208,6 +209,19 @@ on conflict (key) do update set value = excluded.value, updated_at = now();
   rules from here: objection deadlines (`derive_deadlines()`), return and warranty windows
   (`v_purchase_rights`), tax form labels (`v_tax_items`). With a region set but this empty,
   nothing legal is derived and the invariant `region_rules_missing` fires, on purpose.
+- `letter_templates`: what `compose_letter()` writes cancellations and objections from
+  (`workflows/letters.md`). A letter is written in the language of the country it goes
+  to, not in `output_locale`. Pick the letter language: the `locale` of
+  `packs/region/<region>/letters.json` if that file exists; otherwise the first of the
+  region pack's `default_input_locales` that has `packs/lang/<locale>/letters.json`;
+  otherwise `output_locale`, and `en` if that has none. Take
+  `packs/lang/<letter language>/letters.json` as the base, then, when the region has a
+  `letters.json`, let its `date_format`, `child_signature` and each of its `kinds` replace
+  the base's. Add `"region"` and `"version"` (the region pack's version when it has
+  letters, otherwise the language pack's). Germany has a Kündigung, a Widerspruch and an
+  Einspruch; every other country has the generic cancellation of its language and no
+  objection yet. `tests/sql_letters_check.py` (`letter_templates()`) is the same rule in
+  code.
 - `installed_packs`: `{"lang": {"<locale>": "<version>", …}, "region": {"<code>": "<version>"}}`
   for every pack written. Doctor compares it with the packs in `assets/` to offer updates.
 - `former_address_patterns`: short, distinctive fragments (a street name and house
@@ -343,7 +357,7 @@ from bridge_runs order by started_at desc limit 1;
 ```
 
 A row from the last few minutes with `finished_at` set, `errors = []` and
-`script_version = 'bridge-3.2'` means the bridge works. Say so plainly.
+`script_version = 'bridge-3.3'` means the bridge works. Say so plainly.
 
 No row at all: `install` did not reach the database. Ask what the log said. Common:
 
@@ -429,13 +443,14 @@ the installed versions:
 
 ```sql
 insert into skill_revisions (skill_name, version, change_type, summary)
-values ('life-os', 'v4.5', 'baseline', 'installed'),
-       ('setup', 'v1.6', 'baseline', 'installed with life-os v4.5'),
-       ('email-intake', 'v3.4', 'baseline', 'installed with life-os v4.5'),
-       ('drive-file-intake', 'v3.4', 'baseline', 'installed with life-os v4.5'),
-       ('nightly-check', 'v1.3', 'baseline', 'installed with life-os v4.5'),
-       ('context-lookup', 'v2.4', 'baseline', 'installed with life-os v4.5'),
-       ('life-review', 'v2.4', 'baseline', 'installed with life-os v4.5');
+values ('life-os', 'v4.6', 'baseline', 'installed'),
+       ('setup', 'v1.7', 'baseline', 'installed with life-os v4.6'),
+       ('email-intake', 'v3.5', 'baseline', 'installed with life-os v4.6'),
+       ('drive-file-intake', 'v3.4', 'baseline', 'installed with life-os v4.6'),
+       ('nightly-check', 'v1.4', 'baseline', 'installed with life-os v4.6'),
+       ('context-lookup', 'v2.5', 'baseline', 'installed with life-os v4.6'),
+       ('life-review', 'v2.5', 'baseline', 'installed with life-os v4.6'),
+       ('letters', 'v1.0', 'baseline', 'installed with life-os v4.6');
 ```
 
 Finish with doctor mode, then a three-line summary: what runs when, where the emergency
@@ -517,12 +532,14 @@ apply a fix without the person saying yes.
 8. **Night schedule**: `select * from v_intake_watchdog;` has a row per nightly job,
    `nightly-check` included; a job with `runs_7d = 0` was never scheduled.
 9. **Bridge**: `select started_at, errors, script_version from bridge_runs order by started_at desc limit 5;`
-   Errors in the last runs, or a `script_version` other than `bridge-3.2`. An older
-   bridge keeps working but does not deliver the outbox, so without a task app no brief
-   arrives; the fix is to paste the new `assets/apps-script/Code.gs` over the old code
-   and the new `appsscript.json` over the manifest, as in install step 7.2 (Script
-   Properties and the trigger stay), then run `install` and allow the new, shorter
-   permission list. Before that, make sure the
+   Errors in the last runs, or a `script_version` other than `bridge-3.3`. An older
+   bridge keeps working, but before bridge-3.3 it renders no letters, and before
+   bridge-3.2 it does not deliver the outbox either (without a task app no brief
+   arrives). From bridge-3.2 the fix is only to paste the new `assets/apps-script/Code.gs`
+   over the old code (the manifest and permissions are unchanged). From an older one,
+   also paste the new `appsscript.json` over the manifest, as in install step 7.2
+   (Script Properties and the trigger stay), then run `install` and allow the new,
+   shorter permission list. Before that, make sure the
    emergency binder is not recreated: in **Project Settings → Script Properties**, the
    property `dossier_doc_id` must hold the id of the existing binder Google Doc in the
    emergency folder (add it if it is missing). Then run `install` once.
@@ -546,6 +563,21 @@ apply a fix without the person saying yes.
    member: ask once, after an upgrade or when new names appear, whether it is someone in
    the household (add them), another spelling of a member (add an alias), a joint paper,
    or someone outside the household (nothing to do). This is a question, not a problem.
+13. **Letters** (from schema 0.9.0):
+   ```sql
+   select setting('letter_templates') ->> 'region' as region,
+          setting('letter_templates') ->> 'version' as version,
+          (select string_agg(k, ', ') from jsonb_object_keys(coalesce(setting('letter_templates') -> 'kinds', '{}')) k) as kinds;
+   select issue, subject, send_by, render_error from v_letters_followup;
+   ```
+   No `letter_templates`, or a `region` or `version` other than the installed region
+   pack's (and its letter language pack's): letters cannot be composed, or are composed
+   from old wording. The fix is to rebuild the setting as in install step 5 and write it
+   (a settings write, shown before and after). A `not_rendered` row is a problem: the
+   bridge is older than bridge-3.3, or it failed three times and `render_error` says why.
+   Fix the bridge (check 9), then let it retry the letter:
+   `update letters set render_attempts = 0 where status = 'approved' and drive_pdf_id is null returning id;`
+   `send_now` and `unconfirmed` are for the person, not fixes: name them.
 
 The fixes for recurring patterns are in `assets/docs/troubleshooting.md`; use the same
 wording. Order the answer by severity: anything that can make a hard
@@ -563,12 +595,14 @@ and ends by showing the person what changed:
 To undo a change, write the `old_value` back.
 
 - **Output language**: rewrite `output_locale` and `dossier_labels`. Folder names do not
-  change (renaming Drive folders is harmless, but ask first).
+  change (renaming Drive folders is harmless, but ask first). Letters keep the language
+  of the country they go to; rebuild `letter_templates` only when there is no region.
 - **Input languages**: rewrite `input_locales` and `lang_hints`.
 - **Country, or a newer version of the same region pack**: deadlines already in the
   database were counted with the old rules, so this is a three-part change.
   1. `select take_snapshot('before region change');` then write `region`, `region_rules`
-     (with `region` and `version` added) and `installed_packs`, and run the pack's
+     (with `region` and `version` added), `letter_templates` (install step 5) and
+     `installed_packs`, and run the pack's
      `classification_rules.sql`. Old email rules from the previous country stay (they
      are only rules); list them and offer to deactivate (`active = false`), never delete.
   2. `select * from rederive_deadlines(false);` is a dry run over every open deadline

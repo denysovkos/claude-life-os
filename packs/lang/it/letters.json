@@ -1,0 +1,16 @@
+{
+  "locale": "it",
+  "date_format": "DD/MM/YYYY",
+  "child_signature": "in qualità di rappresentante legale di {{holder_name}}",
+  "kinds": {
+    "cancellation": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "contract_name", "reference"],
+      "subject": "Disdetta del contratto {{contract_name}}, {{reference_label}} {{reference}}",
+      "body": "Spettabile società,\n\ncon la presente comunico la disdetta del seguente contratto {{effective_clause}}:\n\n{{contract_name}}\n{{reference_label}}: {{reference}}\nIntestatario del contratto: {{holder_name}}\n\nVi chiedo di confermarmi per iscritto la ricezione della disdetta e la data di cessazione del contratto. Non acconsento ad alcun rinnovo del contratto.\n\nL'autorizzazione all'addebito diretto che vi ho rilasciato cessa con il contratto.\n\nDistinti saluti\n\n\n{{sender_name}}{{signature_note}}",
+      "effective_clause": "con effetto dal {{effective_date}} o, in subordine, dalla prima data possibile",
+      "effective_clause_unknown": "dalla prima data possibile",
+      "reference_label": "Numero di contratto o cliente",
+      "delivery": "Verificate nel contratto la forma richiesta. Inviate la disdetta in modo che arrivi entro la data indicata e in un modo dimostrabile: raccomandata con ricevuta di ritorno, PEC, fax con rapporto di trasmissione oppure il modulo di disdetta del fornitore con conferma."
+    }
+  }
+}

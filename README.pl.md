@@ -120,6 +120,12 @@ aktualizacje bazy i nowe przepisy.
   (partnera, dzieci, rodzica), a każdy paszport, umowa i termin są przypisane tej
   osobie: brief mówi, czyj paszport wygasa, teczka awaryjna wymienia, kto z tobą
   mieszka, a na pytanie „co wkrótce wygasa Maksowi” jest odpowiedź.
+- **Wypowiedzenia i odwołania.** Powiedz „wypowiedz umowę z siłownią” albo „odwołanie od
+  decyzji podatkowej”, a napisze pismo z tego, co już wie: adresat i jego adres, numer
+  umowy lub sprawy, termin rozwiązania, do kiedy pismo musi dotrzeć, a dla Niemiec także
+  podstawa prawna. Czytasz i mówisz „tak”; PDF trafia do Drive obok umowy i do twojej
+  skrzynki, z informacją, jak je wysłać. Wysyłasz ty, system nigdy, a brak potwierdzenia
+  jest zgłaszany.
 
 ## Zadania w menedżerze zadań
 

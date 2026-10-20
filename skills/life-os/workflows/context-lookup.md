@@ -1,6 +1,6 @@
 # Context lookup (read-only, scope first)
 
-Workflow `context-lookup` v2.4 of the `life-os` skill: read-only answers in any chat. The shared rules in
+Workflow `context-lookup` v2.5 of the `life-os` skill: read-only answers in any chat. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Other chats regularly need one fact out of the person's documents or mail (is the
@@ -148,6 +148,13 @@ use it instead of reasoning from scratch.
   An expired permit or passport with a successor of the same person (a new card, a
   permanent title) is not listed. A document marked `drive_missing_since` is in the index
   but its Drive file is gone: say so instead of handing over a dead link.
+  When the answer is a date that is still ahead, add in one line that saying "write the
+  cancellation for X" prepares the letter (`workflows/letters.md`); this workflow never
+  writes one itself.
+- **Letters: what is open, was it sent, was it confirmed**: `select * from v_letters;` and
+  `select * from v_letters_followup;` (a ready letter that must arrive within a week, one
+  the bridge has not rendered, a cancellation unconfirmed after three weeks). The PDF is
+  `drive_url`.
 - **What renews by itself without a known exit**: `select * from v_auto_renew_unwatched;`
 - **Emergency overview**: `select emergency_dossier();` The same text the bridge writes
   daily into the "Emergency binder" Google Doc in the emergency folder.

@@ -29,5 +29,11 @@
   "rel_child": "kind",
   "rel_parent": "ouder",
   "rel_other": "lid van het huishouden",
-  "born": "geboren"
+  "born": "geboren",
+  "letter_ready": "Brief klaar",
+  "letter_to": "Aan",
+  "letter_send_by": "Moet aankomen vóór",
+  "letter_how": "Zo verstuur je hem",
+  "letter_after_sending": "Als hij verstuurd is, zeg dan in een willekeurige chat tegen Claude \"Ik heb de brief verstuurd\" en hoe (post, aangetekend, fax, online). De termijn wordt dan gesloten en een ontbrekende bevestiging wordt gemeld.",
+  "letter_not_advice": "Ingevuld uit je documenten. Geen juridisch advies: lees elke regel, controleer de ontvanger, het nummer en de data, en onderteken zelf."
 }
