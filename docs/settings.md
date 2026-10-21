@@ -35,7 +35,7 @@ the Supabase dashboard also works; the history then shows `human`.
 
 | Key | Example | Written by | Read by |
 |---|---|---|---|
-| `schema_version` | `"0.11.0"` | migrations | setup (doctor, upgrades); every workflow compares it with `SKILL.md` |
+| `schema_version` | `"0.12.0"` | migrations | setup (doctor, upgrades); every workflow compares it with `SKILL.md` |
 | `owner_name` | `"Anna Beispiel"` | setup | reports |
 | `owner_email` | `"anna@example.com"` | setup | must be the Google account the bridge runs in: the email intake recognises the system's own mail by it (`self_only` rules). Mail itself always goes to the bridge's account |
 | `timezone` | `"Europe/Berlin"` | setup | every skill, the bridge, the binder date |
@@ -47,10 +47,11 @@ the Supabase dashboard also works; the history then shows `human`.
 | `dossier_labels` | contents of `packs/lang/uk/dossier.json` | setup | `emergency_dossier()`, the note that comes with a letter's PDF |
 | `letter_templates` | `packs/lang/de/letters.json` overlaid with `packs/region/de/letters.json`, plus `locale`, `region`, `version` | setup, reconfigure (country) | `compose_letter()`: cancellation and objection letters, in the language of the country they go to |
 | `installed_packs` | `{"lang":{"uk":"1.0.0"},"region":{"de":"1.1.0"}}` | setup | doctor (pack updates) |
-| `drive_folders` | ids of inbox, emergency, backups, catch_all | setup | bridge, Drive intake, review |
+| `drive_folders` | ids of inbox, emergency, backups, catch_all; optional `scan_inboxes`, a list of folders a mail-scanning service writes into | setup, reconfigure (scan inbox folders) | bridge (inbox only), Drive intake (files under a scan inbox are filed out like inbox files), review |
 | `task_provider` | `"todoist"` or `"none"` | setup | every skill that creates tasks |
 | `task_targets` | project ids and label | setup | same |
 | `notes_provider`, `notes_targets` | `"craft"`, folder id | setup | review |
+| `explain_letter_types` | `["official_decision","tax_assessment","authority_letter","notary_letter","insurance_correspondence"]` | 0021 default | Drive intake: which letters get an explanation and a draft reply at night (`v_letters_to_explain`). Any letter can still be explained on request in chat |
 | `bridge_categories` | `["legal_notary","government","bank_finance","bills_payments"]` | setup (defaults in 0005) | bridge, which attachments to copy |
 | `current_address`, `former_address_patterns`, `address_audit_ignore` | street fragments | setup, review | `v_address_audit`; `current_address` is also the sender address on letters |
 | `tax_year` | `2026` | setup, review | `v_tax_items` |

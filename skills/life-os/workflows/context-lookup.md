@@ -1,6 +1,6 @@
 # Context lookup (read-only, scope first)
 
-Workflow `context-lookup` v2.6 of the `life-os` skill: read-only answers in any chat. The shared rules in
+Workflow `context-lookup` v2.7 of the `life-os` skill: read-only answers in any chat. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Other chats regularly need one fact out of the person's documents or mail (is the
@@ -111,6 +111,15 @@ question that maps to none: say so and ask which scope, do not guess broad.
    that seems to be what was meant.
 7. A deadline is reported as stored (`deadlines.due_on`, `documents.expiry_date`). Do not
    recompute the brief's ladder logic and never touch `snoozed_until`.
+8. **A question about a letter** ("what did the Ausländerbehörde write", "do I have to
+   answer the Finanzamt", "що вони хочуть") is answered from its explanation when it has
+   one (schema 0.12.0 and later), not by re-reading the letter:
+   ```sql
+   select letter, issuer, issued_on, person, summary, act_by, objection_until, reply_kind, suspicious, url
+   from v_letter_explanations where letter ilike '%' || :name || '%' or issuer ilike '%' || :name || '%';
+   ```
+   Lead with the summary and the date, link the Doc. "Explain it again", "draft a reply"
+   or a letter with no explanation yet belongs to the letters workflow, which writes.
 
 ## Content, rights and exits
 

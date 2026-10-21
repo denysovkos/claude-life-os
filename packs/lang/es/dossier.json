@@ -35,5 +35,17 @@
   "letter_send_by": "Debe llegar antes del",
   "letter_how": "Cómo enviarla",
   "letter_after_sending": "Cuando la envíes, dile a Claude en cualquier chat «He enviado la carta» y cómo (correo, certificado, burofax, en línea). Entonces se cierra el plazo y se avisa si falta la confirmación.",
-  "letter_not_advice": "Rellenada con tus documentos. No es asesoramiento jurídico: lee cada línea, comprueba el destinatario, el número y las fechas, y fírmala tú."
+  "letter_not_advice": "Rellenada con tus documentos. No es asesoramiento jurídico: lee cada línea, comprueba el destinatario, el número y las fechas, y fírmala tú.",
+  "explain_title": "Explicado",
+  "explain_says": "Qué dice esta carta",
+  "explain_if_ignored": "Si no hace nada",
+  "explain_options": "Qué puede hacer",
+  "explain_act_by": "Actuar antes del",
+  "explain_draft": "Borrador de respuesta",
+  "explain_draft_translation": "Qué dice el borrador",
+  "explain_draft_missing": "Completar antes de enviar",
+  "explain_objection": "Para recurrir, diga \"escribe el recurso\" en cualquier chat: Claude rellena la plantilla revisada con el número de expediente, la fecha de la resolución y el plazo.",
+  "explain_suspicious": "Compruebe primero: esta carta no viene de un remitente que el índice conozca, o pide algo inusual. Contacte al remitente con la dirección o el teléfono de su web oficial, no con los de la carta.",
+  "explain_original": "La carta",
+  "explain_not_advice": "Explicado por IA a partir de la carta y sus documentos. No es asesoramiento jurídico: si está en juego dinero, un derecho o su situación de residencia, consulte a un servicio de orientación o a un abogado antes del plazo."
 }

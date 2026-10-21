@@ -11,7 +11,7 @@ begin;
 
 do $checks$
 declare
-  n bigint; s text; doc uuid; perm uuid; dl uuid; rp uuid; ok boolean; j jsonb; mem uuid; mem2 uuid; m uuid;
+  n bigint; s text; s2 text; doc uuid; perm uuid; dl uuid; rp uuid; ok boolean; j jsonb; mem uuid; mem2 uuid; m uuid;
   tag text := 'fc-' || substr(md5(random()::text), 1, 8);   -- unique names for this run
 begin
   perform set_config('app.actor', 'test', true);
@@ -327,6 +327,112 @@ begin
     if n <> 0 then raise exception 'closed tasks are still listed'; end if;
     select close_reason into s from system_tasks where todoist_task_id = tag || '-brief-old';
     if s is distinct from 'test' then raise exception 'the first close reason was overwritten: %', s; end if;
+  end if;
+
+  -- 15. the letter explainer (schema 0.12.0) -----------------------------------------------
+  if to_regclass('public.letter_explanations') is not null then
+    insert into documents (drive_file_id, name, drive_url, document_type_key, issuer, issued_on, status,
+                           drive_parent_id, body_fingerprint)
+    values (tag || '-anh', tag || ' Anhoerung.pdf', 'https://example.invalid/anh', 'authority_letter', 'LEA Berlin',
+            current_date - 3, 'current', tag || '-folder', 'fp1')
+    returning id into doc;
+    insert into document_texts (document_id, body, extraction_status) values (doc, 'Anhörung vor Erlass', 'done');
+    -- an old letter, an invoice and a letter without text are not explained by the night run
+    insert into documents (drive_file_id, name, drive_url, document_type_key, issued_on, status) values
+      (tag || '-old', tag || ' old letter', 'https://example.invalid/o', 'authority_letter', current_date - 400, 'current'),
+      (tag || '-inv', tag || ' invoice', 'https://example.invalid/i', 'vendor_invoice', current_date - 2, 'current'),
+      (tag || '-notext', tag || ' no text', 'https://example.invalid/n', 'official_decision', current_date - 2, 'current');
+    insert into document_texts (document_id, body, extraction_status)
+    select id, 'text', 'done' from documents where drive_file_id in (tag || '-old', tag || '-inv');
+    select string_agg(name, ',' order by name) into s from v_letters_to_explain where name like tag || '%';
+    if s is distinct from tag || ' Anhoerung.pdf' then raise exception 'v_letters_to_explain lists %', s; end if;
+
+    -- the function refuses what the Doc could not be built from
+    begin
+      perform record_letter_explanation(doc, '{"locale":"uk","summary":"s","if_ignored":"x"}');
+      raise exception 'an explanation without meaning was accepted';
+    exception when raise_exception then
+      if sqlerrm not like '%meaning is required%' then raise; end if;
+    end;
+    begin
+      perform record_letter_explanation(doc, '{"locale":"uk","summary":"s","meaning":"m","if_ignored":"x","send_to":"a@b.c"}');
+      raise exception 'an unknown field was accepted';
+    exception when raise_exception then
+      if sqlerrm not like '%unknown field send_to%' then raise; end if;
+    end;
+    begin
+      perform record_letter_explanation(doc, '{"locale":"uk","summary":"s","meaning":"m","if_ignored":"x","options":[{"how":"h"}]}');
+      raise exception 'an option without title was accepted';
+    exception when raise_exception then
+      if sqlerrm not like '%needs a title%' then raise; end if;
+    end;
+    begin
+      perform record_letter_explanation(doc, '{"locale":"uk","summary":"s","meaning":"m","if_ignored":"x","reply_kind":"reply"}');
+      raise exception 'a reply without a draft was accepted';
+    exception when check_violation then null;
+    end;
+
+    perform record_letter_explanation(doc, jsonb_build_object(
+      'locale', 'uk', 'letter_locale', 'de', 'summary', 'The office wants to hear you before it decides.',
+      'meaning', E'They plan to refuse the extension.\n# not a heading\n- not a bullet',
+      'if_ignored', 'They decide without your side.', 'act_by', (current_date + 14)::text,
+      'options', jsonb_build_array(
+        jsonb_build_object('title', 'Reply in writing', 'how', 'send the draft', 'until', (current_date + 14)::text),
+        jsonb_build_object('title', 'Ask for more time')),
+      'reply_kind', 'reply', 'draft_reply', E'Sehr geehrte Damen und Herren,\n[[reason]]',
+      'draft_translation', 'Dear Sir or Madam', 'draft_missing', jsonb_build_array('reason')));
+    select count(*) into n from v_letters_to_explain where document_id = doc;
+    if n <> 0 then raise exception 'an explained letter is still waiting'; end if;
+    select e.text into s from explanations_to_render(20) e where e.file_name = 'Explained: ' || tag || ' Anhoerung';
+    if s is null then raise exception 'the explanation is not queued for the bridge, or its file name is wrong'; end if;
+    if s not like '# Explained: %' or s not like '%## What this letter says%' or s not like '%## Draft reply%'
+       or s not like '%Fill in before sending: reason%' or s not like '%https://example.invalid/anh%'
+       or s not like '%- Reply in writing: send the draft (until %' or s not like '%- Ask for more time%' then
+      raise exception 'explanation text: %', s;
+    end if;
+    if s like E'%\n# not a heading%' or s like E'%\n- not a bullet%' then
+      raise exception 'text from the letter became a heading or bullet: %', s;
+    end if;
+    select e.folder_id into s from explanations_to_render(20) e where e.file_name = 'Explained: ' || tag || ' Anhoerung';
+    if s is distinct from tag || '-folder' then raise exception 'the Doc goes into %, not the letter''s folder', s; end if;
+
+    select id into m from letter_explanations where document_id = doc;
+    perform explanation_rendered(m, tag || '-doc', 'https://example.invalid/doc');
+    select count(*) into n from explanations_to_render(20) e where e.id = m;
+    if n <> 0 then raise exception 'a rendered explanation is queued again'; end if;
+    select url into s from v_letter_explanations where id = m and has_doc;
+    if s is distinct from 'https://example.invalid/doc' then raise exception 'v_letter_explanations url %', s; end if;
+
+    -- the letter is read again with a different text: listed again, rewritten into the same Doc
+    update documents set body_fingerprint = 'fp2' where id = doc;
+    select count(*) into n from v_letters_to_explain where document_id = doc and text_changed;
+    if n <> 1 then raise exception 'a letter whose text changed is not listed again'; end if;
+    perform record_letter_explanation(doc, '{"locale":"uk","summary":"s2","meaning":"m","if_ignored":"x","reply_kind":"objection"}');
+    select e.doc_id, e.text into s, s2 from explanations_to_render(20) e where e.id = m;
+    if s is distinct from tag || '-doc' then raise exception 'a changed explanation does not reuse its Doc: %', s; end if;
+    if s2 not like '%write the objection%' then raise exception 'an objection does not point at the letters workflow'; end if;
+
+    -- three failed renders take it off the bridge's queue
+    perform explanation_render_failed(m, 'e1');
+    perform explanation_render_failed(m, 'e2');
+    perform explanation_render_failed(m, 'e3');
+    select count(*) into n from explanations_to_render(20) e where e.id = m;
+    if n <> 0 then raise exception 'an explanation that failed three times is still queued'; end if;
+
+    -- a duplicate is explained through its canonical row
+    update documents set duplicate_of = doc where drive_file_id = tag || '-notext' returning id into perm;
+    begin
+      perform record_letter_explanation(perm, '{"locale":"uk","summary":"s","meaning":"m","if_ignored":"x"}');
+      raise exception 'a duplicate was explained';
+    exception when raise_exception then
+      if sqlerrm not like '%is a duplicate of%' then raise; end if;
+    end;
+
+    -- the setting decides which types are explained
+    update life_settings set value = '["official_decision"]' where key = 'explain_letter_types';
+    update documents set body_fingerprint = 'fp3' where id = doc;
+    select count(*) into n from v_letters_to_explain where document_id = doc;
+    if n <> 0 then raise exception 'explain_letter_types is ignored'; end if;
   end if;
 
   raise notice 'feature checks: all passed';

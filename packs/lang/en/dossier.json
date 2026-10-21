@@ -35,5 +35,17 @@
   "letter_send_by": "Must arrive by",
   "letter_how": "How to send it",
   "letter_after_sending": "Once it is sent, tell Claude in any chat \"I sent the letter\" and how (post, registered mail, fax, online). The deadline then closes, and a missing confirmation is reported.",
-  "letter_not_advice": "Filled in from your documents. Not legal advice: read every line, check the recipient, the number and the dates, and sign it yourself."
+  "letter_not_advice": "Filled in from your documents. Not legal advice: read every line, check the recipient, the number and the dates, and sign it yourself.",
+  "explain_title": "Explained",
+  "explain_says": "What this letter says",
+  "explain_if_ignored": "If you do nothing",
+  "explain_options": "What you can do",
+  "explain_act_by": "Act by",
+  "explain_draft": "Draft reply",
+  "explain_draft_translation": "What the draft says",
+  "explain_draft_missing": "Fill in before sending",
+  "explain_objection": "To object, say \"write the objection\" in any chat: Claude fills in the reviewed template with the file number, the decision date and the deadline.",
+  "explain_suspicious": "Check first: this letter does not come from a sender the index knows, or it asks for something unusual. Contact the sender through the address or phone number on their official website, not the one in the letter.",
+  "explain_original": "The letter",
+  "explain_not_advice": "Explained by AI from the letter and your documents. Not legal advice: when money, a right or your residence status is at stake, ask a counselling service or a lawyer before the deadline."
 }

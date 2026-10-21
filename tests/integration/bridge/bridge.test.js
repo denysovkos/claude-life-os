@@ -103,7 +103,7 @@ test('install checks access, creates exactly one 15-minute trigger, and writes a
   assert.equal(w.triggers[0].fn, 'run');
   assert.equal(w.triggers[0].every, 15);
   const [hb] = rows(`select script_version, finished_at is not null as finished, errors from bridge_runs order by started_at desc limit 1`);
-  assert.deepEqual(hb, { script_version: 'bridge-3.3', finished: true, errors: [] });
+  assert.deepEqual(hb, { script_version: 'bridge-3.4', finished: true, errors: [] });
 });
 
 test('a URL outside the allowlist is refused by Apps Script itself', () => {
@@ -360,6 +360,102 @@ test('a letter that cannot be rendered is retried three times, then left for the
   assert.equal([...w.files.values()].filter((f) => f.mimeType === 'application/pdf' && f.name === l.file_name + '.pdf' && !f.trashed).length, 0);
   assert.equal(rows(`select count(*)::int as n from v_letters_followup where id = '${l.id}' and issue = 'not_rendered'`)[0].n, 1);
   sql(`update letters set status = 'withdrawn' where id = '${l.id}'`);
+});
+
+// ---- letter explanations -----------------------------------------------------------------------
+
+/** An authority letter filed in `folder`, explained as the Drive intake records it. */
+function explainedLetter(folder, extra = {}) {
+  const id = uid();
+  const doc = sql(`insert into documents (drive_file_id, name, drive_url, document_type_key, issuer, issued_on, status,
+                     drive_parent_id, last_intake_at)
+    values ('it-anh-${id}', 'Anhoerung ${id}.pdf', 'https://drive.test/anh-${id}', 'authority_letter', 'LEA Berlin',
+            current_date - 2, 'current', ${folder ? `'${folder}'` : 'null'}, clock_timestamp()) returning id`).split('\n')[0];
+  const p = Object.assign({
+    locale: 'uk', letter_locale: 'de', summary: 'Відомство хоче почути вас до рішення ' + id,
+    meaning: 'Вони планують відмовити.', if_ignored: 'Рішення без вашої позиції.', act_by: '2026-11-04',
+    options: [{ title: 'Відповісти письмово', how: 'надішліть чернетку', until: '2026-11-04' }],
+    reply_kind: 'reply', draft_reply: 'Sehr geehrte Damen und Herren,\n[[Begründung]]', draft_missing: ['Begründung'],
+  }, extra);
+  sql(`select set_config('app.actor','test',false); select record_letter_explanation('${doc}', $j$${JSON.stringify(p)}$j$::jsonb)`);
+  return rows(`select id, file_name, document_id from letter_explanations where document_id = '${doc}'`)[0];
+}
+const docText = (f) => f.doc.kids.map((k) => k.text).join('\n');
+
+test('an explanation becomes an editable Google Doc next to its letter, rewritten in place when it changes', () => {
+  const w = world();
+  w.addFolder('fld-lea');
+  const e = explainedLetter('fld-lea');
+  const p = project(w);
+  p.run();
+  const docs = w.filesIn('fld-lea').filter((f) => f.doc && !f.trashed);
+  assert.equal(docs.length, 1);
+  const doc = docs[0];
+  assert.equal(doc.name, e.file_name);
+  assert.match(doc.name, /^Explained: Anhoerung /);
+  const kids = doc.doc.kids;
+  assert.equal(kids.find((k) => k.heading === 'HEADING1').text, e.file_name);
+  assert.deepEqual(kids.filter((k) => k.heading === 'HEADING2').map((k) => k.text),
+    ['What this letter says', 'If you do nothing', 'What you can do', 'Draft reply', 'The letter']);
+  assert.ok(kids.some((k) => k.type === 'LIST_ITEM' && /^Відповісти письмово: надішліть чернетку/.test(k.text)));
+  assert.match(docText(doc), /Fill in before sending: Begründung/);
+  assert.match(docText(doc), /Sehr geehrte Damen und Herren,\n\[\[Begründung\]\]/);
+  assert.equal(kids[kids.length - 1].type, 'PARAGRAPH', 'the body must end on a paragraph');
+  const [r] = rows(`select drive_doc_id, drive_url is not null as has_url, rendered_at is not null as rendered
+                    from letter_explanations where id = '${e.id}'`);
+  assert.deepEqual(r, { drive_doc_id: doc.id, has_url: true, rendered: true });
+  assert.equal(w.sent.filter((m) => m.subject.includes('Anhoerung')).length, 0, 'an explanation is not mailed');
+
+  const saves = doc.doc.saves;
+  p.run();
+  assert.equal(doc.doc.saves, saves, 'a rendered explanation is not written again');
+
+  // the letter was read again and explained anew: same Doc, new text, one link for the person
+  sql(`select record_letter_explanation('${e.document_id}', '{"locale":"uk","summary":"Нове пояснення","meaning":"m","if_ignored":"x","reply_kind":"objection"}')`);
+  p.run();
+  assert.equal(doc.doc.saves, saves + 1);
+  assert.match(docText(doc), /Нове пояснення/);
+  assert.match(docText(doc), /write the objection/);
+  assert.doesNotMatch(docText(doc), /Draft reply/);
+  assert.equal(w.filesIn('fld-lea').filter((f) => f.doc && !f.trashed).length, 1, 'a second Doc was created');
+});
+
+test('an explanation whose Doc the person deleted gets a new one; a lost folder means the catch-all', () => {
+  const w = world();
+  const e = explainedLetter('fld-gone-' + uid());
+  const p = project(w);
+  p.run();
+  const first = w.filesIn('fld-catch-all').filter((f) => f.doc && f.name === e.file_name);
+  assert.equal(first.length, 1);
+  first[0].trashed = true;
+  sql(`select record_letter_explanation('${e.document_id}', '{"locale":"uk","summary":"again","meaning":"m","if_ignored":"x"}')`);
+  p.run();
+  const live = w.filesIn('fld-catch-all').filter((f) => f.doc && f.name === e.file_name && !f.trashed);
+  assert.equal(live.length, 1);
+  assert.notEqual(live[0].id, first[0].id);
+  assert.equal(rows(`select drive_doc_id from letter_explanations where id = '${e.id}'`)[0].drive_doc_id, live[0].id);
+});
+
+test('when the database refuses the result, the new Doc is trashed and the explanation retried three times', () => {
+  const w = world();
+  w.addFolder('fld-lea-fail');
+  const e = explainedLetter('fld-lea-fail');
+  w.faults.push({ when: (m, u, b) => m === 'POST' && u.includes('/rpc/explanation_rendered') && String(b).includes(e.id),
+                  status: 500, body: '{"message":"boom"}' });
+  const p = project(w);
+  for (let i = 0; i < 4; i++) p.run();
+  assert.equal(w.filesIn('fld-lea-fail').filter((f) => f.doc && !f.trashed).length, 0, 'an unrecorded Doc lingers');
+  const [r] = rows(`select render_attempts, render_error is not null as has_error, rendered_at is null as pending
+                    from letter_explanations where id = '${e.id}'`);
+  assert.deepEqual(r, { render_attempts: 3, has_error: true, pending: true });
+});
+
+test('a database without the explainer (older schema) is skipped quietly', () => {
+  const w = world();
+  w.faults.push({ when: (m, u) => u.includes('/rpc/explanations_to_render'), status: 404, body: '{"message":"not found"}' });
+  project(w).run();
+  const [hb] = rows(`select errors from bridge_runs order by started_at desc limit 1`);
+  assert.deepEqual(hb.errors, []);
 });
 
 // ---- what the bridge must never do ------------------------------------------------------------

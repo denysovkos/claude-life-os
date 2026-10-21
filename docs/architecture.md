@@ -70,6 +70,10 @@ Every 15 minutes, under a script lock:
    in the emergency folder.
 5. **Heartbeat.** Every run writes a `bridge_runs` row; the watchdog treats the bridge
    as a job with a one-hour SLA.
+6. **Letters and explanations.** Approved letters become PDFs next to their document
+   (`letters_to_render`), and letter explanations become editable Google Docs next to
+   the letter they explain (`explanations_to_render`); a changed explanation rewrites
+   the same Doc.
 
 Copying is idempotent on `(gmail_message_id, filename)` and fails closed: if the lookup
 of what is already staged errors, nothing is copied. A Drive file is trashed again if
@@ -107,6 +111,12 @@ The core objects:
   date it must arrive, legal basis) and lists what it does not know; the person approves;
   the bridge renders the PDF into Drive and mails it to its own account; the person
   sends it, and the deadline closes. Nothing in the system sends a letter.
+- `letter_explanations`: one per authority or legal letter, in the person's language:
+  what it says, what happens if nothing is done, the options with their dates, and a draft
+  reply in the letter's language with a translation and its open `[[placeholders]]`.
+  `v_letters_to_explain` is the night queue (types in `explain_letter_types`, last 180
+  days, text changed), `record_letter_explanation()` the one way to write, and
+  `v_letter_explanations` what the brief and questions read.
 - Search: `find_documents(terms)` ranks documents, mail and notes against several
   terms at once (synonyms and translations the model supplies, stems for inflected
   languages) and returns quotable snippets with links; `similar_documents(id)` finds
@@ -177,8 +187,12 @@ start a deadline and how it is counted. The setup workflow copies the chosen pac
    it again at 01:15 UTC as a safety net): a hard `legal_response` deadline counted by the region pack's rule (in Germany: one month after the fourth day
    after posting, moved off a weekend), ladder `{30,14,7,3,1}`, `rule_key =
    objection_administrative`.
-6. The same run builds the daily brief, so the deadline is in it that morning and again
-   on each rung of its ladder. If a scheduled run does not fire for 36 hours, the bridge
+6. The same `drive-file-intake` run explains the letter (`record_letter_explanation()`):
+   what it says, what happens if nothing is done, the options, and that the objection
+   letter can be prepared from the template. Within 15 minutes the bridge writes it as a
+   Google Doc in the legal folder, next to the PDF.
+7. The nightly check builds the daily brief, so the deadline and the explanation are in it
+   that morning, and the deadline again on each rung of its ladder. If a scheduled run does not fire for 36 hours, the bridge
    emails the person.
 
 ## Known gaps, stated rather than hidden
@@ -191,6 +205,11 @@ start a deadline and how it is counted. The setup workflow copies the chosen pac
   region pack, objection deadlines are an early 14-day placeholder and return windows are
   `unknown`. Public holidays are not modelled; weekends are.
 - `briefing_text()` builds the brief in English. The skills deliver it unchanged.
+- A paper letter enters only as a file: a phone scan or a scanning service's PDF in the
+  inbox (or a `scan_inboxes` folder). See [paper-mail.md](paper-mail.md).
+- An explanation is written by a model from the letter's text. It quotes dates and
+  amounts as printed and says what is certain, but it is not reviewed like the letter
+  templates; the Doc says so, and objections are never drafted freehand.
 - The Drive inbox can be emptied by hand, which removes files before they are indexed.
   The bridge heals them from Gmail, but a file dropped into the inbox manually has no
   second copy. See `troubleshooting.md`.

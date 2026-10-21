@@ -1,5 +1,5 @@
 /**
- * claude-life-os: the Google side of the system.  bridge-3.3
+ * claude-life-os: the Google side of the system.  bridge-3.4
  *
  * Runs inside your own Google account every 15 minutes, with or without Claude:
  *   1. Copies email attachments that matter (bills, contracts, letters from authorities)
@@ -16,8 +16,11 @@
  *   7. Renders the letters you approved in Claude (a cancellation, an objection) to PDF,
  *      saves each next to the document it answers in Drive, and mails it to this account
  *      for you to send. It never sends a letter anywhere else.
+ *   8. Writes the explanation of each letter from an authority or a lawyer (what it says,
+ *      what happens if you do nothing, your options, a draft reply) into a Google Doc next
+ *      to the letter. The Doc is yours to edit; nothing sends it.
  *
- * UPGRADING from bridge-3.2: paste this file over the old code. appsscript.json, the
+ * UPGRADING from bridge-3.2 or bridge-3.3: paste this file over the old code. appsscript.json, the
  * Script Properties and the trigger stay as they are; no new permission is needed.
  *
  * UPGRADING from bridge-3.1: also replace appsscript.json (Project Settings > "Show
@@ -51,7 +54,7 @@
  * is read from the `life_settings` table in Supabase, so there is nothing to edit here.
  */
 
-const SCRIPT_VERSION = 'bridge-3.3';
+const SCRIPT_VERSION = 'bridge-3.4';
 const QUEUE_BATCH = 20;                        // messages per run, the next run takes the rest
 const HEAL_BATCH = 50;                         // staged files re-verified per run
 const WATCHDOG_MAIL_EVERY_HOURS = 12;          // at most one alert per job per 12 hours
@@ -59,6 +62,7 @@ const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 const DRIVE_CHECK_BATCH = 150;                 // indexed files checked per day, oldest check first
 const OUTBOX_BATCH = 10;                       // mails to the owner per run
 const LETTER_BATCH = 5;                        // letters rendered per run
+const EXPLAIN_BATCH = 10;                      // letter explanations written per run
 const SUBJECT_PREFIX = '[Life OS] ';           // the email intake skips the system's own mail by it
 
 const ALLOWED_MIME_TYPES = [
@@ -150,6 +154,9 @@ function run() {
 
     // 7. Letters the person approved: PDF into Drive, and to the owner's inbox.
     try { renderLetters_(settings, stats); } catch (e) { stats.errors.push('letters: ' + e.message); }
+
+    // 8. Explanations of authority and legal letters: a Google Doc next to each letter.
+    try { renderExplanations_(settings, stats); } catch (e) { stats.errors.push('explanations: ' + e.message); }
   } catch (e) {
     stats.errors.push('fatal: ' + e.message);
   } finally {
@@ -335,6 +342,14 @@ function dailyDossier_(settings) {
     props.setProperty('dossier_doc_id', doc.getId());
   }
 
+  writeOutline_(doc, text);
+  doc.saveAndClose();
+  props.setProperty('dossier_date', today);
+  props.setProperty('dossier_hash', hash);
+}
+
+/** Replaces a Doc's body with text whose lines "# ", "## " and "- " are a title, a heading, a bullet. */
+function writeOutline_(doc, text) {
   const body = doc.getBody();
   // Google Docs refuses to remove the last paragraph of a section, and body.clear() throws
   // when the body ends in a list item. End on a plain paragraph first, then clear.
@@ -350,9 +365,6 @@ function dailyDossier_(settings) {
   if (body.getNumChildren() > 1 && body.getChild(0).asText().getText() === '') {
     body.getChild(0).removeFromParent();
   }
-  doc.saveAndClose();
-  props.setProperty('dossier_date', today);
-  props.setProperty('dossier_hash', hash);
 }
 
 // ------------------------------------------------------------------------------------
@@ -475,6 +487,61 @@ function renderLetter_(row, settings) {
     throw e;
   }
   notify_(note.subject, note.body, [pdf.getBlob()]);
+}
+
+// ------------------------------------------------------------------------------------
+// Letter explanations: written by Claude into Supabase (record_letter_explanation()),
+// turned into an editable Google Doc here. A changed explanation rewrites the same Doc.
+// ------------------------------------------------------------------------------------
+
+function renderExplanations_(settings, stats) {
+  let rows;
+  try {
+    rows = sb_('POST', '/rest/v1/rpc/explanations_to_render', { p_limit: EXPLAIN_BATCH });
+  } catch (e) {
+    if (String(e.message).indexOf('-> 404') >= 0) return;  // database older than schema 0.12.0
+    throw e;
+  }
+  (rows || []).forEach(function (row) {
+    try {
+      renderExplanation_(row, settings);
+      stats.explained = (stats.explained || 0) + 1;
+    } catch (e) {
+      stats.errors.push('explanation ' + row.id + ': ' + e.message);
+      try { sb_('POST', '/rest/v1/rpc/explanation_render_failed', { p_id: row.id, p_error: String(e.message) }); }
+      catch (e2) { stats.errors.push('explanation ' + row.id + ' (recording the failure): ' + e2.message); }
+    }
+  });
+}
+
+function renderExplanation_(row, settings) {
+  let doc = null;
+  if (row.doc_id) {
+    try { if (!DriveApp.getFileById(row.doc_id).isTrashed()) doc = DocumentApp.openById(row.doc_id); }
+    catch (e) { doc = null; }                            // the person deleted it: write a new one
+  }
+  const created = !doc;
+  if (created) doc = DocumentApp.create(row.file_name);
+  const file = DriveApp.getFileById(doc.getId());
+  try {
+    if (created) {
+      let folder = null;
+      if (row.folder_id) {
+        try { folder = DriveApp.getFolderById(row.folder_id); if (folder.isTrashed()) folder = null; }
+        catch (e) { folder = null; }                     // the letter's folder is gone: use the catch-all
+      }
+      if (!folder) folder = DriveApp.getFolderById(settings.drive_folders.catch_all || settings.drive_folders.inbox);
+      file.moveTo(folder);
+    } else if (file.getName() !== row.file_name) {
+      file.setName(row.file_name);
+    }
+    writeOutline_(doc, row.text);
+    doc.saveAndClose();
+    sb_('POST', '/rest/v1/rpc/explanation_rendered', { p_id: row.id, p_doc_id: doc.getId(), p_url: file.getUrl() });
+  } catch (e) {
+    if (created) file.setTrashed(true);                  // never leave a Doc the database does not know about
+    throw e;
+  }
 }
 
 /** Fails install early, with the fix, if the read-only Gmail scope is not enough. */
