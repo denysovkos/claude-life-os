@@ -1,12 +1,13 @@
 # Nightly check
 
-Workflow `nightly-check` v1.4 of the `life-os` skill: the last run of the night. The
+Workflow `nightly-check` v1.5 of the `life-os` skill: the last run of the night. The
 shared rules in `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 It runs after both intakes (typically 03:05, after email at 01:05 and Drive at 02:05), so
-everything it reports includes tonight's mail and documents. It does three things:
-brings the derived data up to date, checks the system, and delivers the one daily brief.
-It does not read mail or files and does not change documents or emails.
+everything it reports includes tonight's mail and documents. It does four things:
+brings the derived data up to date, checks the system, delivers the one daily brief, and
+closes the tasks the system opened whose reason to exist is gone. It does not read mail
+or files and does not change documents or emails.
 
 ## Step 0: settings and lock
 
@@ -23,7 +24,7 @@ returning skill_name;
 ```
 
 No snapshot: nothing here edits indexed data. Every write in this workflow (the
-`briefings` row, the lock) is an INSERT or a short UPDATE with `returning`, as SKILL.md
+`briefings` row, the `system_tasks` rows, the lock) is an INSERT or a short UPDATE with `returning`, as SKILL.md
 requires.
 
 ## Step 1: derivations
@@ -103,6 +104,14 @@ deadline is already overdue.
   with `[Life OS]`, which is how the email intake recognises it. Keep the words
   `Daily brief` in English whatever the language.
 
+A brief delivered as a task is registered, so that tomorrow's run closes it (step 3c):
+
+```sql
+insert into system_tasks (kind, ref, todoist_task_id, title)
+values ('brief', current_date::text, :task_id, :title)
+on conflict (todoist_task_id) do nothing returning id;
+```
+
 Either way write exactly one `briefings` row for today (`briefings_date_uidx` keeps it at
 one): `should_send`, `sent`, `suppressed`, `item_count`, `payload` = `build_briefing()`,
 `channel` (`todoist`, or `email` for the outbox), and `todoist_task_id` or `outbox_id`.
@@ -125,15 +134,64 @@ where status in ('approved','ready') and todoist_task_id is not null and todoist
 
 Fetch each task. Completed: `select id, status from mark_letter_sent(:ready_letter_id, :completed_on::date, null);`
 with the day it was completed (the method is unknown; null). That closes the deadline it
-answers. An open task changes nothing. This is the one letter state a night run may
+answers. Then record that the task is done, so step 3c does not fetch it again:
+`select mark_task_closed(:task_id, 'completed by the person');`. An open task changes nothing. This is the one letter state a night run may
 change, because the person changed it by completing the task; nothing here composes,
 approves or withdraws a letter.
+
+## Step 3c: close what the system opened
+
+With `task_provider = 'todoist'`. A task the system created and nobody needs any more is
+noise that hides the ones that matter, so the system closes its own (SKILL.md, "Tasks
+are closed by whoever opened them"):
+
+```sql
+select source, row_id, todoist_task_id, title, reason
+from v_tasks_to_close order by since limit 50;
+```
+
+Yesterday's brief, a review a newer one replaced, a failure task of a job that has run
+clean since, and the task of a deadline that is done or cancelled, a mail that no longer
+needs action, a document that was replaced or is a duplicate, a letter sent or
+withdrawn, a proposal decided. For each: fetch the task. Open: complete it, and if the
+task app takes comments, add the `reason` as one. Already completed, or deleted: nothing
+to do in the task app. Then record it, whatever the case:
+
+```sql
+select mark_task_closed(:task_id, :reason);
+```
+
+A task that cannot be fetched or completed (the connector fails) stays in the view and is
+tried again tomorrow; more than 50 waiting (the first run after an upgrade) are worked off
+over the next nights, oldest first.
+
+Then adopt what older versions left behind: list the open tasks in
+`task_targets.system_project`. Every task titled `📅 Daily brief <date>`, `🧾 Review
+<month>` or `⚠️ <workflow> failed <date>` that is not in `system_tasks` is the system's
+own; register it with its kind and ref (the date, the month, the workflow name) and the
+task's creation time, and the view closes it on the next run:
+
+```sql
+insert into system_tasks (kind, ref, todoist_task_id, title, created_at)
+values ('review', :review_month, :task_id, :title, :created_at::timestamptz)
+on conflict (todoist_task_id) do nothing returning id;
+```
+
+Leave every other task alone, whatever its title: it may be the person's own. Count those
+the system's catalog (`docs/tasks.md`) does not explain and put the count in the brief's
+`SYSTEM` section once a week (Sundays) with the hint "say *life os doctor* to sort them".
+
+Never close a task of a deadline that is still open, a mail that still needs action, a
+letter not yet sent, or a review that is the newest one: those are the person's to
+complete.
 
 ## Step 4: finish
 
 Release the lock by expiring it (SKILL.md). If this workflow itself failed before step 3 (for example the
 database was unreachable), create one task `⚠️ nightly-check failed <date>` in the system
-project, or without a task provider one `outbox` row (`kind = 'failure'`), unless an open
-or unsent one exists.
+project and register it (`kind = 'failure'`, `ref = 'nightly-check'`, as in step 3), or
+without a task provider one `outbox` row (`kind = 'failure'`), unless an open or unsent
+one exists (`select todoist_task_id from system_tasks where kind = 'failure' and ref =
+'nightly-check' and closed_at is null;`). The next brief closes it.
 
 If a human started this run, show them the brief in chat as well.

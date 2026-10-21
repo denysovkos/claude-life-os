@@ -16,9 +16,9 @@ description: >-
   searching Drive or Gmail by hand.
 compatibility: Requires Supabase, Google Drive and Gmail connectors. Google Calendar recommended. Todoist and Craft optional.
 metadata:
-  version: v4.7
+  version: v4.8
   product: claude-life-os
-  schema_version: 0.10.0
+  schema_version: 0.11.0
 ---
 
 # Life OS
@@ -135,7 +135,8 @@ life os doctor" instead of sending.
 
 1. Whatever you would have said in chat goes into the run's log row (`notes`).
 2. A failure becomes a task, or with `task_provider = 'none'` an `errors` entry the daily
-   brief surfaces. Never a sentence nobody reads.
+   brief surfaces. Never a sentence nobody reads. One per failing workflow, registered in
+   `system_tasks`; the nightly check closes it once the workflow runs clean again.
 3. Never assume "yesterday". A run starts where the last one stopped, so a run after
    missed nights covers all of them.
 
@@ -186,6 +187,27 @@ has no task: `update deadlines set todoist_task_id = 'pending:' || :holder where
 and todoist_task_id is null returning id`. Zero rows: someone else has it, skip. Then create
 the task (its description carries the row id), then write the real id back. A row still
 `pending:` from a crashed run: search the task app for the row id before creating anything.
+
+**Only catalogued tasks, and the system closes its own.** A run creates only the task
+kinds `docs/tasks.md` lists: the daily brief, a mail that needs action, an expiring
+document, a letter to send, the monthly review, a failure. Each one either mirrors a row
+(its id in that row's `todoist_task_id`) or is registered in `system_tasks` the moment
+it exists:
+
+```sql
+insert into system_tasks (kind, ref, todoist_task_id, title)
+values ('failure', 'email-intake', :task_id, :title)
+on conflict (todoist_task_id) do nothing returning id;
+```
+
+A finding, a question, a proposal or a decision the person should take is never a task
+of its own: it goes into `improvement_proposals` (`autonomy = 'ask'`), the brief's
+`SYSTEM` section or the run's notes, and the monthly review's one task carries the
+decisions. What is left in the task app is then exactly two things: the system's
+scheduled tasks, which it closes itself when their reason is gone (the nightly check,
+through `v_tasks_to_close`), and the person's own work, which only the person completes.
+A workflow that sees a task completed by the person records it at once with
+`select mark_task_closed(:task_id, 'completed by the person');`.
 
 **Rules before judgement.** `match_rules()` and `region_rules` come before reasoning.
 `match_rules()` returns rules by `priority` ascending: the lowest number wins, so a

@@ -1,5 +1,44 @@
 # Changelog
 
+## 4.8.0 (workflow release v3.6), 2026-10-21
+
+Housekeeping release. Schema 0.11.0, bridge-3.3 (unchanged). Upgrading is additive: one
+table, five columns, one view, one function, no row removed. After uploading the zip, run
+`life os doctor` to apply 0020.
+
+### Fixed
+- **The system now closes the tasks it opened.** Every workflow knew how to create its
+  task and none knew when to close it, so the system project filled up with a month of
+  daily briefs, superseded reviews and failure notices of jobs that had long recovered.
+  `v_tasks_to_close` lists every system task whose reason is gone: a brief of an earlier
+  day, a review the next one replaced, a failure of a job that has run clean since, the
+  task of a deadline that is done or cancelled, a letter sent or withdrawn, a mail that
+  no longer needs action, a document replaced or found to be a duplicate, a proposal
+  decided. The nightly check completes them every night (up to 50, oldest first) and
+  records each with `mark_task_closed()`. (0020, nightly-check)
+- **Old tasks are adopted.** Briefs already on record are registered by the migration.
+  Briefs, reviews and failure tasks from earlier versions that the database never knew
+  are recognised by title in the system project and closed the same way. Nothing else in
+  that project is touched. (0020, nightly-check)
+- **No more loose tasks.** Night runs created tasks outside the catalog for findings,
+  folder questions and bundles. They now create only the six kinds in `docs/tasks.md`;
+  a finding or question becomes an `improvement_proposals` row that the monthly review
+  task carries, a bundle that is missing papers becomes a deadline on the brief's
+  ladder. (SKILL.md, drive-file-intake, life-review)
+- The monthly review carries last month's open decisions into its new task, since the
+  old one is closed once the new one exists. (life-review)
+
+### Added
+- `system_tasks`: every brief, review and failure task the system opened, with when and
+  why it was closed. `task_closed_at` on deadlines, emails, documents, letters and
+  proposals. (0020)
+- Doctor check 14: tasks waiting to be closed, and a numbered list of tasks in the system
+  project the system cannot account for, for you to decide. (setup)
+
+### Workflow versions
+setup v1.8, email-intake v3.6, drive-file-intake v3.5, nightly-check v1.5,
+context-lookup v2.6, life-review v2.6, letters v1.1.
+
 ## 4.7.0 (workflow release v3.5), 2026-10-21
 
 Search release. Schema 0.10.0, bridge-3.3 (unchanged). Upgrading is additive: functions

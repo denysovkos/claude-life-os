@@ -48,6 +48,9 @@ PARAMS = {
     "sent_letter_id": "'00000000-0000-0000-0000-000000000053'", "completed_on": "current_date",
     "gmail_message_id": "'fx-msg-bill'",
     "terms": "array['Kündigungsfrist', 'notice period', 'Rechnung']",
+    # tasks: registering and closing (0020)
+    "task_id": "'it-task-1'", "reason": "'integration test'", "title": "'⚠️ email-intake failed test'",
+    "review_month": "'2026-09'", "created_at": "now()",
 }
 for folder in ("inbox", "emergency", "backups", "catch_all", "identity", "finance", "taxes",
                "housing", "insurance", "work", "legal", "health", "vehicle", "education"):

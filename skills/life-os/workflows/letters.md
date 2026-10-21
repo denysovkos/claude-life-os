@@ -1,6 +1,6 @@
 # Letters
 
-Workflow `letters` v1.0 of the `life-os` skill: a cancellation (Kündigung) or an objection
+Workflow `letters` v1.1 of the `life-os` skill: a cancellation (Kündigung) or an objection
 (Widerspruch, Einspruch), written from the index on the person's request. The shared rules
 in `../SKILL.md` apply; this file adds what is specific to this workflow.
 
@@ -153,12 +153,15 @@ call expects.)
 - "I sent it" (and how): `select id, status from mark_letter_sent(:ready_letter_id, current_date, 'registered_mail');`
   with the day it went out and `post`, `registered_mail`, `fax`, `email`, `online_form`,
   `cancel_button`, `in_person` or `elster` (null if they do not say). The deadline it
-  answers closes. Complete its task if there is one.
+  answers closes. Complete its task if there is one, then
+  `select mark_task_closed(:task_id, 'letter sent');`.
 - A confirmation arrived (or they say so): `select id, status from mark_letter_confirmed(:sent_letter_id, null);`
   The email intake does this itself when the confirmation comes by mail from the
   recipient.
 - They changed their mind before sending: `select id, status from withdraw_letter(:letter_id);`
-  A sent letter stays on record.
+  A sent letter stays on record. Its `✉️ Send by` task is now pointless: complete it and
+  record it the same way (`'letter withdrawn'`); if this chat cannot reach the task
+  app, the next nightly check does it.
 - "What is open", "was it confirmed": `select * from v_letters;` and
   `select * from v_letters_followup;` (`send_now`, `not_rendered`, `unconfirmed`,
   `draft_incomplete`).
