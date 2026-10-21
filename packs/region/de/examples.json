@@ -1,0 +1,16 @@
+{
+  "term_rules": [
+    {"rule": "objection_administrative", "start": "2026-01-15", "expect": "2026-02-19", "why": "posted Thu 15 Jan, notified Mon 19 Jan, one month later Thu 19 Feb"},
+    {"rule": "objection_administrative", "start": "2026-02-24", "expect": "2026-03-30", "why": "notified Sat 28 Feb, one month is Sat 28 Mar, rolls to Mon 30 Mar"},
+    {"rule": "objection_tax", "start": "2026-06-01", "expect": "2026-07-06", "why": "notified Fri 5 Jun, one month is Sun 5 Jul, rolls to Mon 6 Jul"},
+    {"rule": "telecom_min_term_end", "start": "2026-03-15", "expect": "2028-03-14"},
+    {"rule": "telecom_min_term_end", "start": "2024-02-29", "expect": "2026-02-28", "why": "no 29 Feb in 2026, so the term ends on the last day of February"},
+    {"rule": "telecom_min_term_end", "start": "2026-03-01", "expect": "2028-02-29", "why": "day before 1 Mar 2028, a leap year"},
+    {"rule": "telecom_cancel_by", "start": "2026-03-15", "expect": "2028-02-14"},
+    {"rule": "insurance_cancel_by", "start": "2026-12-31", "expect": "2026-09-30"},
+    {"rule": "rent_tenant_exit", "start": "2026-04-03", "expect": "2026-06-30"},
+    {"rule": "consumer_withdrawal", "start": "2026-05-02", "expect": "2026-05-18", "why": "day 14 is Sat 16 May"},
+    {"rule": "statutory_warranty", "start": "2026-05-02", "expect": "2028-05-02"},
+    {"rule": "residence_permit_apply_by", "start": "2027-08-31", "expect": "2027-08-31"}
+  ]
+}

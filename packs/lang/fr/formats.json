@@ -1,0 +1,30 @@
+{
+  "decimal_separator": ",",
+  "thousands_separator": " ",
+  "amount_pattern": "(?P<amount>\\d{1,3}(?:[ \\u00a0]\\d{3})*(?:,\\d{2})|\\d+(?:,\\d{2}))\\s?(?:€|EUR)",
+  "date_patterns": ["(?P<y>\\d{4})-(?P<m>\\d{2})-(?P<d>\\d{2})", "(?P<d>\\d{1,2})/(?P<m>\\d{1,2})/(?P<y>\\d{4}|\\d{2})\\b", "(?P<d>\\d{1,2})(?:er)?\\s(?P<mon>[a-zéû]{3,9}\\.?)\\s(?P<y>\\d{4})"],
+  "notes": "Dates are day first (05/03/2026). The first of the month is written 1er. Thousands are separated by a space, a no-break space or a narrow no-break space; the currency follows the amount (1 234,56 €).",
+  "month_names": {
+    "janvier": 1,
+    "février": 2,
+    "mars": 3,
+    "avril": 4,
+    "mai": 5,
+    "juin": 6,
+    "juillet": 7,
+    "août": 8,
+    "septembre": 9,
+    "octobre": 10,
+    "novembre": 11,
+    "décembre": 12,
+    "janv": 1,
+    "févr": 2,
+    "fév": 2,
+    "avr": 4,
+    "juil": 7,
+    "sept": 9,
+    "oct": 10,
+    "nov": 11,
+    "déc": 12
+  }
+}

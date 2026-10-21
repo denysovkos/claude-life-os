@@ -1,0 +1,11 @@
+{
+  "name": "lifeos-integration-tests",
+  "private": true,
+  "description": "Integration tests for claude-life-os (see README.md)",
+  "scripts": {
+    "bridge": "node --test --test-concurrency=1 bridge/*.test.js"
+  },
+  "devDependencies": {
+    "acorn": "8.15.0"
+  }
+}

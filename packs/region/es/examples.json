@@ -1,0 +1,44 @@
+{
+  "term_rules": [
+    {
+      "rule": "objection_administrative",
+      "start": "2026-03-02",
+      "expect": "2026-04-02"
+    },
+    {
+      "rule": "objection_administrative",
+      "start": "2026-05-29",
+      "expect": "2026-06-29"
+    },
+    {
+      "rule": "objection_tax",
+      "start": "2026-03-02",
+      "expect": "2026-04-02"
+    },
+    {
+      "rule": "objection_tax",
+      "start": "2026-05-29",
+      "expect": "2026-06-29"
+    },
+    {
+      "rule": "consumer_withdrawal",
+      "start": "2026-03-02",
+      "expect": "2026-03-16"
+    },
+    {
+      "rule": "consumer_withdrawal",
+      "start": "2026-05-29",
+      "expect": "2026-06-12"
+    },
+    {
+      "rule": "statutory_warranty",
+      "start": "2026-03-02",
+      "expect": "2029-03-02"
+    },
+    {
+      "rule": "statutory_warranty",
+      "start": "2026-05-29",
+      "expect": "2029-05-29"
+    }
+  ]
+}

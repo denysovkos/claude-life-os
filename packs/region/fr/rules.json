@@ -1,0 +1,97 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_administrative",
+      "label": "Recours contentieux",
+      "applies_to": ["official_decision"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_months": 2}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [30, 14, 7, 3, 1],
+      "basis": "Article R421-1 du code de justice administrative: deux mois à compter de la notification pour saisir le tribunal administratif. Un délai qui expire un samedi, un dimanche ou un jour férié est prorogé au premier jour ouvrable.",
+      "notes": "Administrative deadlines are délais francs, so the real end is one day later than counted here; this errs early on purpose. A recours gracieux within the same two months interrupts the period."
+    },
+    {
+      "key": "consumer_withdrawal",
+      "label": "Délai de rétractation",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": true,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "Article L221-18 du code de la consommation: quatorze jours à compter de la réception du bien (directive 2011/83/UE).",
+      "notes": "v_purchase_rights counts from the order mail, which is earlier than delivery, so it errs on the safe side. Without proper withdrawal information the period extends by up to 12 months (Directive 2011/83/EU, art. 10)."
+    },
+    {
+      "key": "statutory_warranty",
+      "label": "Fin de la garantie légale de conformité",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_months": 24}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [30],
+      "basis": "Article L217-3 du code de la consommation: garantie légale de conformité de deux ans à compter de la délivrance du bien.",
+      "notes": "A manufacturer's guarantee is voluntary and separate; its terms are in the guarantee document."
+    },
+    {
+      "key": "rent_tenant_exit",
+      "label": "Fin du bail après congé du locataire",
+      "applies_to": ["rental_contract"],
+      "deadline_type": "notice_period",
+      "start": "event_date",
+      "steps": [{"add_months": 3}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [14, 7],
+      "basis": "Article 15 de la loi n° 89-462 du 6 juillet 1989: préavis de trois mois pour le locataire d'un logement vide, à compter de la réception du congé.",
+      "notes": "One month instead for a furnished flat, in a zone tendue, or after a job loss, a new job or for health reasons; store notice_period_months = 1 then."
+    },
+    {
+      "key": "insurance_exit_after_first_year",
+      "label": "Résiliation d'assurance (loi Hamon)",
+      "applies_to": ["insurance_policy"],
+      "deadline_type": "notice_period",
+      "start": "event_date",
+      "steps": [{"add_months": 1}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [7],
+      "basis": "Article L113-15-2 du code des assurances: après la première année, les assurances auto, habitation et affinitaires se résilient à tout moment; la résiliation prend effet un mois après la réception de la notification.",
+      "notes": "event_date is the day the insurer receives the cancellation. Other policies follow their own contract terms."
+    }
+  ],
+  "annual_dates": [],
+  "facts": [
+    {
+      "key": "tax_return_dates",
+      "text": "The deadline for the online income tax return depends on the département and falls between mid-May and early June; impots.gouv.fr publishes the dates each spring."
+    },
+    {
+      "key": "tax_claim",
+      "text": "A réclamation against income tax can be filed until 31 December of the second year after the tax was put into collection (article R196-1 du livre des procédures fiscales)."
+    }
+  ],
+  "authorities": [
+    {
+      "name": "Caisse d'allocations familiales (CAF)",
+      "kind": "authority",
+      "domains": ["caf.fr"],
+      "category": "government"
+    },
+    {
+      "name": "Assurance Maladie (ameli)",
+      "kind": "authority",
+      "domains": ["ameli.fr"],
+      "category": "health"
+    }
+  ],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}

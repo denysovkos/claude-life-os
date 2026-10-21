@@ -1,0 +1,17 @@
+{
+  "categories": {
+    "purchases": ["kassabon", "bedankt voor je aankoop", "bedankt voor uw aankoop", "aankoopbewijs", "betaald met pin", "betaalbewijs"],
+    "orders_delivery": ["pakket", "bezorgd", "track & trace", "verzonden", "onderweg", "afhaalpunt", "zending"],
+    "government": ["belastingdienst", "beschikking", "gemeente", "immigratie- en naturalisatiedienst", "mijnoverheid", "kenmerk", "bezwaar", "verblijfsvergunning", "aanslag"],
+    "bank_finance": ["rekeningoverzicht", "saldo", "betaalrekening", "spaarrekening", "rente", "beleggen", "creditcardoverzicht", "jaaroverzicht"],
+    "bills_payments": ["factuur", "te betalen", "automatische incasso", "termijnbedrag", "vervaldatum", "betalingsherinnering", "aanmaning", "premie"],
+    "legal_notary": ["notaris", "advocaat", "kantoor", "conceptakte", "akte", "volmacht", "rechtbank", "koopovereenkomst"],
+    "work": ["loonstrook", "salaris", "werkgever", "personeelszaken", "arbeidsovereenkomst", "jaaropgaaf", "verlofaanvraag"],
+    "health": ["afspraak", "huisarts", "recept", "zorgverzekeraar", "uitslag", "tandarts", "verwijzing"],
+    "travel": ["vlucht", "instapkaart", "boekingsbevestiging", "hotel", "inchecken", "reisschema", "reservering"],
+    "personal_social": ["verjaardag", "etentje", "tot snel", "familie", "bruiloft", "feestje", "zullen we afspreken"]
+  },
+  "action_phrases": ["graag betalen", "actie vereist", "reageer voor", "ondertekend retour", "graag bevestigen", "termijn"],
+  "deadline_phrases": ["vervaldatum", "te betalen voor", "uiterlijk", "binnen 14 dagen", "binnen een maand", "voor de datum"],
+  "amount_labels": ["totaal", "te betalen", "bedrag", "totaalbedrag"]
+}

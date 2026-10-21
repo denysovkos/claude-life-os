@@ -1,0 +1,703 @@
+# Life OS setup
+
+Workflow `setup` v1.9 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
+`../SKILL.md` apply; this file adds what is specific to this workflow.
+
+Three modes. Pick from what the person said; if unclear, ask.
+
+- **install**: first-time setup, or finishing one that stopped halfway.
+- **doctor**: read-only health check with one concrete fix per problem.
+- **reconfigure**: change language, country, task or notes app, folders, contacts, the
+  people in the household.
+
+## How to talk during setup
+
+The person may never have used a database or a script editor. So:
+
+- One step at a time. Each step ends with exactly one thing for them to do, or nothing.
+- Say where to click and what to paste, with the exact text. No jargon without a
+  half-sentence explanation ("Supabase, the database that stores the index").
+- Speak the person's language from the first message. Once `output_locale` is chosen,
+  use it.
+- Never ask for, accept or repeat the Supabase **secret** key in chat. It goes only into
+  Google Apps Script. If they paste it anyway: tell them to create a new secret key in
+  Supabase and delete the pasted one, because chat history is not a safe place for it.
+- Before the first question, say once, in their language, that Life OS is not legal, tax
+  or financial advice: its deadlines are defaults from public law, the document in hand
+  wins, and the author accepts no liability (`assets/DISCLAIMER.md`). Continue only after
+  they acknowledge it.
+- Resume by checking reality, not memory. Before every step, run its check; if it is
+  already done, say so in one line and move on. Running install twice must be harmless.
+
+## Where the files are
+
+The database migrations, the packs and the Apps Script ship in the skill's own folder
+(`assets/`, next to `SKILL.md`). When the skill runs from a clone of the repository (Claude
+Code, routines), `assets/` does not exist and the same files are at the repository root:
+`supabase/migrations`, `supabase/seed`, `packs`, `apps-script`, `docs`.
+
+```
+assets/migrations/0001_tables.sql … 0021_letter_explainer.sql
+assets/seed/document_types.sql
+assets/packs/lang/<locale>/{dossier,folders,keywords,formats}.json
+assets/packs/region/<code>/{rules.json,classification_rules.sql}
+assets/apps-script/{Code.gs,appsscript.json}
+assets/docs/troubleshooting.md
+```
+
+Find the folder with `find / -type d -path '*life-os/assets' 2>/dev/null | head -1`.
+If there is none (the skill was installed without assets), ask the person to download
+the repository as a ZIP (on GitHub: the green "Code" button, then "Download ZIP") and
+drop it into this chat. Unzip it in the sandbox and use `supabase/`, `packs/`,
+`apps-script/` and `docs/` from there.
+
+---
+
+# Mode: install
+
+## Step 1: connectors
+
+Try one harmless call on each and report a single checklist:
+
+| Connector | Check | Needed |
+|---|---|---|
+| Supabase | `list_organizations` | yes |
+| Google Drive | `search_files` for one file | yes |
+| Gmail | `search_threads` with `in:inbox`, one result | yes |
+| Google Calendar | `list_calendars` | recommended (travel and appointments become events) |
+| Todoist | `find-projects` | optional (tasks) |
+| Craft | a read of the root | optional (monthly report) |
+
+Missing a required one: "In Claude, open Settings → Connectors, find <name>, click
+Connect and sign in. Then tell me 'done'." Stop until it works.
+
+## Step 2: questions
+
+Ask these in one message, with the defaults filled in so they can just say "yes":
+
+1. Your name, as it should appear in reports.
+2. The Gmail address this runs on. It must be the same Google account as Drive and the
+   Apps Script: the bridge sends every brief and alert to the account it runs in, and the
+   email intake recognises the system's own mail by this address.
+3. Time zone. Default: the one Google Calendar reports (`list_calendars`, primary).
+4. The language you want briefs, tasks and reports in (`output_locale`). Every pack in
+   `assets/packs/lang/` is complete: `en`, `de`, `uk`, `pl`, `fr`, `es`, `it`, `nl`, `ru`,
+   `pt`. Any other language works with English labels.
+5. The languages your mail and documents arrive in (`input_locales`).
+6. The country whose rules apply to your paperwork (`region`). Read the list from
+   `assets/packs/region/*/pack.json`: `de` is stable; `at`, `fr`, `es`, `it`, `nl`, `pt`,
+   `pl`, `gb`, `us`, `ua`, `ch`, `be`, `ie`, `ru` are beta (written from the statutes, not yet reviewed locally:
+   say so in one sentence when one of them is chosen). Anything else: the system still
+   works, but deadlines are counted with cautious placeholders and the workflows ask about
+   local rules instead of knowing them. Offer the pack's `default_timezone` and
+   `default_input_locales` as defaults for questions 3 and 5.
+7. Task app: Todoist or none. Without one, the daily brief and review arrive by email,
+   sent by the bridge to their own address.
+8. Notes app for the monthly report: Craft or none (then a Google Doc).
+9. Optional now, easy later: current address and old addresses still in use by some
+   senders; people for the emergency binder (name, role, phone or email).
+10. Whose papers besides their own does this handle? Usually a partner and children,
+   sometimes a parent. For each: the name as it appears on their documents, the
+   relation (partner, child, parent, other), and, if they like, the birth date and any
+   other spelling their papers use (full legal name, maiden name). Say why in one
+   sentence: then the brief says whose passport expires, and "what does Max have
+   expiring" has an answer. "Nobody" is a fine answer, and anyone can be added later.
+
+Read the available packs from `assets/packs/lang/*/pack.json` and
+`assets/packs/region/*/pack.json` rather than from this list, in case newer ones ship.
+
+## Step 3: the Supabase project
+
+Check first: `list_projects`. If one is named `life-os` (or the person names one), look
+inside with `list_tables` (schema `public`):
+
+- has `life_settings`, or any rows in `documents`, `emails` or `deadlines`: the database
+  exists. Never install into it. Skip to step 5, and run the upgrade in doctor mode if
+  `schema_version` is missing or older than `schema_version` in `../SKILL.md`.
+- has other tables: it is not ours. Do not install into it. Create a new project.
+- empty: use it.
+
+Otherwise create one: `list_organizations`, then `create_project` named `life-os` in the
+region closest to the person (for example `eu-central-1` for central Europe; inside the
+EU keeps the data under EU law). If their Supabase account already holds other projects,
+suggest a separate organization for Life OS: the Supabase connector can reach every
+project in the account, and keeping this one apart keeps its data out of unrelated work. The free
+plan is enough. If the tool asks to confirm a cost, confirm the free plan's $0 only;
+anything else goes to the person first. Wait until `get_project` reports
+`ACTIVE_HEALTHY` (a minute or two; tell them it is working).
+
+Tell them one fact now so it is not a surprise later: free Supabase projects pause
+after a week without activity. The bridge talks to the database every 15 minutes,
+which keeps it awake.
+
+## Step 4: the database
+
+Apply in this order with `apply_migration`, each named after its file without `.sql`:
+
+```
+0001_tables, 0002_functions, 0003_views, 0004_triggers_and_security,
+0005_settings_and_localization, 0006_pack_settings, 0007_region_rules_in_sql,
+0008_nightly_check_watchdog, 0009_business_days, 0010_hotfixes_and_safe_recount,
+0011_mcp_safe_writes, 0012_notice_periods, 0013_watchdog_and_snapshot,
+0014_successors_binder_folders, 0015_audits_health_invariants, 0016_security_hardening,
+0017_household_members, 0018_letters, 0019_meaning_search,
+0020_task_lifecycle, 0021_letter_explainer
+```
+
+Then run `assets/seed/document_types.sql` with `execute_sql` (or as migration
+`seed_document_types`), then `assets/packs/region/<region>/classification_rules.sql` if a
+region pack was chosen. Stop at the first error, show it, and look for it in
+`assets/docs/troubleshooting.md`. Never "fix" a migration by editing it on the fly.
+
+Verify:
+
+```sql
+select value from life_settings where key = 'schema_version';            -- "0.12.0"
+select count(*) from pg_tables where schemaname = 'public';              -- 42
+select count(*) from pg_views  where schemaname = 'public';              -- 47
+select count(*) from document_types;                                     -- 43
+select jobname, schedule, active from cron.job;                          -- nightly-derivations
+```
+
+`get_advisors` (security) will list `rls_enabled_no_policy` for every table. That is the
+design: row level security on, no policies, so the public API can read nothing. Say so
+in one line if the person sees it in the dashboard. Do not add policies.
+
+## Step 5: settings
+
+Every setting lives in one place: the `life_settings` table of the person's own
+Supabase project, one row per key, the value as JSON. Nothing is stored in the skills,
+in Claude's memory or in the Apps Script (which only holds the database URL and key). A
+trigger copies every change into `settings_history` with who made it, so any setting can
+be read as of a date and put back. Tell the person this in one sentence.
+
+Build the values from the answers and the packs, then write them in one `execute_sql`
+that starts with `select set_config('app.actor','setup',true);` (so the history
+shows the setup made the change, not a human). Use dollar quoting for JSON, because
+translations contain apostrophes:
+
+```sql
+select set_config('app.actor','setup',true);
+insert into life_settings (key, value) values
+  ('owner_name',        to_jsonb(:name::text)),
+  ('owner_email',       to_jsonb(:email::text)),
+  ('timezone',          to_jsonb(:tz::text)),
+  ('output_locale',     to_jsonb(:out::text)),
+  ('input_locales',     $j$[...]$j$::jsonb),
+  ('region',            to_jsonb(:region::text)),          -- or 'null'::jsonb
+  ('task_provider',     to_jsonb(:tasks::text)),           -- 'todoist' | 'none'
+  ('notes_provider',    to_jsonb(:notes::text)),           -- 'craft' | 'none'
+  ('dossier_labels',    $j${...}$j$::jsonb),
+  ('lang_hints',        $j${...}$j$::jsonb),
+  ('region_rules',      $j${...}$j$::jsonb),
+  ('letter_templates',  $j${...}$j$::jsonb),
+  ('installed_packs',   $j${"lang": {...}, "region": {...}}$j$::jsonb),
+  ('current_address',   to_jsonb(:address::text)),        -- or 'null'::jsonb
+  ('former_address_patterns', $j$[...]$j$::jsonb),
+  ('emergency_contacts',      $j$[...]$j$::jsonb),
+  ('tax_year',          to_jsonb(extract(year from now())::int)),
+  ('schedule_slots',    $j${"email-intake": "01:05", "drive-file-intake": "02:05", "nightly-check": "03:05"}$j$::jsonb),
+  ('area_aliases',      '{}'::jsonb)
+on conflict (key) do update set value = excluded.value, updated_at = now();
+```
+
+- `dossier_labels`: `packs/lang/<output_locale>/dossier.json` as is. English: `{}` (the
+  built-in labels are English).
+- `lang_hints`: for each input locale, `{"<locale>": {"keywords": <keywords.json>,
+  "formats": <formats.json or omitted>}}`.
+- `region_rules`: `packs/region/<region>/rules.json` with two keys added from that pack's
+  `pack.json`: `"region"` and `"version"`. No region: `{}`. The database reads its legal
+  rules from here: objection deadlines (`derive_deadlines()`), return and warranty windows
+  (`v_purchase_rights`), tax form labels (`v_tax_items`). With a region set but this empty,
+  nothing legal is derived and the invariant `region_rules_missing` fires, on purpose.
+- `letter_templates`: what `compose_letter()` writes cancellations and objections from
+  (`workflows/letters.md`). A letter is written in the language of the country it goes
+  to, not in `output_locale`. Pick the letter language: the `locale` of
+  `packs/region/<region>/letters.json` if that file exists; otherwise the first of the
+  region pack's `default_input_locales` that has `packs/lang/<locale>/letters.json`;
+  otherwise `output_locale`, and `en` if that has none. Take
+  `packs/lang/<letter language>/letters.json` as the base, then, when the region has a
+  `letters.json`, let its `date_format`, `child_signature` and each of its `kinds` replace
+  the base's. Add `"region"` and `"version"` (the region pack's version when it has
+  letters, otherwise the language pack's). Germany has a Kündigung, a Widerspruch and an
+  Einspruch; every other country has the generic cancellation of its language and no
+  objection yet. `tests/sql_letters_check.py` (`letter_templates()`) is the same rule in
+  code.
+- `installed_packs`: `{"lang": {"<locale>": "<version>", …}, "region": {"<code>": "<version>"}}`
+  for every pack written. Doctor compares it with the packs in `assets/` to offer updates.
+- `former_address_patterns`: short, distinctive fragments (a street name and house
+  number), never a whole address, so they match however a sender formats it. Patterns of
+  eight letters or more also match masked forms (`Must*****llee`).
+- `schedule_slots`: the local start time of each night job, as created in step 10. The
+  watchdog reports a job that starts hours away from its slot (`v_schedule_drift`).
+- `area_aliases`: when the person names areas differently elsewhere (a notes app), map
+  that name to the Drive area: `{"Home": "Household"}`. Nothing is renamed.
+
+Then the household, from question 10. The owner comes first, as `self`, under the name
+from question 1; then everyone else, one row each:
+
+```sql
+select set_config('app.actor','setup',true);
+insert into household_members (name, relation)
+values (:name, 'self')
+on conflict ((lower(btrim(name)))) do update set relation = excluded.relation, active = true
+returning id, name, relation;
+```
+
+```sql
+select set_config('app.actor','setup',true);
+insert into household_members (name, relation, birth_date, aliases)
+values (:member_name, :relation, :birth_date, :aliases)
+on conflict ((lower(btrim(name)))) do nothing
+returning id, name, relation;
+```
+
+`relation` is `partner`, `child`, `parent` or `other`; `aliases` is a text array of the
+other spellings (`'{}'` when there are none). Zero rows back means a member with that
+name exists already: show it and ask whether it is the same person. The name is matched
+exactly (case aside), so it must be the one their documents use; a nickname goes into
+`aliases`.
+
+Check: `select emergency_dossier();` should come back in the chosen language, with the
+household listed when anyone besides the owner was named.
+
+## Step 6: Drive folders
+
+Names come from `packs/lang/<output_locale>/folders.json`, falling back per key to
+`packs/lang/en/folders.json`. First search Drive for an existing root folder with that
+name owned by the person; reuse it and its children if found, so a second run creates
+nothing twice. Otherwise create, with `create_file` and mime type
+`application/vnd.google-apps.folder`:
+
+```
+<root>/
+  <inbox>          landing zone for the bridge and for files you drop in
+  <emergency>      the emergency binder Google Doc lives here
+  <backups>        monthly CSV exports
+  <catch_all>      documents whose area has no folder yet
+  <identity>  <finance>/<taxes>  <housing>  <insurance>  <work>
+  <legal>  <health>  <vehicle>  <education>
+```
+
+Then:
+
+```sql
+update life_settings set value = coalesce(value, '{}'::jsonb) || jsonb_build_object(
+  'inbox', :inbox_id, 'emergency', :emergency_id, 'backups', :backups_id,
+  'catch_all', :catch_all_id), updated_at = now()
+where key = 'drive_folders';
+
+insert into drive_folder_areas (drive_folder_id, folder_path, area_name, para_category,
+  document_domain_hint, is_filing_default, notes) values
+  (:identity_id,  '<root>/<identity>',          '<identity>',  'area', 'identity',   true,  null),
+  (:finance_id,   '<root>/<finance>',           '<finance>',   'area', 'finance',    true,  null),
+  (:taxes_id,     '<root>/<finance>/<taxes>',   '<finance>',   'area', 'finance',    false, 'tax assessments, wage tax certificates, tax returns'),
+  (:housing_id,   '<root>/<housing>',           '<housing>',   'area', 'property',   true,  null),
+  (:insurance_id, '<root>/<insurance>',         '<insurance>', 'area', 'insurance',  true,  null),
+  (:work_id,      '<root>/<work>',              '<work>',      'area', 'employment', true,  null),
+  (:legal_id,     '<root>/<legal>',             '<legal>',     'area', 'legal',      true,  null),
+  (:health_id,    '<root>/<health>',            '<health>',    'area', null,         true,  null),
+  (:vehicle_id,   '<root>/<vehicle>',           '<vehicle>',   'area', 'vehicle',    true,  null),
+  (:education_id, '<root>/<education>',         '<education>', 'area', 'education',  true,  null),
+  (:catch_all_id, '<root>/<catch_all>',         '<catch_all>', 'resource', null,     true,  null)
+on conflict (drive_folder_id) do nothing;
+```
+
+The inbox, emergency and backups folders are deliberately not in `drive_folder_areas`:
+they are never a destination for a document.
+
+Ask once: "Do you already keep documents in other Drive folders?" If yes, map each
+existing folder with one more `drive_folder_areas` row (asking which area it is) instead
+of moving anything. The intake indexes them where they are.
+
+## Step 7: the Apps Script bridge
+
+This is the part that runs inside the person's Google account every 15 minutes, without
+Claude: it copies important attachments from Gmail into the Drive inbox, re-copies any
+that go missing, emails them if a Claude job stops running, delivers the brief and the
+review to their own inbox, and rewrites the emergency binder daily. It reads everything
+else from the database, so the code needs no editing. It can only read Gmail, never
+change, send from or delete it, and it only talks to Supabase.
+
+Get the project URL with `get_project_url`. Then walk them through it, one message:
+
+1. Open **script.google.com** (signed in as the Gmail address from step 2), click
+   **New project**. Click "Untitled project" at the top and name it `Life OS bridge`.
+2. Delete everything in the editor and paste the code below. Click the save icon.
+   (Show `assets/apps-script/Code.gs` in one code block, unchanged.)
+   Then the permissions file: gear icon **Project Settings** → tick **Show
+   "appsscript.json" manifest file in editor**, back in the editor click `appsscript.json`,
+   replace its content with the second block (`assets/apps-script/appsscript.json`,
+   unchanged), save. It limits the script to reading Gmail and to talking to Supabase.
+3. Click the gear icon **Project Settings** on the left. Scroll to **Script Properties**,
+   click **Add script property** twice:
+   - `SUPABASE_URL` = `<the project URL>`
+   - `SUPABASE_SECRET_KEY` = the secret key. To get it: supabase.com → your project →
+     **Project Settings** → **API Keys** → **Secret keys** → **Create new secret key**
+     (name it `apps-script`), click copy. It starts with `sb_secret_`. Paste it only
+     here, never into the chat.
+   Click **Save script properties**.
+4. Back in the editor (the `< >` icon), choose `install` in the function dropdown at the
+   top and click **Run**. Google asks for permission: **Review permissions** → your
+   account → if it says "Google hasn't verified this app", click **Advanced** → **Go to
+   Life OS bridge (unsafe)**. It is your own script, running in your own account.
+   If the next screen shows checkboxes, click **Select all** (an unticked box makes the
+   script fail later with a permission error), then **Allow**.
+   In Ukrainian or German Google shows the same buttons translated ("Додатково",
+   "Erweitert"); `assets/docs/apps-script.md` and `apps-script.uk.md` have the full
+   walkthrough and what each permission is for, if they ask.
+5. The log at the bottom says "Installed." Come back here and say "done".
+
+Timezone of the script itself does not matter; it reads `timezone` from the database.
+
+## Step 8: first heartbeat
+
+```sql
+select started_at, finished_at, errors, script_version
+from bridge_runs order by started_at desc limit 1;
+```
+
+A row from the last few minutes with `finished_at` set, `errors = []` and
+`script_version = 'bridge-3.4'` means the bridge works. Say so plainly.
+
+No row at all: `install` did not reach the database. Ask what the log said. Common:
+
+| Log says | Meaning | Fix |
+|---|---|---|
+| `Script Property SUPABASE_URL is missing` | property name or value missing | re-check step 7.3, names are case-sensitive |
+| `That is the publishable key` | the wrong key was pasted | use the `sb_secret_…` key |
+| `-> 401` | key revoked or from another project | create a new secret key in this project |
+| `life_settings.drive_folders.inbox is empty` | step 6 did not finish | run step 6, then `install` again |
+| `No item with the given ID could be found` | inbox folder id wrong or not owned by this account | check the Google account; re-run step 6 |
+| `Gmail read check failed` | this Google account needs the full Gmail scope for reading | do what the message says in `appsscript.json`, run `install` again |
+| `URL not allowed` / `not on the allowlist` | the project URL is not a `*.supabase.co` address | check `SUPABASE_URL`; a custom domain needs its own line in `urlFetchWhitelist` |
+
+A row with errors: read them; `fatal:` lines block everything, others are per message.
+
+## Step 9: Todoist and Craft (only if chosen)
+
+Todoist: find or create a project `Life OS` (system project: briefs, reviews, failures)
+and, if the person wants mail tasks separate, a second one; find or create the label
+`mail`. Write the ids:
+
+```sql
+update life_settings set value = jsonb_build_object(
+  'system_project', :system_id, 'default_project', :default_id, 'label', 'mail'),
+  updated_at = now()
+where key = 'task_targets';
+```
+
+Craft: find or create a folder `Life OS reports` and write its id into
+`notes_targets.reports_folder`.
+
+## Step 10: the night schedule
+
+The Claude side does not start by itself. It needs four scheduled runs, at night, in
+this order, each with a few minutes past the hour (runs exactly on the hour can start
+late):
+
+| When (their time zone) | Prompt | Why this slot |
+|---|---|---|
+| every day 01:05 | `Run the life-os email-intake workflow.` | first: its categories tell the bridge which attachments to copy, which the bridge does within 15 minutes |
+| every day 02:05 | `Run the life-os drive-file-intake workflow.` | an hour later, so tonight's attachments are already in the Drive inbox |
+| every day 03:05 | `Run the life-os nightly-check workflow.` | last: derivations, health check, and the one daily brief, built from everything above |
+| 1st of every month, 04:05 | `Run the life-os life-review workflow.` | the review reads a finished month and a fresh index |
+
+Night, because nobody is working with the mail or the Drive then, the runs do not
+compete with the person's own Claude use, and the brief is ready in the morning.
+
+Where to create them depends on what the person uses. Explain the choice in two
+sentences and walk them through one:
+
+- **Claude Code routines (recommended).** They run in Anthropic's cloud, so the computer
+  can be off. At claude.ai/code/routines → **New routine**: name, the prompt from the
+  table, a repository to start in (a fork of claude-life-os is the natural choice; it
+  holds no personal data), the **Default** environment, trigger **Schedule** → daily
+  (monthly: pick a preset, then `/schedule update` in the Claude Code CLI to set
+  `5 4 1 * *`), connectors: keep Gmail, Google Drive, Supabase, Google Calendar and, if
+  used, Todoist and Craft, remove the rest. Four routines. A routine acts without asking,
+  so close what the skill never needs: in each connector's tool settings
+  (claude.ai/customize/connectors) switch off Gmail's send, draft, reply and forward
+  tools, and Drive's sharing and permission tools. Mail and documents are written by
+  strangers; a tool that is off cannot be talked into anything. A routine loads the skill from
+  the clone (`.claude/skills/life-os` in the repository), so a fork must be kept in sync
+  with new releases; a skill uploaded to the Claude account works as well. From the CLI,
+  `/schedule` creates the same thing conversationally. Full walkthrough: `assets/docs/scheduling.md`.
+- **Claude desktop app, scheduled tasks.** Same prompts and times (**Scheduled tasks** →
+  new task), but they run on the person's computer, so it must be on and awake at night.
+
+If the person picks other times, write them into `life_settings.schedule_slots` so the
+watchdog's drift check compares against the real slots. The next morning,
+`v_intake_watchdog` should show a fresh run for each nightly job; the doctor mode checks
+it.
+
+Say honestly: a scheduled run can still be skipped. That is why the database keeps a
+watchdog and the bridge emails them when a job has not run within its window (36 hours
+for each nightly job). A missed night is caught up by the next run, because each run
+starts where the last one stopped.
+
+## Step 11: first run and baseline
+
+Offer to run the email intake now (it covers the last two days on an empty system),
+then the Drive intake, then the nightly check (which sends the first brief). Then record
+the installed versions:
+
+```sql
+insert into skill_revisions (skill_name, version, change_type, summary)
+values ('life-os', 'v4.9', 'baseline', 'installed'),
+       ('setup', 'v1.9', 'baseline', 'installed with life-os v4.9'),
+       ('email-intake', 'v3.6', 'baseline', 'installed with life-os v4.9'),
+       ('drive-file-intake', 'v3.6', 'baseline', 'installed with life-os v4.9'),
+       ('nightly-check', 'v1.6', 'baseline', 'installed with life-os v4.9'),
+       ('context-lookup', 'v2.7', 'baseline', 'installed with life-os v4.9'),
+       ('life-review', 'v2.6', 'baseline', 'installed with life-os v4.9'),
+       ('letters', 'v1.2', 'baseline', 'installed with life-os v4.9');
+```
+
+Finish with doctor mode, then a three-line summary: what runs when, where the emergency
+binder is, and "ask me anything about your documents in any chat".
+
+---
+
+# Mode: doctor
+
+Read-only. Run every check, then answer with one short table in `output_locale`:
+check, status (ok / warning / problem), and for every non-ok row exactly one fix. Never
+apply a fix without the person saying yes.
+
+1. **Connectors**: the calls from install step 1.
+2. **Schema version**: `select value from life_settings where key = 'schema_version';`
+   Older than `schema_version` in `../SKILL.md`: an upgrade is available. `list_migrations`
+   shows what is applied; the fix is to apply the missing files from `assets/migrations`
+   in order (after a `take_snapshot('pre-upgrade')`), then the pack check below, because
+   a migration can start reading a setting the old installation never wrote. Every
+   migration is additive, can run twice, and contains no top-level DROP and no row
+   removal, so the connector applies it without asking. After upgrading, run
+   `assets/tests/release_checks.sql` if present (or the repository's
+   `tests/sql/release_checks.sql`): it must end with "release checks: all passed".
+   Before applying, show the person `select * from rederive_deadlines(false) where action
+   <> 'unchanged';` and do not run the recount with `true` unless they agree.
+3. **Packs current**: compare `installed_packs` with `version` in
+   `assets/packs/*/*/pack.json`. A newer region pack means the legal rules changed:
+   the fix is "update the region pack", done as in reconfigure → Country (rules, then the
+   recount of open deadlines). `select failing from v_system_invariants where invariant = 'region_rules_missing';`
+   above zero is a problem, not a warning: no objection deadline is being derived. It is
+   what an installation upgraded from 0.2.0 looks like until its pack is synced.
+4. **Settings complete**: `owner_email`, `timezone`, `output_locale`, and all four
+   `drive_folders` set. Each folder id exists and is not trashed (`get_file_metadata`),
+   the optional `scan_inboxes` ones included: a scanning service that lost its folder
+   keeps scanning into nowhere the intake looks.
+   `task_provider = 'todoist'` needs `task_targets.system_project` to exist in Todoist.
+5. **Security**:
+   ```sql
+   select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+   where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity;     -- empty
+   select table_name, grantee, privilege_type from information_schema.role_table_grants
+   where table_schema = 'public' and grantee in ('anon','authenticated');       -- empty
+   select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')
+     and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e');  -- empty
+   ```
+   (Functions that belong to an extension, such as `pg_trgm`'s `similarity`, are excluded:
+   they hold no data.) Plus `get_advisors` (security), ignoring `rls_enabled_no_policy`;
+   `extension_in_public` for `pg_trgm` is a warning, not a problem. From schema 0.7.0:
+   ```sql
+   select id, match_field, match_value from classification_rules        -- empty
+   where active and scope = 'email' and set_category = 'none'
+     and match_field <> 'sender_email' and not self_only;
+   select count(*) from outbox where sent_at is null
+     and created_at < now() - interval '1 hour';                         -- 0
+   select count(*) from document_texts
+   where body is not null and body <> redact_identifiers(body);          -- 0
+   ```
+   A silencing rule that is not `self_only` lets any sender hide a mail: the fix is
+   `update classification_rules set self_only = true where id = :id returning id;`
+   (or deactivate it). Unsent outbox rows mean the bridge is not delivering: see the
+   bridge check. Unredacted text is from before 0.7.0: offer
+   `select redact_stored_texts();`, repeated until it returns 0 (it only masks IBANs,
+   card numbers and passport lines; the files in Drive keep everything). Then ask, once,
+   whether the night routines' connectors still offer Gmail's send, draft or forward
+   tools or Drive's sharing tools, and if so how to switch them off (install step 10).
+6. **Nightly database job**:
+   ```sql
+   select jobname, schedule, active from cron.job;
+   select status, start_time from cron.job_run_details
+   where jobid = (select jobid from cron.job where jobname = 'nightly-derivations')
+   order by start_time desc limit 3;
+   select ran_at, error from derivation_runs order by ran_at desc limit 3;
+   ```
+   `nightly-derivations` must exist and be active.
+7. **Jobs running on time**: `select * from v_intake_watchdog;` Every `overdue` row is a
+   problem; `runs_7d` well below `runs_7d_expected` is a warning even if the last run is
+   recent (a job that runs every other night looks fine on `last_run`).
+   `select * from v_schedule_drift where drifted;` is a warning: the job runs, but hours
+   away from its slot, which is how scheduler outages have started.
+8. **Night schedule**: `select * from v_intake_watchdog;` has a row per nightly job,
+   `nightly-check` included; a job with `runs_7d = 0` was never scheduled.
+9. **Bridge**: `select started_at, errors, script_version from bridge_runs order by started_at desc limit 5;`
+   Errors in the last runs, or a `script_version` other than `bridge-3.4`. An older
+   bridge keeps working, but before bridge-3.4 it writes no letter explanations, before
+   bridge-3.3 it renders no letters, and before
+   bridge-3.2 it does not deliver the outbox either (without a task app no brief
+   arrives). From bridge-3.2 the fix is only to paste the new `assets/apps-script/Code.gs`
+   over the old code (the manifest and permissions are unchanged). From an older one,
+   also paste the new `appsscript.json` over the manifest, as in install step 7.2
+   (Script Properties and the trigger stay), then run `install` and allow the new,
+   shorter permission list. Before that, make sure the
+   emergency binder is not recreated: in **Project Settings → Script Properties**, the
+   property `dossier_doc_id` must hold the id of the existing binder Google Doc in the
+   emergency folder (add it if it is missing). Then run `install` once.
+10. **Invariants**: `select invariant, severity, failing, meaning from v_system_invariants where failing > 0 order by severity;`
+11. **Health numbers**: `select * from v_system_health;` Flag
+   `hours_since_snapshot > 48`, `days_since_offsite_backup > 35`, `attachment_backlog > 0`,
+   `text_coverage_pct < 80`, `recall_miss_pct_60d > 10`, `hard_deadlines_missed > 0`,
+   `expired_without_successor > 0`, `docs_drive_missing > 0`, `unmapped_folders > 0`.
+12. **Household** (from schema 0.8.0):
+   ```sql
+   select name, relation, active from household_members order by relation, name;
+   select count(*) from link_household_members(false);                   -- 0
+   select person, rows, documents, example from v_unassigned_people;
+   ```
+   No `self` row is a warning: the brief cannot tell the owner's items from others'. The
+   upgrade to 0.8.0 creates it from `owner_name` when that is set; otherwise the fix is
+   reconfigure → household with the owner's name. A non-zero link count means rows that
+   name a member are not linked yet (written before the member or alias existed): the
+   fix is to show `select * from link_household_members(false);` and, on yes, run it
+   with `true`. Each `v_unassigned_people` row is a name in the index that matches no
+   member: ask once, after an upgrade or when new names appear, whether it is someone in
+   the household (add them), another spelling of a member (add an alias), a joint paper,
+   or someone outside the household (nothing to do). This is a question, not a problem.
+13. **Letters** (from schema 0.9.0):
+   ```sql
+   select setting('letter_templates') ->> 'region' as region,
+          setting('letter_templates') ->> 'version' as version,
+          (select string_agg(k, ', ') from jsonb_object_keys(coalesce(setting('letter_templates') -> 'kinds', '{}')) k) as kinds;
+   select issue, subject, send_by, render_error from v_letters_followup;
+   ```
+   No `letter_templates`, or a `region` or `version` other than the installed region
+   pack's (and its letter language pack's): letters cannot be composed, or are composed
+   from old wording. The fix is to rebuild the setting as in install step 5 and write it
+   (a settings write, shown before and after). A `not_rendered` row is a problem: the
+   bridge is older than bridge-3.3, or it failed three times and `render_error` says why.
+   Fix the bridge (check 9), then let it retry the letter:
+   `update letters set render_attempts = 0 where status = 'approved' and drive_pdf_id is null returning id;`
+   `send_now` and `unconfirmed` are for the person, not fixes: name them.
+   Explanations (from schema 0.12.0):
+   ```sql
+   select count(*) filter (where rendered_at is null and render_attempts >= 3) as failed,
+          count(*) filter (where rendered_at is null and updated_at < now() - interval '2 hours') as waiting,
+          max(render_error) as last_error
+   from letter_explanations;
+   select count(*) from v_letters_to_explain;
+   ```
+   `waiting` above zero means the bridge does not write the Docs: older than bridge-3.4
+   (check 9), or `failed` with `last_error` saying why. Once fixed:
+   `update letter_explanations set render_attempts = 0 where rendered_at is null returning id;`
+   Letters waiting in `v_letters_to_explain` for more than a few nights mean the Drive
+   intake skips step 8c: a warning, and the next run takes ten of them.
+14. **Tasks** (from schema 0.11.0, with `task_provider = 'todoist'`):
+   ```sql
+   select source, count(*) as waiting, min(since) as oldest from v_tasks_to_close group by source;
+   select kind, count(*) filter (where closed_at is null) as open from system_tasks group by kind;
+   ```
+   Tasks waiting more than two days mean the nightly check cannot reach the task app: a
+   problem, fix the Todoist connector of the night routine. More than one open `brief` or
+   `review` is the same problem. Then list the open tasks in
+   `task_targets.system_project` and sort each into one of three groups: the system's
+   own (in `system_tasks`, or titled `📅 Daily brief`, `🧾 Review`, `⚠️ <workflow>
+   failed`: the nightly check adopts and closes those by itself, nothing to do); a task
+   that mirrors a row (its id is in `todoist_task_id` of a deadline, mail, document,
+   letter or proposal: the person's, or closed by the view once the row is finished);
+   and the rest. The rest are either the person's own or what versions before 4.8 made
+   of findings and proposals as loose tasks. Show them as one numbered list (title,
+   created, project) and ask once which to complete: the person decides, the doctor
+   never closes a task it cannot account for. A finding among them that still matters
+   becomes an `improvement_proposals` row before its task is completed, so it reaches the
+   next monthly review.
+
+The fixes for recurring patterns are in `assets/docs/troubleshooting.md`; use the same
+wording. Order the answer by severity: anything that can make a hard
+deadline slip comes first.
+
+---
+
+# Mode: reconfigure
+
+Each change is a settings write plus its side effects:
+
+Every write in this mode starts with `select set_config('app.actor','setup',true);`
+and ends by showing the person what changed:
+`select key, old_value, new_value from settings_history where changed_at > now() - interval '5 minutes';`
+To undo a change, write the `old_value` back.
+
+- **Output language**: rewrite `output_locale` and `dossier_labels`. Folder names do not
+  change (renaming Drive folders is harmless, but ask first). Letters keep the language
+  of the country they go to; rebuild `letter_templates` only when there is no region.
+- **Input languages**: rewrite `input_locales` and `lang_hints`.
+- **Country, or a newer version of the same region pack**: deadlines already in the
+  database were counted with the old rules, so this is a three-part change.
+  1. `select take_snapshot('before region change');` then write `region`, `region_rules`
+     (with `region` and `version` added), `letter_templates` (install step 5) and
+     `installed_packs`, and run the pack's
+     `classification_rules.sql`. Old email rules from the previous country stay (they
+     are only rules); list them and offer to deactivate (`active = false`), never delete.
+  2. `select * from rederive_deadlines(false);` is a dry run over every open deadline
+     that remembers the rule it was counted with (`deadlines.rule_key`). Show the person
+     the rows with `action = 'moved'` (earlier) or `moved_later` (old and new date),
+     `later_kept` (the recount gives a later date for a row whose origin is unknown, so it
+     is left alone: often a date chosen early on purpose), `stated_kept` (the document
+     states the date; never recounted), `no_start_date` and `rule_gone` (the new country
+     has no such rule: the deadline stays as it is until they decide). A date that moves
+     earlier comes first in the list.
+  3. On yes: `select * from rederive_deadlines(true);` Moved deadlines get a note with
+     both dates. With a task provider, update the due date of each moved deadline's task
+     (`todoist_task_id`) the same way.
+  `derive_deadlines()` picks up documents that had no rule before on the next night.
+  Moving country does not change `timezone`, `output_locale` or folders; ask about each.
+- **Task app**: switching to Todoist runs install step 9. Switching to none: set
+  `task_provider = 'none'`; existing tasks stay in Todoist.
+- **Owner address**: `owner_email` must stay the Google account the bridge runs in, or
+  the intake stops recognising the system's own mail. Change it only when the person
+  moves the whole system to another account.
+- **Addresses and emergency contacts**: update the setting, then
+  `select emergency_dossier();` to show the result.
+- **People in the household**: `household_members`, not a setting, but changed the same
+  way, only here and only on the person's word (never because a letter names someone).
+  Every write starts with `select set_config('app.actor','setup',true);`.
+  - Add someone: the insert from install step 5. Then
+    `select * from link_household_members(false);` lists the rows already in the index
+    that name them (and the deadlines and contracts of those documents); show the list
+    and, on yes, run `select count(*) from link_household_members(true);`.
+  - Another spelling (a full legal name, a maiden name, how one authority writes it):
+    `update household_members set aliases = aliases || :alias::text where id = :id returning name, aliases;`
+    then the same dry run and link.
+  - A new name: keep the old one as an alias, so older papers stay linked:
+    `update household_members set aliases = aliases || name, name = :member_name where id = :id returning name, aliases;`
+  - Birth date: `update household_members set birth_date = :birth_date where id = :id returning name, birth_date;`
+  - Someone whose papers are no longer handled here (an adult child who moved out, a
+    separation): `update household_members set active = false where id = :id returning name, active;`
+    Their documents keep the link and the name; nothing is removed, and the binder stops
+    listing them.
+  - One document, deadline or contract filed under the wrong person: set its member and
+    the name follows, for example
+    `update documents set member_id = (select id from household_members where lower(name) = lower(:member_name)) where id = :id returning name, subject_person;`
+    The correction is recorded, which is how the intake learns.
+  Show the result with `select * from v_household_overview;`.
+- **Scan inbox folders** (paper mail from Dropscan, Caya or any service that writes into
+  its own Drive folder): connect the service to Google Drive in its own settings first and
+  let it deliver one scan, so its folder exists. Find that folder with `search_files`
+  (by name, owned by the person), confirm the path with them, then
+  `update life_settings set value = jsonb_set(value, '{scan_inboxes}', coalesce(value->'scan_inboxes', '[]'::jsonb) || to_jsonb(:folder_id::text)) where key = 'drive_folders' returning value;`
+  Files under it are indexed and filed out like inbox files from the next intake on. A
+  service that can target any folder needs none of this: point it at the inbox.
+  `docs/paper-mail.md` is the guide to hand over.
+- **Bridge categories**: `bridge_categories` lists which email categories get their
+  attachments copied. Adding `health` or `work` is common; say that it copies more files
+  into Drive.
+
+## Uninstalling
+
+Nothing here deletes data. To stop everything: in the Apps Script run `uninstall`
+(removes the trigger), delete the three Claude scheduled tasks, and pause the Supabase
+project from its dashboard. Drive files and the database stay intact until the person
+deletes them.

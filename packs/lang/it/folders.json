@@ -1,0 +1,17 @@
+{
+  "root": "Life OS",
+  "inbox": "In arrivo",
+  "emergency": "Emergenza",
+  "backups": "Backup di sistema",
+  "catch_all": "Documenti",
+  "identity": "Identità",
+  "finance": "Finanze",
+  "taxes": "Tasse",
+  "housing": "Casa",
+  "insurance": "Assicurazioni",
+  "work": "Lavoro",
+  "legal": "Legale",
+  "health": "Salute",
+  "vehicle": "Veicolo",
+  "education": "Istruzione"
+}

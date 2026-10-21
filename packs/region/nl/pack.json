@@ -1,0 +1,15 @@
+{
+  "region": "nl",
+  "name": "Netherlands",
+  "status": "beta",
+  "version": "0.1.0",
+  "currency": "EUR",
+  "default_timezone": "Europe/Amsterdam",
+  "default_input_locales": [
+    "nl",
+    "en"
+  ],
+  "tax_year_start": "01-01",
+  "maintainers": [],
+  "disclaimer": "Beta: written from the statutes cited in each rule, date arithmetic tested, not yet reviewed by someone who practises there. It encodes defaults so the system asks the right question on time; it is not legal advice, and the document in hand always wins."
+}

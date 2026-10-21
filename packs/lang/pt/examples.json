@@ -1,0 +1,86 @@
+{
+  "dates": [
+    {
+      "text": "Data limite de pagamento: 05/03/2026",
+      "expect": "2026-03-05"
+    },
+    {
+      "text": "Lisboa, 1 de fevereiro de 2026",
+      "expect": "2026-02-01"
+    },
+    {
+      "text": "válido até 14 set. 2027",
+      "expect": "2027-09-14"
+    },
+    {
+      "text": "débito a 31-01-2026",
+      "expect": "2026-01-31"
+    }
+  ],
+  "amounts": [
+    {
+      "text": "Valor a pagar: 1.234,56 €",
+      "expect": "1234.56"
+    },
+    {
+      "text": "Prestação 89,00 EUR por mês",
+      "expect": "89.00"
+    },
+    {
+      "text": "Mensalidade 42,10€",
+      "expect": "42.10"
+    }
+  ],
+  "emails": [
+    {
+      "subject": "O seu talão",
+      "body": "Obrigado pela sua compra. Talão n.º 4411, pago com cartão.",
+      "expect_category": "purchases"
+    },
+    {
+      "subject": "A sua encomenda foi entregue",
+      "body": "Número de seguimento 00340434. A encomenda foi entregue hoje no ponto de recolha.",
+      "expect_category": "orders_delivery"
+    },
+    {
+      "subject": "Notificação de decisão",
+      "body": "Junto enviamos a decisão relativa ao processo n.º 12-345, disponível no Portal das Finanças. Pode apresentar reclamação graciosa.",
+      "expect_category": "government"
+    },
+    {
+      "subject": "O seu extrato de janeiro",
+      "body": "O extrato da sua conta à ordem já está disponível. O saldo no fim do mês segue em anexo.",
+      "expect_category": "bank_finance"
+    },
+    {
+      "subject": "Fatura 2026-0113",
+      "body": "Segue a sua fatura. O valor a pagar será cobrado por débito direto.",
+      "expect_category": "bills_payments"
+    },
+    {
+      "subject": "Minuta da escritura do notário",
+      "body": "Exma. Senhora, enviamos a minuta da escritura de compra e venda. O cartório do notário pede que a reveja antes da assinatura.",
+      "expect_category": "legal_notary"
+    },
+    {
+      "subject": "Recibo de vencimento de janeiro",
+      "body": "O seu recibo de vencimento está disponível. Questões aos recursos humanos da entidade patronal.",
+      "expect_category": "work"
+    },
+    {
+      "subject": "Lembrete de consulta",
+      "body": "Lembramos a sua consulta no centro de saúde na terça-feira. Traga a credencial e os resultados das análises.",
+      "expect_category": "health"
+    },
+    {
+      "subject": "Confirmação de reserva: voo para Madrid",
+      "body": "O seu voo está confirmado. O check-in online abre 24 horas antes da partida e o cartão de embarque segue depois.",
+      "expect_category": "travel"
+    },
+    {
+      "subject": "Aniversário no sábado",
+      "body": "Vamos festejar o aniversário da Mia com um jantar. Vem a família toda, até breve!",
+      "expect_category": "personal_social"
+    }
+  ]
+}

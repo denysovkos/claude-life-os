@@ -1,0 +1,86 @@
+{
+  "dates": [
+    {
+      "text": "Termin płatności: 05.03.2026",
+      "expect": "2026-03-05"
+    },
+    {
+      "text": "Warszawa, 1 lutego 2026",
+      "expect": "2026-02-01"
+    },
+    {
+      "text": "ważny do 14 września 2027",
+      "expect": "2027-09-14"
+    },
+    {
+      "text": "obciążenie 31.01.26",
+      "expect": "2026-01-31"
+    }
+  ],
+  "amounts": [
+    {
+      "text": "Do zapłaty: 1 234,56 zł",
+      "expect": "1234.56"
+    },
+    {
+      "text": "Rata 89,00 PLN miesięcznie",
+      "expect": "89.00"
+    },
+    {
+      "text": "Składka 42,10 zł za miesiąc",
+      "expect": "42.10"
+    }
+  ],
+  "emails": [
+    {
+      "subject": "Twój paragon",
+      "body": "Dziękujemy za zakupy. Paragon nr 4411, zapłacono kartą.",
+      "expect_category": "purchases"
+    },
+    {
+      "subject": "Przesyłka doręczona",
+      "body": "Numer przesyłki 00340434. Paczka została dziś doręczona do paczkomatu.",
+      "expect_category": "orders_delivery"
+    },
+    {
+      "subject": "Decyzja w Pana sprawie",
+      "body": "W załączeniu decyzja urzędu, sygnatura 12-345. Prosimy zapoznać się z pouczeniem.",
+      "expect_category": "government"
+    },
+    {
+      "subject": "Wyciąg z konta za styczeń",
+      "body": "Wyciąg z konta jest dostępny w bankowości (rachunek bieżący). Saldo na koniec miesiąca w załączniku.",
+      "expect_category": "bank_finance"
+    },
+    {
+      "subject": "Faktura 2026/01/113",
+      "body": "W załączeniu faktura. Kwota do zapłaty zostanie pobrana poleceniem zapłaty.",
+      "expect_category": "bills_payments"
+    },
+    {
+      "subject": "Projekt umowy od notariusza",
+      "body": "Szanowna Pani, przesyłamy projekt umowy sprzedaży. Kancelaria notariusza prosi o uwagi przed podpisaniem aktu notarialnego.",
+      "expect_category": "legal_notary"
+    },
+    {
+      "subject": "Pasek wynagrodzenia za styczeń",
+      "body": "Wynagrodzenie za styczeń zostało wypłacone. Pytania prosimy kierować do działu kadr pracodawcy.",
+      "expect_category": "work"
+    },
+    {
+      "subject": "Przypomnienie o wizycie",
+      "body": "Przypominamy o wizycie w przychodni we wtorek. Prosimy zabrać skierowanie i wyniki badań.",
+      "expect_category": "health"
+    },
+    {
+      "subject": "Potwierdzenie rezerwacji lotu do Lizbony",
+      "body": "Twój lot jest potwierdzony. Odprawa online otwiera się 24 godziny przed wylotem, karta pokładowa przyjdzie osobno.",
+      "expect_category": "travel"
+    },
+    {
+      "subject": "Urodziny w sobotę",
+      "body": "Świętujemy urodziny Mii kolacją. Przyjdzie cała rodzina, do zobaczenia!",
+      "expect_category": "personal_social"
+    }
+  ]
+}

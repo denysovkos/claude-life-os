@@ -1,0 +1,46 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_tax",
+      "label": "Petition the US Tax Court",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 90}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [30, 14, 7, 3, 1],
+      "basis": "26 U.S.C. § 6213(a): 90 days after a notice of deficiency is mailed (150 days if addressed outside the United States). 26 U.S.C. § 7503: a deadline on a Saturday, Sunday or legal holiday moves to the next business day.",
+      "notes": "Applies to a notice of deficiency. The notice states the last day to file; that date wins. State tax rules differ."
+    },
+    {
+      "key": "cooling_off_door_to_door",
+      "label": "Cooling-off period (door-to-door sale)",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "event_date",
+      "steps": [{"add_business_days": 3}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [1],
+      "basis": "FTC Cooling-Off Rule, 16 CFR Part 429: three business days to cancel sales of $25 or more made at the buyer's home or away from the seller's place of business.",
+      "notes": "There is no general federal right to return online purchases; the shop's return policy decides."
+    }
+  ],
+  "annual_dates": [
+    {
+      "key": "tax_return_due",
+      "label": "File the federal income tax return",
+      "month_day": "04-15",
+      "year_offset_from_tax_year": 1,
+      "hard": true,
+      "basis": "26 U.S.C. § 6072(a): individual returns are due on the 15th day of April following the close of the calendar year; § 7503 moves a weekend or holiday to the next business day.",
+      "notes": "An automatic six-month extension to file (Form 4868) does not extend the time to pay."
+    }
+  ],
+  "facts": [],
+  "authorities": [],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}

@@ -1,0 +1,245 @@
+# Life review
+
+Workflow `life-review` v2.6 of the `life-os` skill: the monthly review. The shared rules in
+`../SKILL.md` apply; this file adds what is specific to this workflow.
+
+Write `v2.6` into `life_review_runs.skill_version`.
+
+## How the work is split, and why this skill exists
+
+Deterministic work runs without Claude. The `pg_cron` job `nightly-derivations` calls
+`run_nightly_derivations()`: it closes passive direct-debit deadlines, links bank
+transactions to `recurring_payments`, and derives objection deadlines from official
+decisions. The Apps Script bridge copies attachments every 15 minutes and rewrites the
+emergency binder daily. The daily brief reads `v_system_invariants`.
+
+This skill does the part that needs judgement: reading statements and contracts,
+deciding whether a mismatch is a data error or a real problem, and turning the month
+into a short list of decisions for the person.
+
+Never delete rows. Never cancel or change anything with a vendor. Every write that is not
+an insert starts with `select set_config('app.actor','skill',true);` in the same
+`execute_sql` call, so `corrections` records it as the skill's, not a human's. Notes,
+quoted clauses and evidence go through `skill_writebacks` (SKILL.md); an UPDATE carries
+only the short value itself (an amount, a date, a status).
+
+## Step 0: settings, snapshot, lock
+
+```sql
+select key, value from life_settings
+where key in ('timezone','output_locale','region','region_rules','owner_name','owner_email',
+              'task_provider','task_targets','notes_provider','notes_targets','drive_folders',
+              'current_address','former_address_patterns','address_audit_ignore',
+              'tax_year','emergency_contacts');
+select * from take_snapshot('life-review pre-run');
+
+insert into run_locks (skill_name, expires_at, holder)
+values ('life-review', now() + interval '60 minutes', :holder)
+on conflict (skill_name) do update set locked_at = now(),
+  expires_at = excluded.expires_at, holder = excluded.holder
+where run_locks.expires_at < now()
+returning skill_name;
+```
+
+Zero rows from the lock: another run holds it, stop. Release it at the end by expiring it
+(SKILL.md).
+Write everything for the person in `output_locale`. Legal statements come from
+`region_rules` (its `basis`, `notes` and `facts`), never from memory; with no region
+pack, say that a local rule applies and ask.
+
+## Monthly run
+
+1. **Import bank statements.** `select * from v_bank_statement_backlog;` lists indexed
+   `bank_statement` documents with no `bank_statement_imports` row. For each, oldest
+   first, at most three per run:
+   - Read the text (`document_texts.body`, else Drive `read_file_content`, else the OCR
+     fallback described in `workflows/drive-file-intake.md`). Identify the account (IBAN or account
+     number) and the period.
+   - **Already covered?** If `bank_transactions` already has rows for that account
+     spanning the whole period (for example from a CSV import done earlier), record an
+     import row with `rows_inserted = 0` and `source_note = 'pre-existing'`. Do not
+     import twice.
+   - Otherwise extract every line: `booked_on`, `value_date`, `amount` (always positive),
+     `direction` (`debit`/`credit`), `counterparty`, `reference`, `method`
+     (`sepa_direct_debit`, `transfer`, `card`, `fee`, `cash_deposit`), `account_iban`,
+     `source = 'statement_import'`. Insert with a plain `on conflict do nothing` (no
+     conflict target). `account_iban` is the account key: the IBAN, or for a card
+     statement without one a masked card id `CARD-<scheme>-<last digits as printed>`, the
+     same string every month. The dedupe index does not include the account yet, so two
+     accounts with an identical booking (same day, amount, direction, empty reference)
+     keep only one row: when you import a second account, compare the parsed count with
+     the inserted count and name any shortfall in the report. Record the import with parsed and inserted counts. A parsed count
+     that does not match the statement's own line count is an `errors` entry, never a
+     silent pass.
+   - Many people pay from more than one account. A contract paid from an account whose
+     statements were never imported reads as `never_observed`. Say which accounts have
+     data (`v_bank_coverage`) instead of reporting such contracts as missing.
+   - Then `select link_bank_transactions();`
+   Nothing to import and `v_bank_coverage.days_stale > 40`: that is the first line of
+   the report, asking the person to drop the latest statements into the Drive inbox.
+
+2. **Run the derivations once more** (idempotent): `select run_nightly_derivations();`
+   then `select * from derivation_runs order by ran_at desc limit 3;` must show no
+   `error`. Also `select jobname, schedule, active from cron.job;` where `pg_cron` exists:
+   a missing or inactive `nightly-derivations` is an `errors` entry.
+
+3. **Collect the month.** `select monthly_review();` (previous month by default).
+
+4. **Triage payment exceptions.** `select * from v_payment_exceptions;`
+   - `amount_changed`: find the evidence, a price-change letter in `emails` or
+     `documents` (`ask_documents('<vendor> <price change words in the letter''s language>', 8)`).
+     Evidence found: update `recurring_payments.amount` (short UPDATE, `returning id`) and
+     cite the source in `notes` through `skill_writebacks` (`mode = 'append'`). None: it
+     goes to the person.
+   - A single debit that equals the sum of two or more active contracts of the same vendor
+     (one insurer collecting several policies together) cannot be linked to both yet: the
+     link holds one contract. Say so once in the report and add an `explanation` to the
+     second contract's notes, rather than reporting it as `missing` every month.
+   - `missing`: a contract that stopped debiting. Look for a cancellation confirmation
+     from the vendor. Found: `status = 'ended'` with a note. Otherwise it goes to the
+     person; a savings or insurance contract that silently stopped is exactly the case
+     worth a question.
+   - `never_observed` with an `explanation`: fine, skip. Without one: probably paid from
+     another account or a wrong record. List it for the person once, not every month.
+   - `select * from v_invoice_reconciliation where period_covered and matched_tx is null;`
+     same treatment.
+
+5. **Fill unknown exits.** `select * from v_auto_renew_unwatched;` first (auto-renewing,
+   no end, no notice, no deadline: these renew unannounced), then
+   `select * from v_notice_calendar where not exit_known;`. For up to five rows with a
+   `document_id`, read the contract for the notice period, minimum term and contract
+   term, and write `notice_period_months`, `contract_end`, `auto_renews` only if stated.
+   A cancellation date the contract states is a `notice_period` deadline with
+   `date_basis = 'stated'`; one you derive from start, term and notice is counted with
+   `contract_cancel_by()` and gets `date_basis = 'derived'`. A contract cancellable any
+   time gets `notice_period_months` and no `contract_end`. Quote the clause in `notes`. Where the law answers it
+   rather than the contract, use the matching `region_rules.term_rules` entry (for
+   example `telecom_cancel_by`, `insurance_cancel_by`) or `facts` entry (for example an
+   obligation that cannot be cancelled at all), cite its `basis` in `notes`, and write
+   the result. Everything else goes to the person as one list, highest monthly amount
+   first.
+
+5a. **Letters.** From schema 0.9.0, `select issue, kind, subject, send_by, render_error from v_letters_followup;`
+   A ready letter that must arrive within a week, one the bridge did not render, a
+   cancellation sent three weeks ago with no confirmation (look for the confirmation in
+   mail first: `ask_documents('<Kündigungsbestätigung, confirmation, the vendor>', 8)`;
+   found and from the recipient, record it with `mark_letter_confirmed()`), a draft still
+   missing a value: each is a decision line, by subject. For every contract the review
+   would suggest cancelling, and every exit in `v_notice_calendar` with `cancel_by` within
+   60 days that has no letter yet, the decision line ends with "say 'write the
+   cancellation for <name>' to get the letter". The review never composes one itself.
+
+6. **Things that should have ended.** Look for active obligations tied to a situation
+   that is over: a former flat (deposit guarantees, utilities, parking), a phone number
+   that was ported to another provider, a finished course, a sold car. Propose, never
+   change status without evidence (a confirmation letter in the index).
+
+7. **Address audit.** `select * from v_address_audit;` (it also matches masked addresses
+   such as `Must*****llee`). Every counterparty listed gets one line in the person's
+   task: "update address at X". A counterparty that still bills for a former address is
+   more than an address change: look for its contract in `recurring_payments`; none means
+   an obligation the index does not know about, which is the first line of the report.
+   Likely false positives (the old landlord, a closed account) are listed in the
+   decisions; they go into `life_settings.address_audit_ignore` only when the person
+   confirms, never in the unattended run.
+
+8. **Tax year.** `select * from v_tax_items;` and the open tax bundle, if one exists:
+   `select * from v_bundle_status where bundle ilike '%tax%' or bundle ilike '%steuer%';`
+   Tag new obligations with `tax_relevance` when obvious. Candidate categories are
+   candidates: the person, or their adviser, decides the share. From January on, chase
+   the missing annual certificates by name. `region_rules.annual_dates` holds the filing
+   deadline; when it is within 90 days and the bundle is still blocked, that is the
+   first line of the report.
+
+8a. **Household.** From schema 0.8.0:
+   ```sql
+   select * from v_household_overview where active;
+   select * from v_unassigned_people;
+   select count(*) from link_household_members(false);
+   ```
+   - In the report, one line per member other than the owner: open deadlines and the next
+     one, the next identity paper to expire, the monthly cost of their contracts. A
+     child's passport or ID that expires within six months is a line of its own: for
+     minors it usually takes both parents and an appointment, so it needs lead time.
+   - An active member with `identity_documents = 0` is a question for the person ("no
+     passport or ID for Max in the index: is it somewhere else?"), once, not every month.
+   - Each `v_unassigned_people` row is a name that matches no member. Combine it with
+     this month's intake `decisions` where `field = 'subject_person'` (spellings the
+     intake mapped to a member by judgement), and put one decision to the person: add
+     them as a member, add the spelling as an alias of member X, or leave them (a joint
+     paper, someone outside the household). Never add a member or alias in this run.
+   - A non-zero link count means rows that name a member are not linked yet; that is a
+     doctor fix (`link_household_members(true)`), mention it in the decisions.
+
+9. **Legal dates.** `select * from v_system_invariants where invariant = 'legal_decision_without_date';`
+   For each official decision without `issued_on`, read the date from the text and set
+   it. The nightly job then derives the deadline. If the window has clearly passed, leave
+   it: `derive_deadlines()` ignores dates more than 7 days gone.
+
+10. **Backup check.** Latest `backups` row: download the CSV from the backups folder in
+    `drive_folders.backups`, count data rows per table, compare with `row_counts`.
+    Mismatch, or no backup in 35 days, is an `errors` entry. The Drive intake takes a
+    backup on any night the last one is over 30 days old.
+
+11. **System quality.** From `monthly_review()->'system_quality'`: human corrections by
+    field (where does intake misjudge?), `emails_other_pct`, `rules_zero_hits`,
+    `unresolved_entities`. Propose at most three concrete changes as
+    `improvement_proposals` with `autonomy = 'ask'`, for example a `classification_rules`
+    row for a sender that keeps landing in `other`, or promoting a frequent unresolved
+    entity.
+
+12. **Report and decisions.**
+    - The report: prose, short. Money (total committed, what changed, exceptions), exits
+      coming up (`v_notice_calendar` with `cancel_by` within 90 days), legal and
+      immigration dates, tax status, system quality. Numbers, not adjectives.
+      - `notes_provider = 'craft'`: a document "Monthly review YYYY-MM" in
+        `notes_targets.reports_folder`.
+      - otherwise: a Google Doc with the same title in the `drive_folders.catch_all`
+        folder, or, if Drive writes are not possible, the report text in
+        `life_review_runs.notes`.
+    - The decisions: exactly one item, due in three days, titled
+      `🧾 Review YYYY-MM: <the most important decision>`, body = the decisions as a
+      numbered list, each with its evidence link. Decisions from last month's review
+      that are still open (its task is not completed, the proposal still `open`) are
+      carried into this list, because the nightly check closes last month's task once
+      this one exists. The open `improvement_proposals` with `autonomy = 'ask'` belong in
+      this list too; none of them gets a task of its own.
+      - `task_provider = 'todoist'`: a task in `task_targets.system_project`, registered
+        as the newest review:
+        ```sql
+        insert into system_tasks (kind, ref, todoist_task_id, title)
+        values ('review', :review_month, :task_id, :title)
+        on conflict (todoist_task_id) do nothing returning id;
+        ```
+      - otherwise: one `outbox` row (`kind = 'review'`, that subject, the list as body);
+        the bridge mails it to the person.
+    - Log `life_review_runs` (`mode`, `review_month`, `skill_version`, `summary` jsonb,
+      `errors`, `notes`).
+    - Release the lock (expire it).
+
+## On-demand modes
+
+- "What can I cancel / when can I cancel X": `v_notice_calendar`, answer with
+  `cancel_by` and `earliest_exit`, flag unknowns.
+- "Can I return it / warranty": `v_purchase_rights`.
+- "Taxes": step 8 only.
+- "Import this statement": step 1 only, then `v_payment_exceptions`.
+- "Emergency binder": `select emergency_dossier();` shows the current text. The Google
+  Doc in the emergency folder is rewritten daily by the bridge. To add people to it,
+  update `life_settings.emergency_contacts` (a list of `{name, role, contact}`).
+- Content questions ("what does the contract say about X") belong to the `context-lookup` workflow;
+  use `ask_documents` from here only inside a review.
+
+On-demand modes that write still take the snapshot and the lock.
+
+## Reference
+
+Views: `v_bank_coverage`, `v_bank_statement_backlog`, `v_payment_exceptions`,
+`v_payment_reconciliation`, `v_invoice_reconciliation`, `v_notice_calendar`,
+`v_purchase_rights`, `v_tax_items`, `v_address_audit`, `v_hard_deadline_guard`,
+`v_system_invariants`, `v_bundle_status`, `v_bundle_summary`.
+Functions: `monthly_review(date)`, `link_bank_transactions()`, `derive_deadlines()`,
+`run_nightly_derivations()`, `emergency_dossier()`, `ask_documents(text, int)`,
+`reconcile_passive_deadlines()`, `take_snapshot(text)`.
+Tables: `life_settings`, `bank_statement_imports`, `bank_transactions`,
+`recurring_payments`, `life_review_runs`, `derivation_runs`, `improvement_proposals`.

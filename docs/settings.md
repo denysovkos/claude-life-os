@@ -1,0 +1,139 @@
+# Settings
+
+## Where they live
+
+In one table of your own Supabase project: `life_settings`, one row per setting, the
+value as JSON. Nothing personal is stored anywhere else:
+
+- not in the skills (they read the table at the start of every run),
+- not in Claude's memory,
+- not in the Apps Script (it holds only the database URL and key, in Script
+  Properties, and reads everything else from the table on every run),
+- not in this repository.
+
+Every change goes through a trigger into `settings_history`: the key, the old value,
+the new value, when, and who (`setup`, `skill`, or `human` for an edit made by
+hand in the Supabase dashboard). Any setting can be read as of a date and put back.
+
+```sql
+select key, value from life_settings order by key;
+select changed_at, key, actor, old_value, new_value from settings_history order by changed_at desc limit 20;
+```
+
+## How they get there and how to change them
+
+First run: the setup workflow of the `life-os` skill asks a few questions, reads the packs you chose,
+and writes every setting in one statement.
+
+Later: say it in any chat, for example "change my language to German", "I moved to
+another country", "add my sister to the emergency binder", "switch tasks to Todoist".
+The setup workflow in reconfigure mode writes the change, shows you what changed from
+`settings_history`, and handles the side effects listed below. Editing a row by hand in
+the Supabase dashboard also works; the history then shows `human`.
+
+## Every setting
+
+| Key | Example | Written by | Read by |
+|---|---|---|---|
+| `schema_version` | `"0.12.0"` | migrations | setup (doctor, upgrades); every workflow compares it with `SKILL.md` |
+| `owner_name` | `"Anna Beispiel"` | setup | reports |
+| `owner_email` | `"anna@example.com"` | setup | must be the Google account the bridge runs in: the email intake recognises the system's own mail by it (`self_only` rules). Mail itself always goes to the bridge's account |
+| `timezone` | `"Europe/Berlin"` | setup | every skill, the bridge, the binder date |
+| `output_locale` | `"uk"` | setup | every skill: language of briefs, tasks, reports |
+| `input_locales` | `["de","en","uk"]` | setup | intake: which language hints to load |
+| `region` | `"de"` | setup | database and skills: whose law applies |
+| `region_rules` | contents of `packs/region/de/rules.json` plus `region`, `version` | setup | `derive_deadlines()`, `v_purchase_rights`, `v_tax_items`, skills |
+| `lang_hints` | keywords and date/amount formats per input locale | setup | intake |
+| `dossier_labels` | contents of `packs/lang/uk/dossier.json` | setup | `emergency_dossier()`, the note that comes with a letter's PDF |
+| `letter_templates` | `packs/lang/de/letters.json` overlaid with `packs/region/de/letters.json`, plus `locale`, `region`, `version` | setup, reconfigure (country) | `compose_letter()`: cancellation and objection letters, in the language of the country they go to |
+| `installed_packs` | `{"lang":{"uk":"1.0.0"},"region":{"de":"1.1.0"}}` | setup | doctor (pack updates) |
+| `drive_folders` | ids of inbox, emergency, backups, catch_all; optional `scan_inboxes`, a list of folders a mail-scanning service writes into | setup, reconfigure (scan inbox folders) | bridge (inbox only), Drive intake (files under a scan inbox are filed out like inbox files), review |
+| `task_provider` | `"todoist"` or `"none"` | setup | every skill that creates tasks |
+| `task_targets` | project ids and label | setup | same |
+| `notes_provider`, `notes_targets` | `"craft"`, folder id | setup | review |
+| `explain_letter_types` | `["official_decision","tax_assessment","authority_letter","notary_letter","insurance_correspondence"]` | 0021 default | Drive intake: which letters get an explanation and a draft reply at night (`v_letters_to_explain`). Any letter can still be explained on request in chat |
+| `bridge_categories` | `["legal_notary","government","bank_finance","bills_payments"]` | setup (defaults in 0005) | bridge, which attachments to copy |
+| `current_address`, `former_address_patterns`, `address_audit_ignore` | street fragments | setup, review | `v_address_audit`; `current_address` is also the sender address on letters |
+| `tax_year` | `2026` | setup, review | `v_tax_items` |
+| `emergency_contacts` | `[{"name":"…","role":"sister","contact":"+49…"}]` | setup | `emergency_dossier()` |
+| `schedule_slots` | `{"email-intake":"01:05","drive-file-intake":"02:05","nightly-check":"03:05"}` | setup (defaults in 0013) | `v_schedule_drift`, nightly check |
+| `schedule_drift_hours` | `3` | 0013 default | `v_schedule_drift` |
+| `redact_identifiers` | `true` | 0016 default | triggers on `document_texts.body` and the `content_excerpt` of documents and emails: IBANs, card numbers and passport/ID machine-readable lines are masked before they are stored. `false` stores text as read |
+| `area_aliases` | `{"Home":"Household"}` | setup, reconfigure | Drive intake: an area name used elsewhere (a notes app) mapped to a `drive_folder_areas.area_name`. Nothing is renamed. |
+
+The folder-to-area map is a table of its own, `drive_folder_areas`, because it has many
+rows; it is written by setup and read by the Drive intake.
+
+## The household
+
+Whose papers the system handles is not a setting either: it is the table
+`household_members`, one row per person: the owner (`self`), a partner, children,
+parents, others. Each row has the name their documents use, `aliases` for other
+spellings (a full legal name, a maiden name), an optional birth date, and `active`.
+Setup asks for them; later say "add my daughter Sophie, born 2019-05-12", "Max's papers
+also say Maximilian Beispiel", or "my son moved out", and reconfigure writes it.
+Nobody is ever removed: a member who is no longer handled here is set inactive, and
+their documents keep their name. A night run never adds or changes a member, and a
+letter that names someone does not make them one.
+
+Documents, deadlines, contracts, matters and bundles are linked to a member by a
+trigger, from the name the intake stored (`subject_person`), when that name or one of
+the aliases belongs to exactly one member. Mail is linked by the email intake when it is
+about someone other than the owner. When a member or an alias is added, the rows that
+already name them are linked after you see the list:
+
+```sql
+select * from link_household_members(false);  -- dry run: what would be linked
+select * from link_household_members(true);   -- link
+select * from v_unassigned_people;            -- names that match nobody yet
+select * from v_household_overview;           -- per member: papers, deadlines, costs
+```
+
+## When a setting changes what was already computed
+
+Most settings only affect what happens next. The legal rules are the exception: a
+deadline already in the database was counted with the rules that were current then.
+That matters in three situations:
+
+1. **You move to another country.** Objection windows, notice periods and return
+   windows are different.
+2. **A region pack is updated** (the law changed, or the pack had a mistake).
+3. **The database is upgraded** to a version that reads a setting it did not read
+   before.
+
+So every deadline that was counted from a rule remembers it: `deadlines.rule_key` (for
+example `objection_tax`) and `deadlines.rule_version` (the pack version). After the
+rules change, `rederive_deadlines()` recounts every open deadline that has a rule key:
+
+```sql
+select * from rederive_deadlines(false);  -- dry run: what would move, and to when
+select * from rederive_deadlines(true);   -- apply
+```
+
+| action | meaning |
+|---|---|
+| `moved` | the new rules give a different date; applying moves it and notes both dates |
+| `unchanged` | same date under the new rules |
+| `rule_gone` | the new rules have no such rule (for example after moving country); the deadline is left as it is for you to keep or cancel |
+| `no_start_date` | the source document has no date to count from |
+
+The setup skill runs the dry run for you, shows the moves (earlier dates first), and
+applies only when you say yes. It also moves the due dates of the matching Todoist tasks.
+Deadlines that were not counted from a rule (a date printed in a letter, a date you
+entered) are never touched.
+
+A database upgrade works the same way: apply the new migrations, then "life os doctor"
+checks `installed_packs` against the packs shipped with the skill and offers the update
+and the recount. Until the region pack is synced after an upgrade from 0.2.0, the
+invariant `region_rules_missing` is raised and no legal deadline is derived at all,
+rather than one derived with the wrong law. The nightly job records the same message
+in `derivation_runs.error`, so the daily brief reports it.
+
+## No region pack
+
+If your country has no pack yet, `region` stays empty. The system still tracks every
+date it reads in your documents and letters. For an official decision without a stated
+deadline it creates a deliberately early placeholder, 14 days after the date on the
+letter, marked `objection_generic`, so you look at the letter in time. Return and
+warranty windows show `unknown`. See [packs/README.md](../packs/README.md) to add a
+country.

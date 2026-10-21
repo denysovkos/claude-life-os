@@ -1,0 +1,16 @@
+{
+  "locale": "de",
+  "date_format": "DD.MM.YYYY",
+  "child_signature": "als gesetzliche Vertretung für {{holder_name}}",
+  "kinds": {
+    "cancellation": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "contract_name", "reference"],
+      "subject": "Kündigung {{contract_name}}, {{reference_label}} {{reference}}",
+      "body": "Sehr geehrte Damen und Herren,\n\nhiermit kündige ich den folgenden Vertrag {{effective_clause}}:\n\n{{contract_name}}\n{{reference_label}}: {{reference}}\nVertragsinhaber: {{holder_name}}\n\nBitte bestätigen Sie mir den Eingang der Kündigung und das Vertragsende schriftlich. Einer Verlängerung des Vertrags widerspreche ich.\n\nEine Ihnen erteilte Einzugsermächtigung endet mit dem Vertragsende.\n\nMit freundlichen Grüßen\n\n\n{{sender_name}}{{signature_note}}",
+      "effective_clause": "zum {{effective_date}}, hilfsweise zum nächstmöglichen Termin",
+      "effective_clause_unknown": "zum nächstmöglichen Termin",
+      "reference_label": "Vertrags-/Kundennummer",
+      "delivery": "Prüfen Sie im Vertrag, welche Form verlangt ist. Abschicken, dass das Schreiben spätestens am genannten Tag ankommt, und zwar nachweisbar: per Einschreiben mit Rückschein, per Fax mit Sendebericht oder über das Kündigungsformular des Anbieters mit Bestätigung."
+    }
+  }
+}

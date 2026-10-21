@@ -1,0 +1,17 @@
+{
+  "decimal_separator": ",",
+  "thousands_separator": ".",
+  "amount_pattern": "(?P<amount>\\d{1,3}(?:\\.\\d{3})*(?:,\\d{2})|\\d+(?:,\\d{2}))\\s?(?:€|EUR)",
+  "date_patterns": [
+    "(?P<y>\\d{4})-(?P<m>\\d{2})-(?P<d>\\d{2})",
+    "(?P<d>\\d{1,2})\\.(?P<m>\\d{1,2})\\.(?P<y>\\d{4}|\\d{2})\\b",
+    "(?P<d>\\d{1,2})\\.\\s?(?P<mon>[A-Za-zäÄ]{3,9}\\.?)\\s(?P<y>\\d{4})"
+  ],
+  "notes": "Amounts put the currency after the number: 1.234,56 €. Two-digit years (01.02.26) are 20xx.",
+  "month_names": {
+    "januar": 1, "jänner": 1, "februar": 2, "märz": 3, "april": 4, "mai": 5, "juni": 6,
+    "juli": 7, "august": 8, "september": 9, "oktober": 10, "november": 11, "dezember": 12,
+    "jan": 1, "feb": 2, "mär": 3, "apr": 4, "jun": 6, "jul": 7, "aug": 8,
+    "sep": 9, "sept": 9, "okt": 10, "nov": 11, "dez": 12
+  }
+}

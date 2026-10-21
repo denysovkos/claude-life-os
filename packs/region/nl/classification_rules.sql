@@ -1,0 +1,3 @@
+-- Region pack nl: authority entities, their domain aliases and email rules.
+-- Idempotent: safe to run again. Generated from rules.json "authorities"; only
+-- senders whose domain is known go here, everything else is classified by judgement.

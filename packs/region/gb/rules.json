@@ -1,0 +1,71 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_tax",
+      "label": "Appeal to HMRC",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 30}],
+      "roll_to_business_day": false,
+      "hard": true,
+      "lead_days": [21, 14, 7, 3, 1],
+      "basis": "Section 31A Taxes Management Act 1970: notice of appeal within 30 days after the date of the notice.",
+      "notes": "Scotland, Wales and Northern Ireland share this rule for income tax. Late appeals are possible only with a reasonable excuse."
+    },
+    {
+      "key": "consumer_withdrawal",
+      "label": "Cancellation period",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "Regulation 30 of the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013: 14 days after the goods come into the consumer's possession.",
+      "notes": "v_purchase_rights counts from the order mail, which errs early."
+    },
+    {
+      "key": "short_term_right_to_reject",
+      "label": "Short-term right to reject",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 30}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [7],
+      "basis": "Section 22 Consumer Rights Act 2015: 30 days after ownership passes and the goods are delivered, to reject faulty goods for a full refund.",
+      "notes": "After that the right to repair or replacement continues; claims can be brought for up to six years (five in Scotland)."
+    }
+  ],
+  "annual_dates": [
+    {
+      "key": "tax_return_due",
+      "label": "Submit the Self Assessment return online",
+      "month_day": "01-31",
+      "year_offset_from_tax_year": 1,
+      "hard": true,
+      "basis": "Section 8 Taxes Management Act 1970: online returns by 31 January after the end of the tax year (6 April to 5 April). Paper returns by 31 October.",
+      "notes": "tax_year is the calendar year in which the tax year ends: 2026 means 6 April 2025 to 5 April 2026, due 31 January 2027."
+    }
+  ],
+  "facts": [
+    {
+      "key": "tv_licence",
+      "text": "A TV Licence is needed to watch live TV or use BBC iPlayer. It can be cancelled, with a refund of full unused months, when it is no longer needed."
+    }
+  ],
+  "authorities": [
+    {
+      "name": "GOV.UK Notify (government services)",
+      "kind": "authority",
+      "domains": ["notifications.service.gov.uk"],
+      "category": "government"
+    }
+  ],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}

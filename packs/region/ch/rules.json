@@ -1,0 +1,111 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_administrative",
+      "label": "Beschwerdefrist / délai de recours",
+      "applies_to": ["official_decision"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 30}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [21, 14, 7, 3, 1],
+      "basis": "Art. 50 Abs. 1 VwVG: Beschwerde gegen eine Verfügung einer Bundesbehörde innert 30 Tagen nach Eröffnung. Art. 20 Abs. 3 VwVG: fällt der letzte Tag auf einen Samstag, Sonntag oder anerkannten Feiertag, endet die Frist am nächsten Werktag.",
+      "notes": "Cantonal and communal decisions follow cantonal procedure law, usually also 30 days, sometimes 10 or 20; the Rechtsmittelbelehrung on the decision wins. Court holidays (Art. 22a VwVG) can extend the period; they are not counted here, so the result errs early."
+    },
+    {
+      "key": "objection_tax",
+      "label": "Einsprachefrist Steuerveranlagung",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_days": 30}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [21, 14, 7, 3, 1],
+      "basis": "Art. 132 Abs. 1 DBG: Einsprache gegen die Veranlagungsverfügung der direkten Bundessteuer innert 30 Tagen nach Zustellung. Art. 48 Abs. 1 StHG: dieselbe Frist für die Kantons- und Gemeindesteuern.",
+      "notes": "Counted from the date on the assessment, which is before delivery, so the result errs early. The period cannot be extended."
+    },
+    {
+      "key": "statutory_warranty",
+      "label": "Gewährleistung endet",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_months": 24}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [30],
+      "basis": "Art. 210 Abs. 1 OR: Klagen auf Gewährleistung wegen Mängeln verjähren zwei Jahre nach der Ablieferung. Art. 201 OR: Mängel sind sofort nach Entdeckung zu rügen.",
+      "notes": "Unlike the EU, Swiss law lets sellers shorten or exclude the warranty in their terms (for consumer goods not below two years only for used goods, Art. 210 Abs. 4 OR). Report a defect at once: a late notice loses the claim."
+    },
+    {
+      "key": "doorstep_withdrawal",
+      "label": "Widerrufsfrist Haustürgeschäft",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "event_date",
+      "steps": [{"add_days": 14}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "Art. 40a ff. OR, Art. 40e Abs. 2 OR: bei Haustür- und Telefongeschäften kann der Kunde den Antrag innert 14 Tagen widerrufen; die Frist beginnt, sobald er den Vertrag beantragt und von der Widerrufsbelehrung Kenntnis erhalten hat.",
+      "notes": "Switzerland has no general right to withdraw from online purchases; only the shop's own return policy applies there. For this reason the pack has no consumer_withdrawal rule and v_purchase_rights shows the return window as unknown."
+    },
+    {
+      "key": "rent_tenant_exit",
+      "label": "Kündigungsfrist Mieter (Wohnung)",
+      "applies_to": ["rental_contract"],
+      "deadline_type": "notice_period",
+      "start": "event_date",
+      "steps": [{"add_months": 3}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [14, 7],
+      "basis": "Art. 266c OR: Wohnungen können mit einer Frist von drei Monaten auf einen ortsüblichen Termin oder, wenn es keinen gibt, auf Ende einer dreimonatigen Mietdauer gekündigt werden. Art. 266l OR: Kündigung schriftlich.",
+      "notes": "event_date is the day the landlord receives the notice. The lease ends on the next local termination date after these three months (often end of March, June or September, but varies by canton); the contract usually names them. A suitable replacement tenant ends the obligation earlier (Art. 264 OR)."
+    }
+  ],
+  "annual_dates": [
+    {
+      "key": "tax_return_due",
+      "label": "Steuererklärung einreichen",
+      "month_day": "03-31",
+      "year_offset_from_tax_year": 1,
+      "hard": true,
+      "basis": "Cantonal tax laws: in most cantons the return for a calendar year is due on 31 March of the following year.",
+      "notes": "Some cantons use other dates (for example 15 March or 30 April). Every canton grants an extension on request, often online and free until a set date; ask before the deadline."
+    }
+  ],
+  "facts": [
+    {
+      "key": "health_insurance_switch",
+      "text": "Basic health insurance (Grundversicherung, KVG) can be switched to another insurer for 1 January. The cancellation must reach the insurer by the last working day of November, after the new premiums are announced (Art. 7 Abs. 2 KVG). With the standard franchise it can also be cancelled for 30 June with three months' notice."
+    },
+    {
+      "key": "serafe",
+      "text": "The radio and television fee (Serafe) is charged per household and cannot be cancelled while someone is registered at the address."
+    },
+    {
+      "key": "debt_collection",
+      "text": "A Zahlungsbefehl (payment order) from the Betreibungsamt can be opposed with Rechtsvorschlag within 10 days of delivery (Art. 74 SchKG). This is a hard, short deadline."
+    }
+  ],
+  "authorities": [
+    {
+      "name": "Eidgenössische Steuerverwaltung (ESTV)",
+      "kind": "authority",
+      "domains": ["estv.admin.ch"],
+      "category": "government"
+    },
+    {
+      "name": "Serafe AG (Radio- und Fernsehabgabe)",
+      "kind": "organization",
+      "domains": ["serafe.ch"],
+      "category": "bills_payments"
+    }
+  ],
+  "purchase_rights_min_amount": 50,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}

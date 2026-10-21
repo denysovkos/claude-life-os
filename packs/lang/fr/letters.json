@@ -1,0 +1,16 @@
+{
+  "locale": "fr",
+  "date_format": "DD/MM/YYYY",
+  "child_signature": "en qualité de représentant légal de {{holder_name}}",
+  "kinds": {
+    "cancellation": {
+      "required": ["sender_name", "sender_address", "recipient_name", "recipient_address", "contract_name", "reference"],
+      "subject": "Résiliation du contrat {{contract_name}}, {{reference_label}} {{reference}}",
+      "body": "Madame, Monsieur,\n\nPar la présente, je résilie le contrat suivant {{effective_clause}} :\n\n{{contract_name}}\n{{reference_label}} : {{reference}}\nTitulaire du contrat : {{holder_name}}\n\nJe vous prie de me confirmer par écrit la réception de cette résiliation et la date de fin du contrat. Je ne consens à aucune reconduction du contrat.\n\nL'autorisation de prélèvement que je vous ai donnée prend fin avec le contrat.\n\nVeuillez agréer, Madame, Monsieur, l'expression de mes salutations distinguées.\n\n\n{{sender_name}}{{signature_note}}",
+      "effective_clause": "à compter du {{effective_date}}, ou à défaut à la première échéance possible",
+      "effective_clause_unknown": "à la première échéance possible",
+      "reference_label": "Numéro de contrat ou de client",
+      "delivery": "Vérifiez dans le contrat la forme exigée. Envoyez la lettre pour qu'elle arrive au plus tard à la date indiquée, d'une manière que vous pouvez prouver : lettre recommandée avec accusé de réception, fax avec rapport de transmission, ou le formulaire de résiliation du prestataire avec confirmation."
+    }
+  }
+}

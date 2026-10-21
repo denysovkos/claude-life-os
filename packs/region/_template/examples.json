@@ -1,0 +1,5 @@
+{
+  "term_rules": [
+    {"rule": "objection_administrative", "start": "2026-01-15", "expect": "2026-02-16", "why": "15 Feb 2026 is a Sunday"}
+  ]
+}

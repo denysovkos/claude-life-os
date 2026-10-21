@@ -1,0 +1,94 @@
+{
+  "term_rules": [
+    {
+      "key": "objection_administrative",
+      "label": "Срок обжалования решения органа власти",
+      "applies_to": ["official_decision"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_months": 3}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [30, 14, 7, 3, 1],
+      "basis": "Ст. 219 ч. 1 КАС РФ: административное исковое заявление об оспаривании решения органа власти подаётся в течение трёх месяцев со дня, когда гражданину стало известно о нарушении его прав. Ст. 93 ч. 2 КАС РФ: если последний день срока приходится на нерабочий день, днём окончания срока считается следующий за ним рабочий день.",
+      "notes": "Counted from the date on the decision, so it errs early. Some decisions (for example on migration matters or fines) have shorter periods stated in the decision; that text wins."
+    },
+    {
+      "key": "objection_tax",
+      "label": "Апелляционная жалоба на решение налогового органа",
+      "applies_to": ["tax_assessment"],
+      "deadline_type": "legal_response",
+      "start": "issued_on",
+      "steps": [{"add_months": 1}],
+      "roll_to_business_day": true,
+      "hard": true,
+      "lead_days": [21, 14, 7, 3, 1],
+      "basis": "Ст. 139.1 п. 2 НК РФ: апелляционная жалоба на решение о привлечении к ответственности подаётся до дня вступления решения в силу, то есть в течение одного месяца со дня его вручения (ст. 101 п. 9 НК РФ). Ст. 6.1 п. 7 НК РФ: окончание срока в нерабочий день переносится на следующий рабочий день.",
+      "notes": "Other acts of the tax office can be appealed within one year (ст. 139 п. 2 НК РФ). A letter sent by registered post counts as received on the sixth working day after sending (ст. 31 п. 4 НК РФ), so counting from the date on the decision errs early."
+    },
+    {
+      "key": "consumer_withdrawal",
+      "label": "Отказ от товара при дистанционной продаже",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_days": 7}],
+      "roll_to_business_day": true,
+      "hard": false,
+      "lead_days": [3],
+      "basis": "Ст. 26.1 п. 4 Закона РФ «О защите прав потребителей»: потребитель вправе отказаться от товара, купленного дистанционно, в течение семи дней после его передачи. Ст. 193 ГК РФ: окончание срока в нерабочий день переносится на ближайший рабочий день.",
+      "notes": "If the seller did not give written information on the return procedure at delivery, the period is three months. Goods of proper quality bought in a shop can be exchanged within 14 days (ст. 25), except goods on the government's non-returnable list."
+    },
+    {
+      "key": "statutory_warranty",
+      "label": "Срок предъявления требований о недостатках",
+      "applies_to": [],
+      "deadline_type": "other",
+      "start": "delivered_on",
+      "steps": [{"add_months": 24}],
+      "roll_to_business_day": false,
+      "hard": false,
+      "lead_days": [30],
+      "basis": "Ст. 19 п. 1 Закона РФ «О защите прав потребителей»: если гарантийный срок не установлен, требования в отношении недостатков товара предъявляются в течение двух лет со дня передачи товара потребителю.",
+      "notes": "When the manufacturer or seller sets a warranty period, that period applies instead; it is in the warranty card."
+    }
+  ],
+  "annual_dates": [
+    {
+      "key": "tax_return_due",
+      "label": "Подать декларацию 3-НДФЛ",
+      "month_day": "04-30",
+      "year_offset_from_tax_year": 1,
+      "hard": true,
+      "basis": "Ст. 229 п. 1 НК РФ: налоговая декларация по НДФЛ представляется не позднее 30 апреля года, следующего за истекшим налоговым периодом.",
+      "notes": "Tax due on the return is paid by 15 July (ст. 228 п. 4 НК РФ). A return filed only to claim a deduction can be filed at any time within three years."
+    }
+  ],
+  "facts": [
+    {
+      "key": "property_taxes",
+      "text": "Property tax, land tax and vehicle tax for individuals are paid on the tax office's notice by 1 December of the following year (ст. 363, 397, 409 НК РФ)."
+    },
+    {
+      "key": "gosuslugi",
+      "text": "Official notices, fines and court summonses are increasingly delivered to the Gosuslugi account; a notice delivered there counts as received."
+    }
+  ],
+  "authorities": [
+    {
+      "name": "Федеральная налоговая служба (ФНС)",
+      "kind": "authority",
+      "domains": ["nalog.gov.ru"],
+      "category": "government"
+    },
+    {
+      "name": "Госуслуги",
+      "kind": "authority",
+      "domains": ["gosuslugi.ru"],
+      "category": "government"
+    }
+  ],
+  "purchase_rights_min_amount": 3000,
+  "purchase_rights_ignore": [],
+  "tax_relevance_labels": {}
+}

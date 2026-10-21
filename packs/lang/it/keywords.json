@@ -1,0 +1,17 @@
+{
+  "categories": {
+    "purchases": ["scontrino", "grazie per il tuo acquisto", "grazie per l'acquisto", "ricevuta", "pagato con carta", "conferma d'acquisto"],
+    "orders_delivery": ["pacco", "consegnato", "numero di tracciamento", "spedito", "in consegna", "spedizione", "corriere"],
+    "government": ["agenzia delle entrate", "provvedimento", "comune", "questura", "permesso di soggiorno", "protocollo", "avviso di accertamento", "ricorso", "inps"],
+    "bank_finance": ["estratto conto", "saldo", "conto corrente", "deposito", "tasso di interesse", "investimenti", "carta di credito", "risparmio"],
+    "bills_payments": ["fattura", "importo da pagare", "addebito diretto", "bolletta", "scadenza", "sollecito", "rata", "pagopa"],
+    "legal_notary": ["notaio", "avvocato", "studio legale", "bozza di atto", "rogito", "procura", "tribunale", "compromesso"],
+    "work": ["busta paga", "cedolino", "stipendio", "datore di lavoro", "ufficio del personale", "contratto di lavoro", "certificazione unica"],
+    "health": ["appuntamento", "ambulatorio", "ricetta", "tessera sanitaria", "referto", "dentista", "impegnativa"],
+    "travel": ["volo", "carta d'imbarco", "conferma di prenotazione", "hotel", "check-in", "itinerario", "prenotazione"],
+    "personal_social": ["compleanno", "cena", "a presto", "famiglia", "matrimonio", "festa", "ci vediamo"]
+  },
+  "action_phrases": ["si prega di pagare", "azione richiesta", "rispondere entro", "firmare e restituire", "si prega di confermare", "termine"],
+  "deadline_phrases": ["data di scadenza", "da pagare entro", "non oltre", "entro 14 giorni", "entro un mese", "entro il"],
+  "amount_labels": ["totale", "importo da pagare", "importo", "totale da pagare"]
+}
