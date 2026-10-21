@@ -51,6 +51,9 @@ PARAMS = {
     # tasks: registering and closing (0020)
     "task_id": "'it-task-1'", "reason": "'integration test'", "title": "'⚠️ email-intake failed test'",
     "review_month": "'2026-09'", "created_at": "now()",
+    # paper mail and the letter explainer (0021)
+    "folder_id": "'fld-scan'", "document_id": "'00000000-0000-0000-0000-0000000000a2'",
+    "explanation": "'{\"locale\": \"en\", \"summary\": \"s\", \"meaning\": \"m\", \"if_ignored\": \"x\"}'",
 }
 for folder in ("inbox", "emergency", "backups", "catch_all", "identity", "finance", "taxes",
                "housing", "insurance", "work", "legal", "health", "vehicle", "education"):

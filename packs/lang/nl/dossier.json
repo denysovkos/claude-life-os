@@ -35,5 +35,17 @@
   "letter_send_by": "Moet aankomen vóór",
   "letter_how": "Zo verstuur je hem",
   "letter_after_sending": "Als hij verstuurd is, zeg dan in een willekeurige chat tegen Claude \"Ik heb de brief verstuurd\" en hoe (post, aangetekend, fax, online). De termijn wordt dan gesloten en een ontbrekende bevestiging wordt gemeld.",
-  "letter_not_advice": "Ingevuld uit je documenten. Geen juridisch advies: lees elke regel, controleer de ontvanger, het nummer en de data, en onderteken zelf."
+  "letter_not_advice": "Ingevuld uit je documenten. Geen juridisch advies: lees elke regel, controleer de ontvanger, het nummer en de data, en onderteken zelf.",
+  "explain_title": "Uitgelegd",
+  "explain_says": "Wat deze brief zegt",
+  "explain_if_ignored": "Als u niets doet",
+  "explain_options": "Wat u kunt doen",
+  "explain_act_by": "Handelen vóór",
+  "explain_draft": "Concept-antwoord",
+  "explain_draft_translation": "Wat het concept zegt",
+  "explain_draft_missing": "Invullen vóór verzending",
+  "explain_objection": "Om bezwaar te maken, zeg in een willekeurige chat \"schrijf het bezwaar\": Claude vult het gecontroleerde sjabloon in met het dossiernummer, de besluitdatum en de termijn.",
+  "explain_suspicious": "Controleer eerst: deze brief komt niet van een afzender die de index kent, of vraagt iets ongebruikelijks. Neem contact op via het adres of telefoonnummer op de officiële website van de afzender, niet dat in de brief.",
+  "explain_original": "De brief",
+  "explain_not_advice": "Uitgelegd door AI op basis van de brief en uw documenten. Geen juridisch advies: gaat het om geld, een recht of uw verblijfsstatus, vraag dan vóór de termijn een adviesbureau of advocaat."
 }

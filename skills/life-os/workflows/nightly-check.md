@@ -1,6 +1,6 @@
 # Nightly check
 
-Workflow `nightly-check` v1.5 of the `life-os` skill: the last run of the night. The
+Workflow `nightly-check` v1.6 of the `life-os` skill: the last run of the night. The
 shared rules in `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 It runs after both intakes (typically 03:05, after email at 01:05 and Drive at 02:05), so
@@ -92,6 +92,22 @@ unconfirmed` under `SYSTEM` come from `v_letters_followup`; name each letter by 
 subject (`select issue, subject, send_by from v_letters_followup;`). A letter that must
 arrive within a week and is not sent is the most important fact of the day unless a hard
 deadline is already overdue.
+
+Letters the Drive intake explained since the last brief (schema 0.12.0 and later) get
+their own section, `NEW LETTERS`, after `COMING UP`:
+
+```sql
+select letter, person, summary, act_by, objection_until, suspicious, url from v_letter_explanations
+where origin = 'intake'
+  and created_at > coalesce((select max(generated_at) from briefings where briefing_date < current_date), now() - interval '1 day')
+order by suspicious desc, act_by nulls last;
+```
+
+One line each, in `output_locale`: the summary, the person in parentheses when it is not
+the owner, "act by <date>" when there is one, and the link (the Doc with the explanation
+and draft reply once the bridge wrote it, the letter before that). A `suspicious` one
+starts with "check first:". Each counts as an item, so a day with only a new letter still
+gets a brief: a letter from an authority is exactly what must not wait for a quiet day.
 
 - **Nothing to say** (zero items and no findings): write a `briefings` row with
   `suppressed = true` and deliver nothing. No "all clear" messages: a brief that talks

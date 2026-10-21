@@ -1,6 +1,6 @@
 # Life OS setup
 
-Workflow `setup` v1.8 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
+Workflow `setup` v1.9 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Three modes. Pick from what the person said; if unclear, ask.
@@ -37,7 +37,7 @@ Code, routines), `assets/` does not exist and the same files are at the reposito
 `supabase/migrations`, `supabase/seed`, `packs`, `apps-script`, `docs`.
 
 ```
-assets/migrations/0001_tables.sql … 0020_task_lifecycle.sql
+assets/migrations/0001_tables.sql … 0021_letter_explainer.sql
 assets/seed/document_types.sql
 assets/packs/lang/<locale>/{dossier,folders,keywords,formats}.json
 assets/packs/region/<code>/{rules.json,classification_rules.sql}
@@ -141,7 +141,7 @@ Apply in this order with `apply_migration`, each named after its file without `.
 0011_mcp_safe_writes, 0012_notice_periods, 0013_watchdog_and_snapshot,
 0014_successors_binder_folders, 0015_audits_health_invariants, 0016_security_hardening,
 0017_household_members, 0018_letters, 0019_meaning_search,
-0020_task_lifecycle
+0020_task_lifecycle, 0021_letter_explainer
 ```
 
 Then run `assets/seed/document_types.sql` with `execute_sql` (or as migration
@@ -152,9 +152,9 @@ region pack was chosen. Stop at the first error, show it, and look for it in
 Verify:
 
 ```sql
-select value from life_settings where key = 'schema_version';            -- "0.11.0"
-select count(*) from pg_tables where schemaname = 'public';              -- 41
-select count(*) from pg_views  where schemaname = 'public';              -- 45
+select value from life_settings where key = 'schema_version';            -- "0.12.0"
+select count(*) from pg_tables where schemaname = 'public';              -- 42
+select count(*) from pg_views  where schemaname = 'public';              -- 47
 select count(*) from document_types;                                     -- 43
 select jobname, schedule, active from cron.job;                          -- nightly-derivations
 ```
@@ -282,7 +282,7 @@ nothing twice. Otherwise create, with `create_file` and mime type
 Then:
 
 ```sql
-update life_settings set value = jsonb_build_object(
+update life_settings set value = coalesce(value, '{}'::jsonb) || jsonb_build_object(
   'inbox', :inbox_id, 'emergency', :emergency_id, 'backups', :backups_id,
   'catch_all', :catch_all_id), updated_at = now()
 where key = 'drive_folders';
@@ -358,7 +358,7 @@ from bridge_runs order by started_at desc limit 1;
 ```
 
 A row from the last few minutes with `finished_at` set, `errors = []` and
-`script_version = 'bridge-3.3'` means the bridge works. Say so plainly.
+`script_version = 'bridge-3.4'` means the bridge works. Say so plainly.
 
 No row at all: `install` did not reach the database. Ask what the log said. Common:
 
@@ -444,14 +444,14 @@ the installed versions:
 
 ```sql
 insert into skill_revisions (skill_name, version, change_type, summary)
-values ('life-os', 'v4.8', 'baseline', 'installed'),
-       ('setup', 'v1.8', 'baseline', 'installed with life-os v4.8'),
-       ('email-intake', 'v3.6', 'baseline', 'installed with life-os v4.8'),
-       ('drive-file-intake', 'v3.5', 'baseline', 'installed with life-os v4.8'),
-       ('nightly-check', 'v1.5', 'baseline', 'installed with life-os v4.8'),
-       ('context-lookup', 'v2.6', 'baseline', 'installed with life-os v4.8'),
-       ('life-review', 'v2.6', 'baseline', 'installed with life-os v4.8'),
-       ('letters', 'v1.1', 'baseline', 'installed with life-os v4.8');
+values ('life-os', 'v4.9', 'baseline', 'installed'),
+       ('setup', 'v1.9', 'baseline', 'installed with life-os v4.9'),
+       ('email-intake', 'v3.6', 'baseline', 'installed with life-os v4.9'),
+       ('drive-file-intake', 'v3.6', 'baseline', 'installed with life-os v4.9'),
+       ('nightly-check', 'v1.6', 'baseline', 'installed with life-os v4.9'),
+       ('context-lookup', 'v2.7', 'baseline', 'installed with life-os v4.9'),
+       ('life-review', 'v2.6', 'baseline', 'installed with life-os v4.9'),
+       ('letters', 'v1.2', 'baseline', 'installed with life-os v4.9');
 ```
 
 Finish with doctor mode, then a three-line summary: what runs when, where the emergency
@@ -484,7 +484,9 @@ apply a fix without the person saying yes.
    above zero is a problem, not a warning: no objection deadline is being derived. It is
    what an installation upgraded from 0.2.0 looks like until its pack is synced.
 4. **Settings complete**: `owner_email`, `timezone`, `output_locale`, and all four
-   `drive_folders` set. Each folder id exists and is not trashed (`get_file_metadata`).
+   `drive_folders` set. Each folder id exists and is not trashed (`get_file_metadata`),
+   the optional `scan_inboxes` ones included: a scanning service that lost its folder
+   keeps scanning into nowhere the intake looks.
    `task_provider = 'todoist'` needs `task_targets.system_project` to exist in Todoist.
 5. **Security**:
    ```sql
@@ -533,8 +535,9 @@ apply a fix without the person saying yes.
 8. **Night schedule**: `select * from v_intake_watchdog;` has a row per nightly job,
    `nightly-check` included; a job with `runs_7d = 0` was never scheduled.
 9. **Bridge**: `select started_at, errors, script_version from bridge_runs order by started_at desc limit 5;`
-   Errors in the last runs, or a `script_version` other than `bridge-3.3`. An older
-   bridge keeps working, but before bridge-3.3 it renders no letters, and before
+   Errors in the last runs, or a `script_version` other than `bridge-3.4`. An older
+   bridge keeps working, but before bridge-3.4 it writes no letter explanations, before
+   bridge-3.3 it renders no letters, and before
    bridge-3.2 it does not deliver the outbox either (without a task app no brief
    arrives). From bridge-3.2 the fix is only to paste the new `assets/apps-script/Code.gs`
    over the old code (the manifest and permissions are unchanged). From an older one,
@@ -579,6 +582,19 @@ apply a fix without the person saying yes.
    Fix the bridge (check 9), then let it retry the letter:
    `update letters set render_attempts = 0 where status = 'approved' and drive_pdf_id is null returning id;`
    `send_now` and `unconfirmed` are for the person, not fixes: name them.
+   Explanations (from schema 0.12.0):
+   ```sql
+   select count(*) filter (where rendered_at is null and render_attempts >= 3) as failed,
+          count(*) filter (where rendered_at is null and updated_at < now() - interval '2 hours') as waiting,
+          max(render_error) as last_error
+   from letter_explanations;
+   select count(*) from v_letters_to_explain;
+   ```
+   `waiting` above zero means the bridge does not write the Docs: older than bridge-3.4
+   (check 9), or `failed` with `last_error` saying why. Once fixed:
+   `update letter_explanations set render_attempts = 0 where rendered_at is null returning id;`
+   Letters waiting in `v_letters_to_explain` for more than a few nights mean the Drive
+   intake skips step 8c: a warning, and the next run takes ten of them.
 14. **Tasks** (from schema 0.11.0, with `task_provider = 'todoist'`):
    ```sql
    select source, count(*) as waiting, min(since) as oldest from v_tasks_to_close group by source;
@@ -667,6 +683,14 @@ To undo a change, write the `old_value` back.
     `update documents set member_id = (select id from household_members where lower(name) = lower(:member_name)) where id = :id returning name, subject_person;`
     The correction is recorded, which is how the intake learns.
   Show the result with `select * from v_household_overview;`.
+- **Scan inbox folders** (paper mail from Dropscan, Caya or any service that writes into
+  its own Drive folder): connect the service to Google Drive in its own settings first and
+  let it deliver one scan, so its folder exists. Find that folder with `search_files`
+  (by name, owned by the person), confirm the path with them, then
+  `update life_settings set value = jsonb_set(value, '{scan_inboxes}', coalesce(value->'scan_inboxes', '[]'::jsonb) || to_jsonb(:folder_id::text)) where key = 'drive_folders' returning value;`
+  Files under it are indexed and filed out like inbox files from the next intake on. A
+  service that can target any folder needs none of this: point it at the inbox.
+  `docs/paper-mail.md` is the guide to hand over.
 - **Bridge categories**: `bridge_categories` lists which email categories get their
   attachments copied. Adding `health` or `work` is common; say that it copies more files
   into Drive.

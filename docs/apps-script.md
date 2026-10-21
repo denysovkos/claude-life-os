@@ -121,8 +121,9 @@ Supabase project.
 
 When a new version of `Code.gs` is released: open the project, replace the whole content
 of `Code.gs` with the new one, do the same for `appsscript.json` (steps 6 and 7 above),
-save, and run `install` once more. Coming from bridge-3.2, only `Code.gs` changes
-(bridge-3.3 renders letters with the permissions it already has). Coming from
+save, and run `install` once more. Coming from bridge-3.2 or 3.3, only `Code.gs` changes
+(bridge-3.3 renders letters and bridge-3.4 writes letter explanations, both with the
+permissions it already has). Coming from
 bridge-3.1, Google asks for permissions again: the new list is shorter. Script properties and
 permissions stay. If the new version needs a new permission, Google asks again as in
 step 3.

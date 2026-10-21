@@ -35,5 +35,17 @@
   "letter_send_by": "Muss ankommen bis",
   "letter_how": "So senden Sie es",
   "letter_after_sending": "Wenn es verschickt ist, sagen Sie Claude in einem beliebigen Chat „Ich habe das Schreiben verschickt“ und wie (Post, Einschreiben, Fax, online). Dann wird die Frist geschlossen, und eine fehlende Bestätigung wird gemeldet.",
-  "letter_not_advice": "Aus Ihren Unterlagen ausgefüllt. Keine Rechtsberatung: Lesen Sie jede Zeile, prüfen Sie Empfänger, Nummer und Daten, und unterschreiben Sie selbst."
+  "letter_not_advice": "Aus Ihren Unterlagen ausgefüllt. Keine Rechtsberatung: Lesen Sie jede Zeile, prüfen Sie Empfänger, Nummer und Daten, und unterschreiben Sie selbst.",
+  "explain_title": "Erklärt",
+  "explain_says": "Was in diesem Brief steht",
+  "explain_if_ignored": "Wenn Sie nichts tun",
+  "explain_options": "Was Sie tun können",
+  "explain_act_by": "Handeln bis",
+  "explain_draft": "Antwortentwurf",
+  "explain_draft_translation": "Was der Entwurf sagt",
+  "explain_draft_missing": "Vor dem Absenden ausfüllen",
+  "explain_objection": "Für einen Widerspruch sagen Sie in einem beliebigen Chat \"schreib den Widerspruch\": Claude füllt die geprüfte Vorlage mit Aktenzeichen, Bescheiddatum und Frist aus.",
+  "explain_suspicious": "Erst prüfen: Dieser Brief kommt nicht von einem Absender, den der Index kennt, oder er verlangt etwas Ungewöhnliches. Kontaktieren Sie den Absender über die Adresse oder Telefonnummer auf seiner offiziellen Website, nicht über die im Brief.",
+  "explain_original": "Der Brief",
+  "explain_not_advice": "Von einer KI aus dem Brief und Ihren Unterlagen erklärt. Keine Rechtsberatung: Wenn es um Geld, ein Recht oder Ihren Aufenthaltsstatus geht, fragen Sie vor Fristablauf eine Beratungsstelle oder einen Anwalt."
 }

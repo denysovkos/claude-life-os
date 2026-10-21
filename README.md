@@ -115,6 +115,11 @@ emergency binder.
 - **Important attachments** (bills, contracts, letters from authorities) are copied into
   Google Drive automatically, filed into the right folder, and indexed with their full
   text.
+- **Paper mail too.** Scan a letter with the Google Drive app straight into the Life OS
+  Inbox, or let a scanning service such as Dropscan or Caya deliver it there, and it is
+  read, filed and given its deadlines like any email. Its deadline counts from the date
+  on the letter, not the day you scanned it. In a chat, attach a document and say "file
+  this": it is filed right away. [docs/paper-mail.md](docs/paper-mail.md) shows each way.
 - **It tracks deadlines, not just dates.** A residence permit that expires, a letter you
   can object to within a month, an insurance that renews itself unless cancelled three
   months before: each becomes a deadline with reminders that come more often as it gets
@@ -139,6 +144,14 @@ emergency binder.
   and, for Germany, the legal basis. You read it and say yes; the PDF lands in Drive
   next to the contract and in your inbox, with how to send it. You send it, the system
   never does, and a missing confirmation is reported.
+- **Every official letter explained, in your language.** A letter from the
+  Ausländerbehörde, the Finanzamt, a court, a notary or an insurer gets a Google Doc next
+  to it: what it says in plain words, what happens if you do nothing, what you can do
+  and by when, and, when it asks for an answer, a draft reply in the letter's language
+  with a translation and the gaps you still have to fill marked. The brief names it the
+  next morning. A letter that looks like a scam is flagged first. Ask "what does this
+  letter mean" in any chat for one on the spot. Objections come from the reviewed
+  template above, never from a freehand draft.
 
 ## Tasks in your task manager
 
@@ -229,6 +242,8 @@ database is the single source of truth; Todoist, Craft and the calendar only mir
   through the system.
 - [docs/apps-script.md](docs/apps-script.md): installing the bridge.
 - [docs/scheduling.md](docs/scheduling.md): night schedule: times, order.
+- [docs/paper-mail.md](docs/paper-mail.md): getting paper letters in: phone scan,
+  scanning services, from any chat.
 - [docs/tasks.md](docs/tasks.md): what lands in your task manager and how it closes.
 - [docs/settings.md](docs/settings.md): every setting, and what happens when one changes.
 - [docs/security.md](docs/security.md): keys, permissions, what the AI sees, backups.

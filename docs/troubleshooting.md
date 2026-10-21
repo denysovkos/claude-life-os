@@ -128,6 +128,24 @@ database refuses to count with no rules rather than count with the wrong law.
 the missing deadlines. Documents without a date on them (`legal_decision_without_date`)
 still need the date set; the monthly review does that.
 
+## A letter has no explanation, or no Doc next to it
+
+The Drive intake explains letters of the types in `explain_letter_types` from the last
+180 days, ten per night, once their text is read. Check which step is missing:
+
+```sql
+select name, issued_on from v_letters_to_explain;                         -- not explained yet
+select letter, has_doc from v_letter_explanations where not has_doc;     -- explained, no Doc
+select render_attempts, render_error from letter_explanations where rendered_at is null;
+```
+
+Waiting in the first list for several nights: the night run skips its step 8c (an old
+skill zip), or the letter's type is not in `explain_letter_types`. In the second: the
+bridge is older than bridge-3.4 (paste the new `Code.gs`), or `render_error` says why;
+after fixing, `update letter_explanations set render_attempts = 0 where rendered_at is null returning id;`
+An older letter, or one of another type, is explained on request: "explain the letter
+from ..." in any chat.
+
 ## Deadlines look wrong after moving country or a pack update
 
 Open deadlines keep the date they were counted with until you recount them. Say "I moved

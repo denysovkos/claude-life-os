@@ -2,23 +2,23 @@
 name: life-os
 description: >-
   claude-life-os, a personal paperwork system on Gmail, Google Drive and a Supabase
-  database: indexes documents and mail, tracks deadlines, contracts and payments, sends
-  a daily brief, for its owner and their household (partner, children). Use for
-  installing or checking it ("set up life os", "life os doctor", "налаштуй life os"),
-  for its scheduled night runs ("run the life-os email-intake / drive-file-intake /
-  nightly-check / life-review workflow"), for processing mail or files on request
-  ("check my mail", "перевір пошту"), for the monthly review ("monthly review", "what
-  can I cancel"), for cancellation and objection letters ("cancel the gym", "Widerspruch
+  database: indexes documents, mail and paper letters, tracks deadlines, contracts and
+  payments, explains letters from authorities, sends a daily brief, for its owner and
+  their household. Use for installing or checking it ("set up life os", "life os
+  doctor"), for its scheduled night runs ("run the life-os email-intake /
+  drive-file-intake / nightly-check / life-review workflow"), for processing mail or
+  files ("check my mail", "перевір пошту", "file this"), for explaining a letter and
+  drafting a reply ("what does this letter mean", "was will das Amt"), for the monthly
+  review, for cancellation and objection letters ("cancel the gym", "Widerspruch
   einlegen"), and for any question about the person's own documents, bills, contracts,
-  deadlines, notice periods, returns, taxes or the emergency binder ("when does my
-  passport expire", "my son's passport", "what does the lease say", "коли можу
-  розірвати", "wann kann ich kündigen"). Answer such questions from the index before
+  deadlines, notice periods, taxes or the emergency binder ("when does my passport
+  expire", "wann kann ich kündigen"). Answer such questions from the index before
   searching Drive or Gmail by hand.
 compatibility: Requires Supabase, Google Drive and Gmail connectors. Google Calendar recommended. Todoist and Craft optional.
 metadata:
-  version: v4.8
+  version: v4.9
   product: claude-life-os
-  schema_version: 0.11.0
+  schema_version: 0.12.0
 ---
 
 # Life OS
@@ -33,13 +33,15 @@ one: they are long, and the others are not needed.
 |---|---|---|
 | set up / install / "налаштуй life os"; life os doctor / is everything working; change language, country, task app, contacts; add or change a household member ("add my wife Anna", "my son Max was born 2017-03-02") | setup (modes install, doctor, reconfigure) | `workflows/setup.md` |
 | run the email-intake workflow; check my mail; what came in | email-intake | `workflows/email-intake.md` |
-| run the drive-file-intake workflow; process my files; a document attached in chat to be filed | drive-file-intake | `workflows/drive-file-intake.md` |
+| run the drive-file-intake workflow; process my files; a document, scan or photo attached in chat ("file this", "save it to my folders", "ablegen", "збережи"); "I put a letter in the inbox"; how do I get paper mail in | drive-file-intake | `workflows/drive-file-intake.md` |
 | run the nightly-check workflow; send me today's brief | nightly-check | `workflows/nightly-check.md` |
 | run the life-review workflow; monthly review; import this bank statement; what can I cancel | life-review | `workflows/life-review.md` |
-| write a cancellation or objection ("cancel the gym", "Kündigung für den Handyvertrag", "Widerspruch gegen den Bescheid", "Einspruch einlegen", "розірвати договір"); "I sent the letter"; withdraw a letter | letters | `workflows/letters.md` |
+| write a cancellation or objection ("cancel the gym", "Kündigung für den Handyvertrag", "Widerspruch gegen den Bescheid", "Einspruch einlegen", "розірвати договір"); "I sent the letter"; withdraw a letter; explain a letter or draft a reply to it ("what does this letter mean", "was will das Amt von mir", "що означає цей лист", "draft a reply to the Finanzamt") | letters | `workflows/letters.md` |
 | any question about their own documents, mail, money, deadlines (read only) | context-lookup | `workflows/context-lookup.md` |
 
 A question is always `context-lookup`, even if it mentions mail or files: it never writes.
+"What does the letter from X say" is answered there from its stored explanation; "explain
+this letter" with no explanation yet, or "draft a reply", is `letters`.
 "Can I cancel X and by when" is a question; "cancel X" or "write the cancellation" is
 `letters`.
 When two fit ("check my mail and tell me what's due"), run the writing one, then answer.
@@ -242,7 +244,7 @@ workflows/drive-file-intake.md  nightly document intake
 workflows/nightly-check.md   nightly derivations, health check, daily brief
 workflows/life-review.md     monthly review
 workflows/context-lookup.md  read-only answers
-workflows/letters.md         cancellation and objection letters, on request
+workflows/letters.md         cancellation and objection letters, letter explanations, on request
 assets/                      migrations, packs, Apps Script, docs (in the release zip;
                              in a repository clone they are at the repository root)
 ```

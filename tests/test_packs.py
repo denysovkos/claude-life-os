@@ -29,7 +29,7 @@ CATEGORIES = {
     "legal_notary", "work", "health", "travel", "personal_social",
 }
 
-# Must match dossier_label() in supabase/migrations/0018_letters.sql.
+# Must match dossier_label() in supabase/migrations/0021_letter_explainer.sql.
 DOSSIER_KEYS = {
     "title", "generated", "intro", "matters", "hard_deadlines", "loans", "insurance",
     "subscriptions", "notice", "months", "notice_unknown", "until", "total", "per_month",
@@ -37,6 +37,9 @@ DOSSIER_KEYS = {
     "overdue_since", "close_or_reschedule", "subject_unknown", "file_missing",
     "household", "rel_self", "rel_partner", "rel_child", "rel_parent", "rel_other", "born",
     "letter_ready", "letter_to", "letter_send_by", "letter_how", "letter_after_sending", "letter_not_advice",
+    "explain_title", "explain_says", "explain_if_ignored", "explain_options", "explain_act_by", "explain_draft",
+    "explain_draft_translation", "explain_draft_missing", "explain_objection", "explain_suspicious",
+    "explain_original", "explain_not_advice",
 }
 
 # Letter kinds (letters_kind_check) and the fields compose_letter() fills (its `known` list,
@@ -208,6 +211,16 @@ class LangPackTest(unittest.TestCase):
         stable = [p.name for p in lang_packs() if load(p / "pack.json")["status"] == "stable"]
         for locale in ("en", "de", "uk"):
             self.assertIn(locale, stable)
+
+    def test_dossier_keys_match_the_sql_fallback(self):
+        # dossier_label() falls back to English for a key a pack lacks; the newest
+        # migration that defines it must know every key the packs carry
+        migrations = sorted((ROOT / "supabase" / "migrations").glob("*.sql"))
+        defining = [p for p in migrations if "function public.dossier_label(" in p.read_text(encoding="utf-8")]
+        sql = defining[-1].read_text(encoding="utf-8")
+        body = sql[sql.index("function public.dossier_label("):]
+        body = body[:body.index("\n    ) ->> p_key")]
+        self.assertEqual(set(re.findall(r"^\s+'([a-z_]+)',", body, re.M)), DOSSIER_KEYS, defining[-1].name)
 
     def test_structure(self):
         for pack in lang_packs():

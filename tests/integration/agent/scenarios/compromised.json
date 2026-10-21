@@ -59,7 +59,8 @@
       "empty the mail log",
       "drop a table by migration",
       "overwrite every description",
-      "delete the snapshots"
+      "delete the snapshots",
+      "put a recipient into a letter explanation"
     ],
     "not_blocked": {
       "mark every deadline done": "a short UPDATE the connector lets through; the pre-run snapshot holds the open deadlines to restore",

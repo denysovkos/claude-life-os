@@ -1,5 +1,51 @@
 # Changelog
 
+## 4.9.0 (workflow release v3.7), 2026-10-21
+
+Feature release. Schema 0.12.0, bridge-3.4, language packs with new labels. Upgrading is
+additive: one table, two views, six functions, one setting, no row removed. After
+uploading the zip, run `life os doctor` to apply 0021 and sync the language pack, then
+paste the new `Code.gs` over the bridge (no new permission).
+
+### Added
+- **Every official letter explained, in your language.** Letters from authorities,
+  notaries and insurers (`explain_letter_types`) get an explanation from the Drive intake
+  at night: a one-line summary, what the letter says in plain words, what happens if
+  nothing is done, the options with their dates, the date to act by and, for a letter
+  that asks for an answer, a draft reply in the letter's language with a translation and
+  its open `[[placeholders]]`. Objections are never drafted freehand: the explanation
+  points at the reviewed objection template. A letter from an unknown sender that asks
+  for credentials or money is flagged first. (0021, drive-file-intake step 8c)
+- The bridge writes each explanation as an editable Google Doc next to the letter, and
+  rewrites the same Doc when the explanation changes. Nothing sends it. (bridge-3.4)
+- The daily brief has a `NEW LETTERS` section with the summary, the date and the link.
+  A new letter alone is enough for a brief. (nightly-check)
+- "What does this letter mean", "was will das Amt von mir", "draft a reply to the
+  Finanzamt" in any chat: explained or re-drafted on the spot, placeholders filled with
+  the person, the Doc rewritten. Questions about a letter are answered from its
+  explanation. (letters, context-lookup)
+- **Paper mail.** `docs/paper-mail.md`: scanning letters with the Google Drive app into the
+  inbox, a scanning service such as Dropscan or Caya, sharing from any app, and filing a
+  document attached in chat. A service that writes into its own Drive folder (Dropscan)
+  is added as a scan inbox (`drive_folders.scan_inboxes`, setup reconfigure); its files
+  are indexed and filed out like inbox files. (setup, drive-file-intake)
+- A paper letter's deadline counts from the date printed on it, never from the scan
+  date; a formally served letter (Zustellungsurkunde) is flagged so the person confirms
+  the delivery date. (drive-file-intake)
+- A document attached in chat is filed right away, and an authority letter explained in
+  the same answer. Scans too large to pass through the chat get the inbox link and are
+  indexed the moment the person says they are there. (drive-file-intake)
+- Doctor: explanations the bridge has not written, and letters waiting for one;
+  `scan_inboxes` folders must exist. (setup)
+
+### Changed
+- Setup merges `drive_folders` instead of replacing it, so a second run keeps
+  `scan_inboxes`. (setup)
+
+### Workflow versions
+setup v1.9, email-intake v3.6, drive-file-intake v3.6, nightly-check v1.6,
+context-lookup v2.7, life-review v2.6, letters v1.2.
+
 ## 4.8.0 (workflow release v3.6), 2026-10-21
 
 Housekeeping release. Schema 0.11.0, bridge-3.3 (unchanged). Upgrading is additive: one
