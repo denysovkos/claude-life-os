@@ -1,5 +1,34 @@
 # Changelog
 
+## 4.7.0 (workflow release v3.5), 2026-10-21
+
+Search release. Schema 0.10.0, bridge-3.3 (unchanged). Upgrading is additive: functions
+only, no table, no data change. After uploading the zip, run `life os doctor` to apply
+0019.
+
+### Added
+- **Search by meaning, in any language.** "What does the lease say about pets" now
+  finds the clause on Tierhaltung. Claude turns the question into several terms
+  (synonyms, the words a contract or authority would use, translations into the
+  languages your papers are in), and `find_documents(terms)` ranks documents, mail and
+  notes against all of them at once. Each hit comes with the terms it matched and the
+  passage, so answers quote the clause and link the document. A word of five letters
+  or more also finds its longer forms (Kündigung finds Kündigungsfrist); a stem ending
+  in `*` finds inflected forms (догов* finds договір, договору). (0019, context-lookup)
+- **Documents like this one.** `similar_documents(id)`: related papers by shared rare
+  words, the same issuer, type and household member, each with its reasons. (0019)
+
+### Not embeddings, on purpose
+The only embedding model Supabase runs inside the project, gte-small, reads English
+only and stops at 512 tokens, so German and Ukrainian papers would not be found by
+meaning. Any other model means sending document text to an outside service, which this
+system never does. The meaning comes from Claude instead, which reads every language,
+and the ranking stays in your database.
+
+### Workflow versions
+setup v1.7, email-intake v3.5, drive-file-intake v3.4, nightly-check v1.4,
+context-lookup v2.6, life-review v2.5, letters v1.0.
+
 ## 4.6.0 (workflow release v3.5), 2026-10-20
 
 Letters release. Schema 0.9.0, bridge-3.3. Upgrading is additive: no deadline moves, no

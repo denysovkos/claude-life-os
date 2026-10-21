@@ -233,6 +233,53 @@ begin
     if not ok then raise exception 'snapshots do not cover household_members'; end if;
   end if;
 
+  -- 13. search by meaning, in any language (schema 0.10.0) ---------------------------------
+  if to_regprocedure('public.find_documents(text[],integer)') is not null then
+    -- invented words, so a live installation's own documents cannot interfere
+    insert into documents (drive_file_id, name, drive_url, document_type_key, issuer, status, last_intake_at)
+    values (tag || '-lease', 'Mietvertrag Quokkastraße', 'https://example.invalid/l1', 'rental_contract', tag || ' Hausverwaltung', 'current', clock_timestamp())
+    returning id into doc;
+    insert into document_texts (document_id, body, extraction_status)
+    values (doc, 'Die Quokkahaltung in der Wohnung ist nur mit schriftlicher Zustimmung des Vermieters gestattet. '
+              || 'Die Kündigungsfrist für den Mieter beträgt drei Monate. Nebenkostenvorauszahlung Quokkastraße.', 'done');
+    insert into documents (drive_file_id, name, drive_url, document_type_key, issuer, status, last_intake_at)
+    values (tag || '-lease2', 'Nachtrag Mietvertrag', 'https://example.invalid/l2', 'rental_contract', tag || ' Hausverwaltung', 'current', clock_timestamp())
+    returning id into perm;
+    insert into document_texts (document_id, body, extraction_status)
+    values (perm, 'Nachtrag zur Nebenkostenvorauszahlung für die Wohnung Quokkastraße. Quokkahaltung bleibt zustimmungspflichtig.', 'done');
+    insert into documents (drive_file_id, name, drive_url, document_type_key, status, last_intake_at)
+    values (tag || '-ua', 'Договір оренди', 'https://example.invalid/u1', 'rental_contract', 'current', clock_timestamp())
+    returning id into dl;
+    insert into document_texts (document_id, body, extraction_status)
+    values (dl, 'Умови договору оренди квоккаквартири: орендар сплачує щомісяця.', 'done');
+
+    -- another language and a synonym find what the words of the question would miss
+    select matched_terms::text into s from find_documents(array['pets allowed', 'Quokkahaltung', 'домашні квокки'], 10) f
+    where f.id = doc;
+    if s is distinct from '{Quokkahaltung}' then raise exception 'find_documents: matched terms %', s; end if;
+    select count(*) into n from find_documents(array['Quokkahaltung'], 10) f
+    where f.id = doc and f.snippet like '%<b>Quokkahaltung</b>%' and f.url = 'https://example.invalid/l1';
+    if n <> 1 then raise exception 'find_documents gives no quotable snippet with the link'; end if;
+    -- a word finds its longer forms, a starred stem its inflections
+    select count(*) into n from find_documents(array['Kündigung Quokkastraße'], 10) where id = doc;
+    if n <> 1 then raise exception 'a word does not find its compound (Kündigung -> Kündigungsfrist)'; end if;
+    select count(*) into n from find_documents(array['квоккаквартир*'], 10) where id = dl;
+    if n <> 1 then raise exception 'a starred stem does not find its inflected form'; end if;
+    -- more terms matched ranks higher
+    select id into m from find_documents(array['Quokkahaltung', 'Kündigungsfrist', 'Nebenkostenvorauszahlung'], 10)
+    where id in (doc, perm) order by score desc limit 1;
+    if m is distinct from doc then raise exception 'the document matching more terms does not rank first'; end if;
+    select count(*) into n from find_documents(array['', '*', '?'], 10);
+    if n <> 0 then raise exception 'empty terms return rows'; end if;
+
+    -- documents like this one: the addendum from the same landlord, not the unrelated one
+    select id, reasons::text into m, s from similar_documents(doc, 20) order by score desc limit 1;
+    if m is distinct from perm then raise exception 'similar_documents: % ranked first', m; end if;
+    if s not like '%same issuer%' or s not like '%shared terms%' then raise exception 'similar_documents reasons: %', s; end if;
+    select count(*) into n from similar_documents(doc, 50) where id = doc;
+    if n <> 0 then raise exception 'a document is listed as similar to itself'; end if;
+  end if;
+
   raise notice 'feature checks: all passed';
 end
 $checks$;
