@@ -1,9 +1,9 @@
 # Life review
 
-Workflow `life-review` v2.5 of the `life-os` skill: the monthly review. The shared rules in
+Workflow `life-review` v2.6 of the `life-os` skill: the monthly review. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
-Write `v2.5` into `life_review_runs.skill_version`.
+Write `v2.6` into `life_review_runs.skill_version`.
 
 ## How the work is split, and why this skill exists
 
@@ -199,8 +199,18 @@ pack, say that a local rule applies and ask.
         `life_review_runs.notes`.
     - The decisions: exactly one item, due in three days, titled
       `🧾 Review YYYY-MM: <the most important decision>`, body = the decisions as a
-      numbered list, each with its evidence link.
-      - `task_provider = 'todoist'`: a task in `task_targets.system_project`.
+      numbered list, each with its evidence link. Decisions from last month's review
+      that are still open (its task is not completed, the proposal still `open`) are
+      carried into this list, because the nightly check closes last month's task once
+      this one exists. The open `improvement_proposals` with `autonomy = 'ask'` belong in
+      this list too; none of them gets a task of its own.
+      - `task_provider = 'todoist'`: a task in `task_targets.system_project`, registered
+        as the newest review:
+        ```sql
+        insert into system_tasks (kind, ref, todoist_task_id, title)
+        values ('review', :review_month, :task_id, :title)
+        on conflict (todoist_task_id) do nothing returning id;
+        ```
       - otherwise: one `outbox` row (`kind = 'review'`, that subject, the list as body);
         the bridge mails it to the person.
     - Log `life_review_runs` (`mode`, `review_month`, `skill_version`, `summary` jsonb,

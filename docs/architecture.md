@@ -78,7 +78,7 @@ know about.
 
 ### Database (`supabase/migrations`)
 
-40 tables, 44 views, about 70 functions, row level security on every table with no
+41 tables, 45 views, about 70 functions, row level security on every table with no
 policies.
 
 The core objects:
@@ -121,6 +121,10 @@ The core objects:
 - `improvement_proposals`, `skill_revisions`: how the system changes itself, with a
   human deciding anything structural.
 - `run_locks`, `backup_snapshots`, `backups`: coordination and recovery.
+- `system_tasks`: the brief, review and failure tasks the system opened, with when and why
+  it closed them. `v_tasks_to_close` lists every system task whose reason is gone (an
+  older brief, a replaced review, a recovered job, a finished deadline, letter or mail);
+  the nightly check completes them and calls `mark_task_closed()`.
 - `life_settings` + `settings_history`: all configuration, and every change to it. Nothing
   personal is hard-coded anywhere else. See [settings.md](settings.md).
 

@@ -1,6 +1,6 @@
 # Life OS setup
 
-Workflow `setup` v1.7 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
+Workflow `setup` v1.8 of the `life-os` skill: install, doctor, reconfigure. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
 Three modes. Pick from what the person said; if unclear, ask.
@@ -37,7 +37,7 @@ Code, routines), `assets/` does not exist and the same files are at the reposito
 `supabase/migrations`, `supabase/seed`, `packs`, `apps-script`, `docs`.
 
 ```
-assets/migrations/0001_tables.sql … 0019_meaning_search.sql
+assets/migrations/0001_tables.sql … 0020_task_lifecycle.sql
 assets/seed/document_types.sql
 assets/packs/lang/<locale>/{dossier,folders,keywords,formats}.json
 assets/packs/region/<code>/{rules.json,classification_rules.sql}
@@ -140,7 +140,8 @@ Apply in this order with `apply_migration`, each named after its file without `.
 0008_nightly_check_watchdog, 0009_business_days, 0010_hotfixes_and_safe_recount,
 0011_mcp_safe_writes, 0012_notice_periods, 0013_watchdog_and_snapshot,
 0014_successors_binder_folders, 0015_audits_health_invariants, 0016_security_hardening,
-0017_household_members, 0018_letters, 0019_meaning_search
+0017_household_members, 0018_letters, 0019_meaning_search,
+0020_task_lifecycle
 ```
 
 Then run `assets/seed/document_types.sql` with `execute_sql` (or as migration
@@ -151,9 +152,9 @@ region pack was chosen. Stop at the first error, show it, and look for it in
 Verify:
 
 ```sql
-select value from life_settings where key = 'schema_version';            -- "0.10.0"
-select count(*) from pg_tables where schemaname = 'public';              -- 40
-select count(*) from pg_views  where schemaname = 'public';              -- 44
+select value from life_settings where key = 'schema_version';            -- "0.11.0"
+select count(*) from pg_tables where schemaname = 'public';              -- 41
+select count(*) from pg_views  where schemaname = 'public';              -- 45
 select count(*) from document_types;                                     -- 43
 select jobname, schedule, active from cron.job;                          -- nightly-derivations
 ```
@@ -443,14 +444,14 @@ the installed versions:
 
 ```sql
 insert into skill_revisions (skill_name, version, change_type, summary)
-values ('life-os', 'v4.7', 'baseline', 'installed'),
-       ('setup', 'v1.7', 'baseline', 'installed with life-os v4.7'),
-       ('email-intake', 'v3.5', 'baseline', 'installed with life-os v4.7'),
-       ('drive-file-intake', 'v3.4', 'baseline', 'installed with life-os v4.7'),
-       ('nightly-check', 'v1.4', 'baseline', 'installed with life-os v4.7'),
-       ('context-lookup', 'v2.6', 'baseline', 'installed with life-os v4.7'),
-       ('life-review', 'v2.5', 'baseline', 'installed with life-os v4.7'),
-       ('letters', 'v1.0', 'baseline', 'installed with life-os v4.7');
+values ('life-os', 'v4.8', 'baseline', 'installed'),
+       ('setup', 'v1.8', 'baseline', 'installed with life-os v4.8'),
+       ('email-intake', 'v3.6', 'baseline', 'installed with life-os v4.8'),
+       ('drive-file-intake', 'v3.5', 'baseline', 'installed with life-os v4.8'),
+       ('nightly-check', 'v1.5', 'baseline', 'installed with life-os v4.8'),
+       ('context-lookup', 'v2.6', 'baseline', 'installed with life-os v4.8'),
+       ('life-review', 'v2.6', 'baseline', 'installed with life-os v4.8'),
+       ('letters', 'v1.1', 'baseline', 'installed with life-os v4.8');
 ```
 
 Finish with doctor mode, then a three-line summary: what runs when, where the emergency
@@ -578,6 +579,25 @@ apply a fix without the person saying yes.
    Fix the bridge (check 9), then let it retry the letter:
    `update letters set render_attempts = 0 where status = 'approved' and drive_pdf_id is null returning id;`
    `send_now` and `unconfirmed` are for the person, not fixes: name them.
+14. **Tasks** (from schema 0.11.0, with `task_provider = 'todoist'`):
+   ```sql
+   select source, count(*) as waiting, min(since) as oldest from v_tasks_to_close group by source;
+   select kind, count(*) filter (where closed_at is null) as open from system_tasks group by kind;
+   ```
+   Tasks waiting more than two days mean the nightly check cannot reach the task app: a
+   problem, fix the Todoist connector of the night routine. More than one open `brief` or
+   `review` is the same problem. Then list the open tasks in
+   `task_targets.system_project` and sort each into one of three groups: the system's
+   own (in `system_tasks`, or titled `📅 Daily brief`, `🧾 Review`, `⚠️ <workflow>
+   failed`: the nightly check adopts and closes those by itself, nothing to do); a task
+   that mirrors a row (its id is in `todoist_task_id` of a deadline, mail, document,
+   letter or proposal: the person's, or closed by the view once the row is finished);
+   and the rest. The rest are either the person's own or what versions before 4.8 made
+   of findings and proposals as loose tasks. Show them as one numbered list (title,
+   created, project) and ask once which to complete: the person decides, the doctor
+   never closes a task it cannot account for. A finding among them that still matters
+   becomes an `improvement_proposals` row before its task is completed, so it reaches the
+   next monthly review.
 
 The fixes for recurring patterns are in `assets/docs/troubleshooting.md`; use the same
 wording. Order the answer by severity: anything that can make a hard

@@ -1,9 +1,9 @@
 # Email intake
 
-Workflow `email-intake` v3.5 of the `life-os` skill: nightly mail intake. The shared rules in
+Workflow `email-intake` v3.6 of the `life-os` skill: nightly mail intake. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
-Write `v3.5` into `email_processing_runs.skill_version` on every run.
+Write `v3.6` into `email_processing_runs.skill_version` on every run.
 
 This job usually runs unattended, at night, with nobody reading the chat. Three rules
 follow from that and are not optional.
@@ -238,7 +238,10 @@ for the brief itself, run step 3 of `workflows/nightly-check.md`.
 ## Step 10: failure task
 
 If `errors` is not empty, create one task "⚠️ email-intake failed <date>" in the system
-project with the details, unless an open one already exists. With `task_provider = 'none'`
+project with the details, unless an open one already exists
+(`select todoist_task_id from system_tasks where kind = 'failure' and ref = 'email-intake' and closed_at is null;`),
+and register it in `system_tasks` (`kind = 'failure'`, `ref = 'email-intake'`) as
+SKILL.md shows. The nightly check closes it after the next clean run. With `task_provider = 'none'`
 it is one `outbox` row instead (`kind = 'failure'`, same subject), unless an unsent or
 today's one exists. A week-long outage should
 leave one task, not seven.
@@ -278,7 +281,7 @@ returning id;
 
 insert into email_processing_runs (skill_version, started_at, emails_scanned, emails_added,
   emails_updated, actions_flagged, category_counts, errors, skipped, decisions, notes)
-values ('v3.5', :started_at, ..., :category_counts::jsonb, :errors::jsonb,
+values ('v3.6', :started_at, ..., :category_counts::jsonb, :errors::jsonb,
         :skipped::jsonb, :decisions::jsonb, :notes)
 returning id;
 ```

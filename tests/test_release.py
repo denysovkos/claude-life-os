@@ -142,6 +142,22 @@ class Workflows(unittest.TestCase):
             with self.subTest(workflow=name):
                 self.assertIn(f"{name} {workflow_version(name)}", top)
 
+    def test_system_tasks_are_registered_and_closed(self):
+        # a brief, review or failure task that is not registered is never closed again:
+        # that is how the system project filled up with a month of briefs
+        for name in ("email-intake", "drive-file-intake", "nightly-check", "life-review"):
+            with self.subTest(workflow=name):
+                self.assertIn("system_tasks", read(WORKFLOWS[name]))
+        nightly = read(WORKFLOWS["nightly-check"])
+        self.assertIn("v_tasks_to_close", nightly)
+        self.assertIn("mark_task_closed(", nightly)
+
+    def test_night_runs_create_no_loose_tasks(self):
+        # findings and questions go to improvement_proposals, never to a task of their own
+        for name in ("drive-file-intake", "email-intake", "nightly-check", "life-review"):
+            with self.subTest(workflow=name):
+                self.assertNotRegex(read(WORKFLOWS[name]), r"(?i)(is worth a task|one task asking the person)")
+
     def test_no_workflow_removes_lock_rows(self):
         # the MCP connector holds row removal for confirmation; unattended runs would hang
         for name, path in WORKFLOWS.items():

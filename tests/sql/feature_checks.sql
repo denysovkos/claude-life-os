@@ -280,6 +280,55 @@ begin
     if n <> 0 then raise exception 'a document is listed as similar to itself'; end if;
   end if;
 
+  -- 14. the system closes the tasks it opened (schema 0.11.0) ------------------------------
+  if to_regclass('public.v_tasks_to_close') is not null then
+    insert into system_tasks (kind, ref, todoist_task_id, title, created_at) values
+      ('brief', (current_date - 1)::text, tag || '-brief-old', 'Daily brief old', now() - interval '1 day'),
+      ('brief', current_date::text, tag || '-brief-today', 'Daily brief today', now()),
+      ('review', '2026-08', tag || '-review-old', 'Review 2026-08', now() - interval '40 days'),
+      ('review', '2026-09', tag || '-review-new', 'Review 2026-09', now() - interval '10 days'),
+      ('failure', 'email-intake', tag || '-fail-mail', 'email-intake failed', now() - interval '2 hours'),
+      ('failure', 'some-other-job', tag || '-fail-other', 'other failed', now() - interval '2 hours');
+    select string_agg(todoist_task_id, ',' order by todoist_task_id) into s
+    from v_tasks_to_close where todoist_task_id like tag || '-%';
+    if s is distinct from tag || '-brief-old,' || tag || '-review-old' then
+      raise exception 'v_tasks_to_close before the job recovered: %', s;
+    end if;
+    -- a failing run keeps the failure task open, a clean one closes it
+    insert into email_processing_runs (run_at, errors) values (now() - interval '1 hour', '[{"stage":"x","error":"y"}]');
+    select count(*) into n from v_tasks_to_close where todoist_task_id = tag || '-fail-mail';
+    if n <> 0 then raise exception 'a failure task closes although the job failed again'; end if;
+    insert into email_processing_runs (run_at, errors) values (now(), '[]');
+    select count(*) into n from v_tasks_to_close where todoist_task_id = tag || '-fail-mail';
+    if n <> 1 then raise exception 'a failure task stays open after a clean run'; end if;
+    select count(*) into n from v_tasks_to_close where todoist_task_id = tag || '-fail-other';
+    if n <> 0 then raise exception 'a failure of an unknown job is closed on a guess'; end if;
+
+    -- tasks of rows: a done deadline and a decided proposal close, an open or pending one does not
+    insert into deadlines (title, deadline_type, due_on, status, todoist_task_id)
+    values (tag || ' done', 'other', current_date + 401, 'done', tag || '-dl-done'),
+           (tag || ' open', 'other', current_date + 402, 'open', tag || '-dl-open'),
+           (tag || ' claimed', 'other', current_date + 403, 'done', 'pending:' || tag);
+    insert into improvement_proposals (title, problem, proposed_change, autonomy, status, todoist_task_id, decided_at)
+    values (tag || ' proposal', 'p', 'c', 'ask', 'applied', tag || '-prop', now());
+    select string_agg(source || ':' || todoist_task_id, ',' order by todoist_task_id) into s
+    from v_tasks_to_close where todoist_task_id like tag || '-%' or todoist_task_id = 'pending:' || tag;
+    if s not like '%deadline:' || tag || '-dl-done%' or s not like '%proposal:' || tag || '-prop%'
+       or s like '%dl-open%' or s like '%pending:%' then
+      raise exception 'v_tasks_to_close for rows: %', s;
+    end if;
+
+    -- recording the close takes the task off the list, wherever it is referenced
+    if mark_task_closed(tag || '-dl-done', 'test') <> 1 then raise exception 'mark_task_closed did not mark the deadline'; end if;
+    if mark_task_closed(tag || '-brief-old', 'test') <> 1 then raise exception 'mark_task_closed did not mark the brief'; end if;
+    if mark_task_closed(tag || '-brief-old', 'again') <> 0 then raise exception 'mark_task_closed is not idempotent'; end if;
+    if mark_task_closed('pending:' || tag, 'test') <> 0 then raise exception 'mark_task_closed touched a claimed row'; end if;
+    select count(*) into n from v_tasks_to_close where todoist_task_id in (tag || '-dl-done', tag || '-brief-old');
+    if n <> 0 then raise exception 'closed tasks are still listed'; end if;
+    select close_reason into s from system_tasks where todoist_task_id = tag || '-brief-old';
+    if s is distinct from 'test' then raise exception 'the first close reason was overwritten: %', s; end if;
+  end if;
+
   raise notice 'feature checks: all passed';
 end
 $checks$;

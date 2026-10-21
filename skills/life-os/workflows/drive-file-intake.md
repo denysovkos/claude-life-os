@@ -1,9 +1,9 @@
 # Drive file intake
 
-Workflow `drive-file-intake` v3.4 of the `life-os` skill: nightly document intake. The shared rules in
+Workflow `drive-file-intake` v3.5 of the `life-os` skill: nightly document intake. The shared rules in
 `../SKILL.md` apply; this file adds what is specific to this workflow.
 
-Write `v3.4` into `processing_runs.skill_version` on every run, so the monthly review can
+Write `v3.5` into `processing_runs.skill_version` on every run, so the monthly review can
 attribute a change in a metric to a revision.
 
 This job usually runs unattended at night. The same three rules as `email-intake` apply:
@@ -360,7 +360,9 @@ select * from v_overdue_deadlines;
 ```
 
 `reconcile_rule = 'check_todoist'` (only with `task_provider = 'todoist'`): fetch the task;
-completed means `status = 'done'` with the completion time appended to `notes`. An open
+completed means `status = 'done'` with the completion time appended to `notes`, and
+`select mark_task_closed(:task_id, 'completed by the person');` so the nightly check does
+not fetch it again. An open
 task is real overdue work. `escalate` rows more than 7 days overdue, and any open overdue
 p1 task, go into the run notes by name, not as a count. Every write here starts with
 `select set_config('app.actor','skill',true);`. The status change is one short UPDATE
@@ -398,7 +400,9 @@ Lists expired identity and hard-deadline documents with no successor for the sam
 is succeeded by a new temporary one or by a permanent one, so a settlement permit closes
 the case. `application_on_file = true` (an application exists, the title lapsed while it
 is pending) is the most expensive thing to miss: say it by name in the notes and, with a
-task provider, as a task. When you can see which document succeeded which, set the old
+task provider and no task on the document yet, as a task on the document row: claimed
+and written back to `documents.todoist_task_id` like step 9's, so it closes by itself
+once the successor is indexed and `superseded_by` is set. When you can see which document succeeded which, set the old
 row's `superseded_by` so the view no longer needs to infer it. Before schema 0.6.0 (no
 view), compare by type and person by hand, counting a permanent title as the successor of
 a temporary one.
@@ -408,7 +412,9 @@ a temporary one.
 - **Bundles.** A named set of papers for one event (a permit application, a tax filing,
   a loan). Requirements point at document types, so a bundle survives a renewal.
   `select * from v_bundle_summary;` `blocking > 0` on an open bundle with a near `due_on`
-  is worth a task naming exactly what is missing. `v_bundle_status` tells MISSING from
+  is worth a `deadlines` row (`deadline_type = 'other'`, due the bundle's `due_on`, the
+  title naming exactly what is missing), unless one exists: the brief then carries it on
+  its ladder. Not a task of its own. `v_bundle_status` tells MISSING from
   NOT CURRENT from TOO OLD; the last matters because authorities reject papers that are
   valid but older than their cutoff.
 - **Recurring payments.** A document that turns out to be a standing obligation (policy,
@@ -427,8 +433,10 @@ One `processing_runs` row: `skill_version`, `started_at`, counts, `text_queue_de
 nothing failed; an unreported failure is the one defect the review can never find. Report
 into `notes`: scanned, added, updated, expiring flagged, errors. If a human started the
 run, answer in chat too, short. If `errors` is not empty, one failure task
-"⚠️ drive-file-intake failed <date>" in the system project, unless an open one exists;
-with `task_provider = 'none'` one `outbox` row (`kind = 'failure'`) instead.
+"⚠️ drive-file-intake failed <date>" in the system project, unless an open one exists
+(`select todoist_task_id from system_tasks where kind = 'failure' and ref = 'drive-file-intake' and closed_at is null;`),
+registered in `system_tasks` (`kind = 'failure'`, `ref = 'drive-file-intake'`) as SKILL.md
+shows; with `task_provider = 'none'` one `outbox` row (`kind = 'failure'`) instead.
 
 ## Weekly extras (Sunday run, except the backup, which is checked every run)
 
@@ -458,8 +466,9 @@ with `task_provider = 'none'` one `outbox` row (`kind = 'failure'`) instead.
   first: a mapped parent already covers it. Otherwise add a row (`is_filing_default =
   false` unless it is a top-level area), with `area_name` from `area_aliases` or an
   existing area when obvious. When it is not, do not guess: write the folder path and
-  document count into the notes and, with a task provider, one task asking the person for
-  the area name.
+  document count into the notes and one `improvement_proposals` row (`autonomy = 'ask'`)
+  asking the person for the area name; the monthly review's task carries the question.
+  Not a task of its own.
 
 ## A document attached in chat
 
@@ -538,7 +547,7 @@ select * from v_missing_notice_period;
 insert into processing_runs (skill_version, started_at, files_scanned, files_added,
   files_updated, expiring_flagged, text_queue_depth, capabilities, errors, skipped,
   decisions, notes)
-values ('v3.4', :started_at, ..., :capabilities::jsonb, :errors::jsonb, :skipped::jsonb,
+values ('v3.5', :started_at, ..., :capabilities::jsonb, :errors::jsonb, :skipped::jsonb,
         :decisions::jsonb, :notes)
 returning id;
 ```

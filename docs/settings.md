@@ -35,7 +35,7 @@ the Supabase dashboard also works; the history then shows `human`.
 
 | Key | Example | Written by | Read by |
 |---|---|---|---|
-| `schema_version` | `"0.10.0"` | migrations | setup (doctor, upgrades); every workflow compares it with `SKILL.md` |
+| `schema_version` | `"0.11.0"` | migrations | setup (doctor, upgrades); every workflow compares it with `SKILL.md` |
 | `owner_name` | `"Anna Beispiel"` | setup | reports |
 | `owner_email` | `"anna@example.com"` | setup | must be the Google account the bridge runs in: the email intake recognises the system's own mail by it (`self_only` rules). Mail itself always goes to the bridge's account |
 | `timezone` | `"Europe/Berlin"` | setup | every skill, the bridge, the binder date |
