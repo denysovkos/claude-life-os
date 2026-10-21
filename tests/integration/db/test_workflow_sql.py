@@ -47,6 +47,7 @@ PARAMS = {
     "letter_id": "'00000000-0000-0000-0000-000000000051'", "ready_letter_id": "'00000000-0000-0000-0000-000000000052'",
     "sent_letter_id": "'00000000-0000-0000-0000-000000000053'", "completed_on": "current_date",
     "gmail_message_id": "'fx-msg-bill'",
+    "terms": "array['Kündigungsfrist', 'notice period', 'Rechnung']",
 }
 for folder in ("inbox", "emergency", "backups", "catch_all", "identity", "finance", "taxes",
                "housing", "insurance", "work", "legal", "health", "vehicle", "education"):

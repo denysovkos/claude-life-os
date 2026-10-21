@@ -78,7 +78,7 @@ know about.
 
 ### Database (`supabase/migrations`)
 
-40 tables, 44 views, about 65 functions, row level security on every table with no
+40 tables, 44 views, about 70 functions, row level security on every table with no
 policies.
 
 The core objects:
@@ -107,6 +107,12 @@ The core objects:
   date it must arrive, legal basis) and lists what it does not know; the person approves;
   the bridge renders the PDF into Drive and mails it to its own account; the person
   sends it, and the deadline closes. Nothing in the system sends a letter.
+- Search: `find_documents(terms)` ranks documents, mail and notes against several
+  terms at once (synonyms and translations the model supplies, stems for inflected
+  languages) and returns quotable snippets with links; `similar_documents(id)` finds
+  related papers by shared rare words, issuer, type and person. No embeddings: the only
+  model Supabase runs in the project reads English only, and the documents never go to
+  an outside service.
 - `bundles`, `bundle_requirements`: the papers one event needs, pointing at document
   types rather than files, so a bundle survives a renewal.
 - `classification_rules`: deterministic rules applied before any judgement.

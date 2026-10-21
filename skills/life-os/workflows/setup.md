@@ -37,7 +37,7 @@ Code, routines), `assets/` does not exist and the same files are at the reposito
 `supabase/migrations`, `supabase/seed`, `packs`, `apps-script`, `docs`.
 
 ```
-assets/migrations/0001_tables.sql … 0018_letters.sql
+assets/migrations/0001_tables.sql … 0019_meaning_search.sql
 assets/seed/document_types.sql
 assets/packs/lang/<locale>/{dossier,folders,keywords,formats}.json
 assets/packs/region/<code>/{rules.json,classification_rules.sql}
@@ -140,7 +140,7 @@ Apply in this order with `apply_migration`, each named after its file without `.
 0008_nightly_check_watchdog, 0009_business_days, 0010_hotfixes_and_safe_recount,
 0011_mcp_safe_writes, 0012_notice_periods, 0013_watchdog_and_snapshot,
 0014_successors_binder_folders, 0015_audits_health_invariants, 0016_security_hardening,
-0017_household_members, 0018_letters
+0017_household_members, 0018_letters, 0019_meaning_search
 ```
 
 Then run `assets/seed/document_types.sql` with `execute_sql` (or as migration
@@ -151,7 +151,7 @@ region pack was chosen. Stop at the first error, show it, and look for it in
 Verify:
 
 ```sql
-select value from life_settings where key = 'schema_version';            -- "0.9.0"
+select value from life_settings where key = 'schema_version';            -- "0.10.0"
 select count(*) from pg_tables where schemaname = 'public';              -- 40
 select count(*) from pg_views  where schemaname = 'public';              -- 44
 select count(*) from document_types;                                     -- 43
@@ -443,14 +443,14 @@ the installed versions:
 
 ```sql
 insert into skill_revisions (skill_name, version, change_type, summary)
-values ('life-os', 'v4.6', 'baseline', 'installed'),
-       ('setup', 'v1.7', 'baseline', 'installed with life-os v4.6'),
-       ('email-intake', 'v3.5', 'baseline', 'installed with life-os v4.6'),
-       ('drive-file-intake', 'v3.4', 'baseline', 'installed with life-os v4.6'),
-       ('nightly-check', 'v1.4', 'baseline', 'installed with life-os v4.6'),
-       ('context-lookup', 'v2.5', 'baseline', 'installed with life-os v4.6'),
-       ('life-review', 'v2.5', 'baseline', 'installed with life-os v4.6'),
-       ('letters', 'v1.0', 'baseline', 'installed with life-os v4.6');
+values ('life-os', 'v4.7', 'baseline', 'installed'),
+       ('setup', 'v1.7', 'baseline', 'installed with life-os v4.7'),
+       ('email-intake', 'v3.5', 'baseline', 'installed with life-os v4.7'),
+       ('drive-file-intake', 'v3.4', 'baseline', 'installed with life-os v4.7'),
+       ('nightly-check', 'v1.4', 'baseline', 'installed with life-os v4.7'),
+       ('context-lookup', 'v2.6', 'baseline', 'installed with life-os v4.7'),
+       ('life-review', 'v2.5', 'baseline', 'installed with life-os v4.7'),
+       ('letters', 'v1.0', 'baseline', 'installed with life-os v4.7');
 ```
 
 Finish with doctor mode, then a three-line summary: what runs when, where the emergency
